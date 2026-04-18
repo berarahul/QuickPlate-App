@@ -2,17 +2,18 @@ import 'dart:convert';
 import 'dart:io';
 import 'package:crypto/crypto.dart';
 import 'package:dio/dio.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class CloudinaryService {
-  static const String cloudName = 'dt7ycd3xc';
-  static const String apiKey = '859836134263289';
-  static const String apiSecret = 'uBF83eMfcbwbmK75ZVKeGCQATO8';
-  static const String uploadUrl = 'https://api.cloudinary.com/v1_1/$cloudName/image/upload';
+  static String get cloudName => dotenv.env['CLOUDINARY_CLOUD_NAME'] ?? '';
+  static String get apiKey => dotenv.env['CLOUDINARY_API_KEY'] ?? '';
+  static String get apiSecret => dotenv.env['CLOUDINARY_API_SECRET'] ?? '';
+  static String get uploadUrl => 'https://api.cloudinary.com/v1_1/$cloudName/image/upload';
 
   static Future<String?> uploadImage(File imageFile) async {
     try {
       final timestamp = (DateTime.now().millisecondsSinceEpoch / 1000).round().toString();
-      
+
       // Generate signature: sha1(timestamp=123456789<api_secret>)
       final paramsToSign = 'timestamp=$timestamp$apiSecret';
       final bytes = utf8.encode(paramsToSign);
@@ -28,7 +29,7 @@ class CloudinaryService {
       });
 
       final response = await dio.post(uploadUrl, data: formData);
-      
+
       if (response.statusCode == 200) {
         return response.data['secure_url']; // This is the web url (https://...)
       }
