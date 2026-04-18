@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../features/splash/views/splash.dart';
 import '../../features/onboarding/views/onboarding_screen.dart';
 import '../../features/auth/views/student_registration.dart';
+import '../../features/auth/views/student_login.dart';
 
 class AppRoutes {
   static const String splashScreen = '/splash';
@@ -16,5 +17,6 @@ class AppRoutes {
     splashScreen: (context) => const SplashScreen(),
     onboardingScreen: (context) => const OnboardingScreen(),
     studentRegistrationScreen: (context) => const StudentRegistration(),
+    loginScreen: (context) => const StudentLogin(),
   };
 }

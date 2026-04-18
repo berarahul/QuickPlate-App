@@ -1,5 +1,6 @@
 import '../../../core/app_exports.dart';
 import '../model/onboarding_model.dart';
+import '../../../core/utils/shared_prefs_helper.dart';
 
 class OnboardingProvider extends ChangeNotifier {
   int _currentIndex = 0;
@@ -11,7 +12,7 @@ class OnboardingProvider extends ChangeNotifier {
     OnboardingModel(
       title: AppStrings.onboardingTitle1,
       description: AppStrings.onboardingDesc1,
-      imageUrl: ImageConstant.onboarding1, 
+      imageUrl: ImageConstant.onboarding1,
     ),
     OnboardingModel(
       title: AppStrings.onboardingTitle2,
@@ -28,6 +29,10 @@ class OnboardingProvider extends ChangeNotifier {
   void onPageChanged(int index) {
     _currentIndex = index;
     notifyListeners();
+    // Remember if they reached the last screen
+    if (index == onboardingData.length - 1) {
+      SharedPrefsHelper.setHasSeenOnboarding(true);
+    }
   }
 
   void skipToLastPage() {
@@ -40,10 +45,7 @@ class OnboardingProvider extends ChangeNotifier {
 
   void nextPage() {
     if (_currentIndex < onboardingData.length - 1) {
-      pageController.nextPage(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
-      );
+      pageController.nextPage(duration: const Duration(milliseconds: 400), curve: Curves.easeInOut);
     }
   }
 

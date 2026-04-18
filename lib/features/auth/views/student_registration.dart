@@ -101,6 +101,7 @@ class _StudentRegistrationState extends State<StudentRegistration> {
             ),
           );
           // Navigate to some success view or login
+          Navigator.pushReplacementNamed(context, AppRoutes.loginScreen);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

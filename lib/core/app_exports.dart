@@ -10,3 +10,4 @@ export 'network/api_client.dart';
 export 'network/api_exceptions.dart';
 export 'network/network_info.dart';
 export 'network/network_provider.dart';
+export 'utils/shared_prefs_helper.dart';

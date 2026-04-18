@@ -98,12 +98,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         text: _provider.currentIndex == _provider.onboardingData.length - 1
                             ? AppStrings.getStarted
                             : AppStrings.next,
-                        onPressed: () {
+                        onPressed: () async {
                           if (_provider.currentIndex == _provider.onboardingData.length - 1) {
-                            Navigator.pushReplacementNamed(
-                              context,
-                              AppRoutes.studentRegistrationScreen,
-                            );
+                            await SharedPrefsHelper.setHasSeenOnboarding(true);
+                            if (mounted) {
+                              Navigator.pushReplacementNamed(
+                                context,
+                                AppRoutes.studentRegistrationScreen,
+                              );
+                            }
                           } else {
                             _provider.nextPage();
                           }

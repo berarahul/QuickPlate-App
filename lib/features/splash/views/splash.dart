@@ -17,9 +17,18 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _initializeApp() async {
     // Hold splash screen then navigate
     await Future.delayed(const Duration(seconds: 2));
-    
+
+    final isRegistered = await SharedPrefsHelper.getIsRegistered();
+    final hasSeenOnboarding = await SharedPrefsHelper.getHasSeenOnboarding();
+
     if (mounted) {
-      Navigator.of(context).pushReplacementNamed(AppRoutes.onboardingScreen);
+      if (isRegistered) {
+        Navigator.of(context).pushReplacementNamed(AppRoutes.loginScreen);
+      } else if (hasSeenOnboarding) {
+        Navigator.of(context).pushReplacementNamed(AppRoutes.studentRegistrationScreen);
+      } else {
+        Navigator.of(context).pushReplacementNamed(AppRoutes.onboardingScreen);
+      }
     }
   }
 
@@ -31,20 +40,11 @@ class _SplashScreenState extends State<SplashScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.restaurant_menu,
-              size: 80,
-              color: AppColors.primary,
-            ),
+            Icon(Icons.restaurant_menu, size: 80, color: AppColors.primary),
             SizedBox(height: 16),
-            Text(
-              AppStrings.appName,
-              style: AppTextStyles.splashTitle,
-            ),
+            Text(AppStrings.appName, style: AppTextStyles.splashTitle),
             SizedBox(height: 32),
-            CircularProgressIndicator(
-              color: AppColors.primary,
-            ),
+            CircularProgressIndicator(color: AppColors.primary),
           ],
         ),
       ),
