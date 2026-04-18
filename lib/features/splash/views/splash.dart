@@ -18,11 +18,14 @@ class _SplashScreenState extends State<SplashScreen> {
     // Hold splash screen then navigate
     await Future.delayed(const Duration(seconds: 2));
 
+    final authToken = await SharedPrefsHelper.getAuthToken();
     final isRegistered = await SharedPrefsHelper.getIsRegistered();
     final hasSeenOnboarding = await SharedPrefsHelper.getHasSeenOnboarding();
 
     if (mounted) {
-      if (isRegistered) {
+      if (authToken != null && authToken.isNotEmpty) {
+        Navigator.of(context).pushReplacementNamed(AppRoutes.dashboardScreen);
+      } else if (isRegistered) {
         Navigator.of(context).pushReplacementNamed(AppRoutes.loginScreen);
       } else if (hasSeenOnboarding) {
         Navigator.of(context).pushReplacementNamed(AppRoutes.studentRegistrationScreen);

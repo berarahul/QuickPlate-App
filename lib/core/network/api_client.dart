@@ -2,16 +2,15 @@ import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'api_exceptions.dart';
 import 'network_info.dart';
+import '../utils/shared_prefs_helper.dart';
 
 class ApiClient {
   final Dio _dio;
   final NetworkInfo _networkInfo;
 
-  ApiClient({
-    required Dio dio,
-    required NetworkInfo networkInfo,
-  })  : _dio = dio,
-        _networkInfo = networkInfo {
+  ApiClient({required Dio dio, required NetworkInfo networkInfo})
+    : _dio = dio,
+      _networkInfo = networkInfo {
     _initializeDio();
   }
 
@@ -20,22 +19,21 @@ class ApiClient {
       baseUrl: 'https://quickplate-backend-z3j0.onrender.com/api/v1', // Replace with dev/prod url
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
-      headers: {
-        'Accept': 'application/json',
-        'Content-Type': 'application/json',
-      },
+      headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
     );
 
     // Debug logging interceptor
     if (kDebugMode) {
-      _dio.interceptors.add(LogInterceptor(
-        request: true,
-        requestHeader: true,
-        requestBody: true,
-        responseHeader: true,
-        responseBody: true,
-        error: true,
-      ));
+      _dio.interceptors.add(
+        LogInterceptor(
+          request: true,
+          requestHeader: true,
+          requestBody: true,
+          responseHeader: true,
+          responseBody: true,
+          error: true,
+        ),
+      );
     }
 
     // Auth and Network Connectivity Interceptor
@@ -53,15 +51,18 @@ class ApiClient {
             );
           }
 
-          // TODO: Inject Authorization Tokens if valid user is logged in
-          // options.headers['Authorization'] = 'Bearer user_token';
+          // Inject Authorization Tokens if valid user is logged in
+          final token = await SharedPrefsHelper.getAuthToken();
+          if (token != null) {
+            options.headers['Authorization'] = 'Bearer $token';
+          }
 
           return handler.next(options);
         },
         onError: (DioException e, handler) {
-           // Can globally catch 401 Unauthorized here and trigger router logout
-           return handler.next(e);
-        }
+          // Can globally catch 401 Unauthorized here and trigger router logout
+          return handler.next(e);
+        },
       ),
     );
   }

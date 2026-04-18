@@ -62,7 +62,9 @@ class AuthProvider extends ChangeNotifier {
 
       if (_loginResponse?.success == true) {
         _authToken = _loginResponse?.data?.token;
-        // In a real application, you would securely persist _authToken here using flutter_secure_storage
+        if (_authToken != null) {
+          await SharedPrefsHelper.setAuthToken(_authToken!);
+        }
         return true;
       } else {
         _errorMessage = _loginResponse?.message ?? 'Login failed';

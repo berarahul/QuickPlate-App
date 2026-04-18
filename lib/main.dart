@@ -7,6 +7,10 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'core/app_exports.dart';
 import 'features/auth/provider/auth_provider.dart';
 import 'features/auth/repository/auth_repository.dart';
+import 'features/scan/provider/scan_provider.dart';
+import 'features/scan/repository/scan_repository.dart';
+import 'features/menu/provider/menu_provider.dart';
+import 'features/menu/repository/menu_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -16,12 +20,16 @@ void main() async {
   final networkInfo = NetworkInfoImpl(Connectivity());
   final apiClient = ApiClient(dio: Dio(), networkInfo: networkInfo);
   final authRepository = AuthRepository(apiClient);
+  final scanRepository = ScanRepository(apiClient);
+  final menuRepository = MenuRepository(apiClient);
 
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => NetworkProvider(networkInfo)),
         ChangeNotifierProvider(create: (_) => AuthProvider(authRepository)),
+        ChangeNotifierProvider(create: (_) => ScanProvider(scanRepository)),
+        ChangeNotifierProvider(create: (_) => MenuProvider(menuRepository)),
       ],
       child: const MyApp(),
     ),

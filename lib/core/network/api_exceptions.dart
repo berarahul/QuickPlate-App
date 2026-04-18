@@ -11,11 +11,13 @@ class ApiException implements Exception {
 }
 
 class DefaultException extends ApiException {
-  DefaultException([String message = 'An unexpected error occurred.']) : super(message);
+  DefaultException([String message = 'An unexpected error occurred.'])
+    : super(message);
 }
 
 class NoInternetException extends ApiException {
-  NoInternetException() : super('No Internet Connection. Please check your network.');
+  NoInternetException()
+    : super('No Internet Connection. Please check your network.');
 }
 
 class ServerException extends ApiException {
@@ -46,7 +48,8 @@ class AppErrorHandler {
             (data['errors'] as List).isNotEmpty) {
           final firstError = data['errors'][0];
           if (firstError is Map && firstError.containsKey('message')) {
-            errorMessage = '${data['message'] ?? 'Error'}: ${firstError['message']}';
+            errorMessage =
+                '${data['message'] ?? 'Error'}: ${firstError['message']}';
           } else {
             errorMessage = data['message']?.toString() ?? errorMessage;
           }
@@ -54,7 +57,10 @@ class AppErrorHandler {
           errorMessage = data['message']?.toString() ?? errorMessage;
         }
       }
-      return ServerException(errorMessage, statusCode: error.response?.statusCode);
+      return ServerException(
+        errorMessage,
+        statusCode: error.response?.statusCode,
+      );
     } else {
       return DefaultException('Unexpected error occurred: ${error.message}');
     }

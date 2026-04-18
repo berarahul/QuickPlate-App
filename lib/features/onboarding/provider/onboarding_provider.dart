@@ -45,7 +45,10 @@ class OnboardingProvider extends ChangeNotifier {
 
   void nextPage() {
     if (_currentIndex < onboardingData.length - 1) {
-      pageController.nextPage(duration: const Duration(milliseconds: 400), curve: Curves.easeInOut);
+      pageController.nextPage(
+        duration: const Duration(milliseconds: 400),
+        curve: Curves.easeInOut,
+      );
     }
   }
 

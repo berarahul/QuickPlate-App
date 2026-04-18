@@ -32,19 +32,19 @@ class _StudentLoginState extends State<StudentLogin> {
       );
 
       final authProvider = context.read<AuthProvider>();
-      
+
       final success = await authProvider.login(request);
 
       if (mounted) {
         if (success) {
-           ScaffoldMessenger.of(context).showSnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(authProvider.loginResponse?.message ?? 'Login Successful!'),
               backgroundColor: Colors.green,
             ),
           );
-          // Navigate to Dashboard/Home route upon successful login
-          // Navigator.pushReplacementNamed(context, AppRoutes.homeScreen);
+          // Navigate to Dashboard screen upon successful login
+          Navigator.pushReplacementNamed(context, AppRoutes.dashboardScreen);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -61,9 +61,7 @@ class _StudentLoginState extends State<StudentLogin> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Student Login', style: AppTextStyles.titleLarge),
-      ),
+      appBar: AppBar(title: const Text('Student Login', style: AppTextStyles.titleLarge)),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -73,11 +71,7 @@ class _StudentLoginState extends State<StudentLogin> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 32),
-                Icon(
-                  Icons.lock_person_rounded,
-                  size: 100,
-                  color: AppColors.primaryLight,
-                ),
+                Icon(Icons.lock_person_rounded, size: 100, color: AppColors.primaryLight),
                 const SizedBox(height: 48),
                 TextFormField(
                   controller: _emailController,
@@ -93,17 +87,16 @@ class _StudentLoginState extends State<StudentLogin> {
                   validator: (value) => value!.isEmpty ? 'Enter your password' : null,
                 ),
                 const SizedBox(height: 32),
-                
+
                 Consumer<AuthProvider>(
                   builder: (context, authProvider, child) {
                     if (authProvider.isLoading) {
-                      return const Center(child: CircularProgressIndicator(color: AppColors.primary));
+                      return const Center(
+                        child: CircularProgressIndicator(color: AppColors.primary),
+                      );
                     }
-                    
-                    return CustomElevatedButton(
-                      text: 'Login',
-                      onPressed: () => _submit(context),
-                    );
+
+                    return CustomElevatedButton(text: 'Login', onPressed: () => _submit(context));
                   },
                 ),
                 const SizedBox(height: 24),
@@ -113,7 +106,10 @@ class _StudentLoginState extends State<StudentLogin> {
                     const Text('Don\'t have an account? ', style: AppTextStyles.bodyLarge),
                     TextButton(
                       onPressed: () {
-                        Navigator.pushReplacementNamed(context, AppRoutes.studentRegistrationScreen);
+                        Navigator.pushReplacementNamed(
+                          context,
+                          AppRoutes.studentRegistrationScreen,
+                        );
                       },
                       child: const Text('Register', style: AppTextStyles.textButton),
                     ),

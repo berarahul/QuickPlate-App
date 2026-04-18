@@ -8,11 +8,14 @@ class CloudinaryService {
   static String get cloudName => dotenv.env['CLOUDINARY_CLOUD_NAME'] ?? '';
   static String get apiKey => dotenv.env['CLOUDINARY_API_KEY'] ?? '';
   static String get apiSecret => dotenv.env['CLOUDINARY_API_SECRET'] ?? '';
-  static String get uploadUrl => 'https://api.cloudinary.com/v1_1/$cloudName/image/upload';
+  static String get uploadUrl =>
+      'https://api.cloudinary.com/v1_1/$cloudName/image/upload';
 
   static Future<String?> uploadImage(File imageFile) async {
     try {
-      final timestamp = (DateTime.now().millisecondsSinceEpoch / 1000).round().toString();
+      final timestamp = (DateTime.now().millisecondsSinceEpoch / 1000)
+          .round()
+          .toString();
 
       // Generate signature: sha1(timestamp=123456789<api_secret>)
       final paramsToSign = 'timestamp=$timestamp$apiSecret';

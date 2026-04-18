@@ -3,11 +3,7 @@ class LoginResponse {
   final String message;
   final LoginData? data;
 
-  LoginResponse({
-    required this.success,
-    required this.message,
-    this.data,
-  });
+  LoginResponse({required this.success, required this.message, this.data});
 
   factory LoginResponse.fromJson(Map<String, dynamic> json) {
     return LoginResponse(
@@ -22,10 +18,7 @@ class LoginData {
   final LoginUser? user;
   final String? token;
 
-  LoginData({
-    this.user,
-    this.token,
-  });
+  LoginData({this.user, this.token});
 
   factory LoginData.fromJson(Map<String, dynamic> json) {
     return LoginData(

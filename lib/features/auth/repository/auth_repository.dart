@@ -10,14 +10,22 @@ class AuthRepository {
 
   AuthRepository(this._apiClient);
 
-  Future<StudentRegistrationResponse> registerStudent(StudentRegistrationRequest request) async {
-    final response = await _apiClient.post(ApiEndpoints.register, data: request.toJson());
+  Future<StudentRegistrationResponse> registerStudent(
+    StudentRegistrationRequest request,
+  ) async {
+    final response = await _apiClient.post(
+      ApiEndpoints.register,
+      data: request.toJson(),
+    );
 
     return StudentRegistrationResponse.fromJson(response.data);
   }
 
   Future<LoginResponse> login(LoginRequest request) async {
-    final response = await _apiClient.post(ApiEndpoints.login, data: request.toJson());
+    final response = await _apiClient.post(
+      ApiEndpoints.login,
+      data: request.toJson(),
+    );
 
     return LoginResponse.fromJson(response.data);
   }

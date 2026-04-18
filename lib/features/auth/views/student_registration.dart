@@ -62,7 +62,9 @@ class _StudentRegistrationState extends State<StudentRegistration> {
       });
 
       // Upload image to Cloudinary securely
-      final uploadedImageUrl = await CloudinaryService.uploadImage(_idCardImage!);
+      final uploadedImageUrl = await CloudinaryService.uploadImage(
+        _idCardImage!,
+      );
 
       if (!mounted) return;
 
@@ -96,7 +98,9 @@ class _StudentRegistrationState extends State<StudentRegistration> {
         if (success) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(authProvider.registrationResponse?.message ?? 'Registered!'),
+              content: Text(
+                authProvider.registrationResponse?.message ?? 'Registered!',
+              ),
               backgroundColor: Colors.green,
             ),
           );
@@ -118,7 +122,12 @@ class _StudentRegistrationState extends State<StudentRegistration> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Student Registration', style: AppTextStyles.titleLarge)),
+      appBar: AppBar(
+        title: const Text(
+          'Student Registration',
+          style: AppTextStyles.titleLarge,
+        ),
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),
@@ -130,28 +139,34 @@ class _StudentRegistrationState extends State<StudentRegistration> {
                 TextFormField(
                   controller: _nameController,
                   decoration: const InputDecoration(labelText: 'Full Name'),
-                  validator: (value) => value!.isEmpty ? 'Enter your name' : null,
+                  validator: (value) =>
+                      value!.isEmpty ? 'Enter your name' : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _emailController,
                   decoration: const InputDecoration(labelText: 'Email Address'),
                   keyboardType: TextInputType.emailAddress,
-                  validator: (value) => value!.isEmpty ? 'Enter your email' : null,
+                  validator: (value) =>
+                      value!.isEmpty ? 'Enter your email' : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _passwordController,
                   decoration: const InputDecoration(labelText: 'Password'),
                   obscureText: true,
-                  validator: (value) => value!.isEmpty ? 'Enter your password' : null,
+                  validator: (value) =>
+                      value!.isEmpty ? 'Enter your password' : null,
                 ),
                 const SizedBox(height: 24),
 
                 // Image Picker Container
                 const Text(
                   'ID Card Image',
-                  style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.textSecondary),
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.textSecondary,
+                  ),
                 ),
                 const SizedBox(height: 8),
                 GestureDetector(
@@ -162,7 +177,9 @@ class _StudentRegistrationState extends State<StudentRegistration> {
                       color: Colors.grey.shade100,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                        color: _idCardImage == null ? Colors.grey.shade400 : AppColors.primary,
+                        color: _idCardImage == null
+                            ? Colors.grey.shade400
+                            : AppColors.primary,
                         width: 2,
                         style: BorderStyle.solid,
                       ),
@@ -179,9 +196,16 @@ class _StudentRegistrationState extends State<StudentRegistration> {
                         : Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: const [
-                              Icon(Icons.camera_alt_rounded, size: 40, color: Colors.grey),
+                              Icon(
+                                Icons.camera_alt_rounded,
+                                size: 40,
+                                color: Colors.grey,
+                              ),
                               SizedBox(height: 8),
-                              Text('Tap to select ID Card', style: TextStyle(color: Colors.grey)),
+                              Text(
+                                'Tap to select ID Card',
+                                style: TextStyle(color: Colors.grey),
+                              ),
                             ],
                           ),
                   ),
@@ -193,10 +217,16 @@ class _StudentRegistrationState extends State<StudentRegistration> {
                     if (authProvider.isLoading || _isUploadingImage) {
                       return Column(
                         children: [
-                          const Center(child: CircularProgressIndicator(color: AppColors.primary)),
+                          const Center(
+                            child: CircularProgressIndicator(
+                              color: AppColors.primary,
+                            ),
+                          ),
                           const SizedBox(height: 8),
                           Text(
-                            _isUploadingImage ? 'Uploading ID Card...' : 'Registering...',
+                            _isUploadingImage
+                                ? 'Uploading ID Card...'
+                                : 'Registering...',
                             style: AppTextStyles.bodyLarge,
                           ),
                         ],

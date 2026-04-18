@@ -23,11 +23,7 @@ class Data {
   final String? token;
   final bool requiresVerification;
 
-  Data({
-    this.user,
-    this.token,
-    required this.requiresVerification,
-  });
+  Data({this.user, this.token, required this.requiresVerification});
 
   factory Data.fromJson(Map<String, dynamic> json) {
     return Data(

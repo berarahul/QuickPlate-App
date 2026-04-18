@@ -36,10 +36,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    if (_provider.currentIndex < _provider.onboardingData.length - 1)
+                    if (_provider.currentIndex <
+                        _provider.onboardingData.length - 1)
                       TextButton(
                         onPressed: _provider.skipToLastPage,
-                        child: const Text(AppStrings.skip, style: AppTextStyles.textButton),
+                        child: const Text(
+                          AppStrings.skip,
+                          style: AppTextStyles.textButton,
+                        ),
                       )
                     else
                       const SizedBox(height: 48),
@@ -55,12 +59,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       return Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.fastfood_rounded, size: 150, color: AppColors.primaryLight),
+                          Icon(
+                            Icons.fastfood_rounded,
+                            size: 150,
+                            color: AppColors.primaryLight,
+                          ),
                           const SizedBox(height: 40),
                           Text(data.title, style: AppTextStyles.titleLarge),
                           const SizedBox(height: 16),
                           Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 32.0,
+                            ),
                             child: Text(
                               data.description,
                               textAlign: TextAlign.center,
@@ -95,11 +105,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                       ),
                       CustomElevatedButton(
-                        text: _provider.currentIndex == _provider.onboardingData.length - 1
+                        text:
+                            _provider.currentIndex ==
+                                _provider.onboardingData.length - 1
                             ? AppStrings.getStarted
                             : AppStrings.next,
                         onPressed: () async {
-                          if (_provider.currentIndex == _provider.onboardingData.length - 1) {
+                          if (_provider.currentIndex ==
+                              _provider.onboardingData.length - 1) {
                             await SharedPrefsHelper.setHasSeenOnboarding(true);
                             if (mounted) {
                               Navigator.pushReplacementNamed(

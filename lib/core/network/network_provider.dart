@@ -21,7 +21,7 @@ class NetworkProvider extends ChangeNotifier {
 
     _networkInfo.onConnectivityChanged.listen((results) {
       final offline = results.contains(ConnectivityResult.none);
-      
+
       // Look for a transition from offline -> online
       if (_isOffline && !offline) {
         if (onBackOnline != null) onBackOnline!();
