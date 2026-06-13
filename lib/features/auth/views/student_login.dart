@@ -1,9 +1,10 @@
-import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/app_exports.dart';
 import '../model/login_request.dart';
 import '../provider/auth_provider.dart';
+import '../../../core/services/notification_service.dart';
+import '../../notifications/provider/notification_provider.dart';
 
 class StudentLogin extends StatefulWidget {
   const StudentLogin({super.key});
@@ -35,24 +36,29 @@ class _StudentLoginState extends State<StudentLogin> {
 
       final success = await authProvider.login(request);
 
-      if (mounted) {
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(authProvider.loginResponse?.message ?? 'Login Successful!'),
-              backgroundColor: Colors.green,
-            ),
-          );
-          // Navigate to Dashboard screen upon successful login
-          Navigator.pushReplacementNamed(context, AppRoutes.dashboardScreen);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(authProvider.errorMessage ?? 'Login failed'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+      if (!context.mounted) return;
+
+      if (success) {
+        // Synchronize notification token with backend
+        NotificationService.instance.syncToken();
+        // Pre-fetch notifications history and unread badge count
+        context.read<NotificationProvider>().fetchNotifications(isRefresh: true);
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(authProvider.loginResponse?.message ?? 'Login Successful!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+        // Navigate to Dashboard screen upon successful login
+        Navigator.pushReplacementNamed(context, AppRoutes.dashboardScreen);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(authProvider.errorMessage ?? 'Login failed'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }

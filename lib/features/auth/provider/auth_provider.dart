@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../repository/auth_repository.dart';
 import '../model/student_registration_request.dart';
 import '../model/student_registration_response.dart';
@@ -6,6 +7,7 @@ import '../model/login_request.dart';
 import '../model/login_response.dart';
 import '../../../core/network/api_exceptions.dart';
 import '../../../core/utils/shared_prefs_helper.dart';
+import '../../../core/services/notification_service.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthRepository _authRepository;
@@ -79,6 +81,23 @@ class AuthProvider extends ChangeNotifier {
     } finally {
       _setLoading(false);
     }
+  }
+
+  Future<void> logout() async {
+    _authToken = null;
+    _loginResponse = null;
+
+    try {
+      // Unregister token first (needs the auth header/token that is currently active)
+      await NotificationService.instance.unregisterToken();
+    } catch (e) {
+      debugPrint("Error during FCM token unregistration: $e");
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token');
+    await prefs.remove('fcm_token');
+    notifyListeners();
   }
 
   void _setLoading(bool value) {

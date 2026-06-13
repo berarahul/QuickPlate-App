@@ -73,6 +73,7 @@ class _StudentRegistrationState extends State<StudentRegistration> {
       });
 
       if (uploadedImageUrl == null) {
+        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Failed to upload image. Please try again.'),
@@ -94,26 +95,26 @@ class _StudentRegistrationState extends State<StudentRegistration> {
 
       final success = await authProvider.registerStudent(request);
 
-      if (mounted) {
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                authProvider.registrationResponse?.message ?? 'Registered!',
-              ),
-              backgroundColor: Colors.green,
+      if (!context.mounted) return;
+      
+      if (success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              authProvider.registrationResponse?.message ?? 'Registered!',
             ),
-          );
-          // Navigate to some success view or login
-          Navigator.pushReplacementNamed(context, AppRoutes.loginScreen);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(authProvider.errorMessage ?? 'Registration failed'),
-              backgroundColor: Colors.red,
-            ),
-          );
-        }
+            backgroundColor: Colors.green,
+          ),
+        );
+        // Navigate to some success view or login
+        Navigator.pushReplacementNamed(context, AppRoutes.loginScreen);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(authProvider.errorMessage ?? 'Registration failed'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }
@@ -238,6 +239,28 @@ class _StudentRegistrationState extends State<StudentRegistration> {
                       onPressed: () => _submit(context),
                     );
                   },
+                ),
+                const SizedBox(height: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text(
+                      'YOU HAVE A ALREADY ACCOUNT? ',
+                      style: AppTextStyles.bodyLarge,
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushReplacementNamed(
+                          context,
+                          AppRoutes.loginScreen,
+                        );
+                      },
+                      child: const Text(
+                        'LOGIN',
+                        style: AppTextStyles.textButton,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),

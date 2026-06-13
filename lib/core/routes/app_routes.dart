@@ -5,16 +5,21 @@ import '../../features/auth/views/student_registration.dart';
 import '../../features/auth/views/student_login.dart';
 import '../../features/dashboard/views/dashboard_screen.dart';
 import '../../features/menu/views/menu_screen.dart';
-
+import '../../features/cart/views/order_history_screen.dart';
+import '../../features/notifications/views/notification_screen.dart';
 class AppRoutes {
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
   static const String splashScreen = '/splash';
   static const String onboardingScreen = '/onboarding';
-
+  
   // Future auth and home routes
   static const String loginScreen = '/login';
   static const String studentRegistrationScreen = '/student_registration';
   static const String dashboardScreen = '/dashboard';
   static const String menuScreen = '/menu';
+  static const String orderHistoryScreen = '/order_history';
+  static const String notificationScreen = '/notifications';
 
   static Map<String, WidgetBuilder> get routes => {
     splashScreen: (context) => const SplashScreen(),
@@ -23,5 +28,7 @@ class AppRoutes {
     loginScreen: (context) => const StudentLogin(),
     dashboardScreen: (context) => const DashboardScreen(),
     menuScreen: (context) => const MenuScreen(),
+    orderHistoryScreen: (context) => const OrderHistoryScreen(),
+    notificationScreen: (context) => const NotificationScreen(),
   };
 }

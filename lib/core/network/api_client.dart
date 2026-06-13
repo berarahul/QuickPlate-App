@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:quick_plate/core/network/api_endpoints.dart';
 import 'api_exceptions.dart';
 import 'network_info.dart';
 import '../utils/shared_prefs_helper.dart';
@@ -16,7 +17,9 @@ class ApiClient {
 
   void _initializeDio() {
     _dio.options = BaseOptions(
-      baseUrl: 'https://quickplate-backend-z3j0.onrender.com/api/v1', // Replace with dev/prod url
+      baseUrl: ApiEndpoints.baseUrl,
+      
+       // Replace with dev/prod url
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
       headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
@@ -94,6 +97,17 @@ class ApiClient {
   Future<Response> put(String path, {dynamic data}) async {
     try {
       final response = await _dio.put(path, data: data);
+      return response;
+    } on DioException catch (e) {
+      throw AppErrorHandler.handleDioError(e);
+    } catch (e) {
+      throw DefaultException(e.toString());
+    }
+  }
+
+  Future<Response> patch(String path, {dynamic data}) async {
+    try {
+      final response = await _dio.patch(path, data: data);
       return response;
     } on DioException catch (e) {
       throw AppErrorHandler.handleDioError(e);

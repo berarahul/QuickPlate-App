@@ -11,6 +11,12 @@ import 'features/scan/provider/scan_provider.dart';
 import 'features/scan/repository/scan_repository.dart';
 import 'features/menu/provider/menu_provider.dart';
 import 'features/menu/repository/menu_repository.dart';
+import 'features/cart/provider/order_provider.dart';
+import 'features/cart/repository/order_repository.dart';
+import 'features/cart/provider/cart_provider.dart';
+import 'features/notifications/provider/notification_provider.dart';
+import 'features/notifications/repository/notification_repository.dart';
+import 'core/services/notification_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +28,11 @@ void main() async {
   final authRepository = AuthRepository(apiClient);
   final scanRepository = ScanRepository(apiClient);
   final menuRepository = MenuRepository(apiClient);
+  final orderRepository = OrderRepository(apiClient);
+  final notificationRepository = NotificationRepository(apiClient);
+
+  // Initialize notifications in the background
+  NotificationService.instance.initNotifications(apiClient);
 
   runApp(
     MultiProvider(
@@ -30,6 +41,9 @@ void main() async {
         ChangeNotifierProvider(create: (_) => AuthProvider(authRepository)),
         ChangeNotifierProvider(create: (_) => ScanProvider(scanRepository)),
         ChangeNotifierProvider(create: (_) => MenuProvider(menuRepository)),
+        ChangeNotifierProvider(create: (_) => OrderProvider(orderRepository)),
+        ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (_) => NotificationProvider(notificationRepository)),
       ],
       child: const MyApp(),
     ),
@@ -43,6 +57,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Quick Plate',
+      navigatorKey: AppRoutes.navigatorKey,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       initialRoute: AppRoutes.splashScreen,

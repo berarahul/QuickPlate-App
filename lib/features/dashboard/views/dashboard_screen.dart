@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../scan/views/scan_screen.dart';
 import '../../menu/views/menu_screen.dart';
+import '../../cart/views/cart_screen.dart';
+import '../../profile/views/profile_screen.dart';
 import '../../../core/app_exports.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -16,8 +18,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   final List<Widget> _screens = [
     const MenuScreen(),
     const ScanScreen(),
-    const Center(child: Text('Cart Screen', style: AppTextStyles.titleLarge)),
-    const Center(child: Text('Profile Screen', style: AppTextStyles.titleLarge)),
+    const CartScreen(),
+    const ProfileScreen(),
   ];
 
   @override
