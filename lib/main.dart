@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 import 'core/app_exports.dart';
 import 'features/auth/provider/auth_provider.dart';
@@ -18,8 +19,19 @@ import 'features/notifications/provider/notification_provider.dart';
 import 'features/notifications/repository/notification_repository.dart';
 import 'core/services/notification_service.dart';
 
+// FIX #2: The background handler MUST be a top-level function registered here
+// in main.dart, BEFORE runApp() is called. This is required by firebase_messaging
+// so the native Android/iOS layer can spawn a headless Dart isolate to run it
+// when the app is in the background or terminated.
+// We re-export the function defined in notification_service.dart here.
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // FIX #2: Register background handler as the very first thing, before
+  // Firebase.initializeApp() or runApp(). The OS needs to know about this
+  // handler at the earliest possible moment during app startup.
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
   await dotenv.load(fileName: ".env");
 
   // Setup DI manually before app start
@@ -31,8 +43,10 @@ void main() async {
   final orderRepository = OrderRepository(apiClient);
   final notificationRepository = NotificationRepository(apiClient);
 
-  // Initialize notifications in the background
-  NotificationService.instance.initNotifications(apiClient);
+  // FIX #3: Added `await` here. Without await, runApp() fires immediately while
+  // initNotifications is still running, causing a race condition where
+  // getInitialMessage() (for terminated-state taps) fires too early and is lost.
+  await NotificationService.instance.initNotifications(apiClient);
 
   runApp(
     MultiProvider(

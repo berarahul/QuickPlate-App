@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../provider/cart_provider.dart';
 import '../provider/order_provider.dart';
@@ -8,11 +7,21 @@ import '../../../core/app_exports.dart';
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
 
-  void _showOrderSuccess(BuildContext context, String message, {bool isOnline = false}) {
+  void _showOrderSuccess(BuildContext context, String message,
+      {bool isOnline = false}) {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
+        icon: Container(
+          width: 56,
+          height: 56,
+          decoration: const BoxDecoration(
+            color: AppColors.successTint,
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(Icons.check_rounded, color: AppColors.success, size: 32),
+        ),
         title: const Text('Order Placed!'),
         content: Text(message),
         actions: [
@@ -44,7 +53,7 @@ class CartScreen extends StatelessWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please scan a table QR code first!'),
-          backgroundColor: Colors.orange,
+          backgroundColor: AppColors.warning,
         ),
       );
       return;
@@ -59,23 +68,39 @@ class CartScreen extends StatelessWidget {
 
     showModalBottomSheet(
       context: context,
+      backgroundColor: AppColors.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) => Padding(
-        padding: const EdgeInsets.all(24.0),
+        padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Select Payment Method',
-              style: AppTextStyles.titleLarge,
-              textAlign: TextAlign.center,
+            Center(
+              child: Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppColors.border,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
             ),
+            const SizedBox(height: 20),
+            const Text('Select Payment Method',
+                style: AppTextStyles.titleLarge, textAlign: TextAlign.center),
+            const SizedBox(height: 6),
+            Text('Choose how you\'d like to pay for this order.',
+                style: AppTextStyles.bodySmall,
+                textAlign: TextAlign.center),
             const SizedBox(height: 24),
-            ElevatedButton.icon(
-              onPressed: () async {
+            _PaymentOption(
+              icon: Icons.payments_outlined,
+              title: 'Pay Cash at Counter',
+              subtitle: 'Pay in person when you collect',
+              onTap: () async {
                 Navigator.pop(ctx);
                 final success = await orderProvider.placeCashOrder(
                   tableId: tableId,
@@ -90,23 +115,20 @@ class CartScreen extends StatelessWidget {
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text(orderProvider.errorMessage ?? 'Order failed'),
-                      backgroundColor: Colors.red,
+                      content:
+                          Text(orderProvider.errorMessage ?? 'Order failed'),
+                      backgroundColor: AppColors.error,
                     ),
                   );
                 }
               },
-              icon: const Icon(Icons.money),
-              label: const Text('Pay Cash at Counter'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
             ),
             const SizedBox(height: 12),
-            ElevatedButton.icon(
-              onPressed: () async {
+            _PaymentOption(
+              icon: Icons.credit_card_rounded,
+              title: 'Pay Online (Razorpay)',
+              subtitle: 'UPI, cards & wallets',
+              onTap: () async {
                 Navigator.pop(ctx);
                 await orderProvider.initiateOnlineOrder(
                   tableId: tableId,
@@ -123,20 +145,13 @@ class CartScreen extends StatelessWidget {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(message ?? 'Payment failed'),
-                          backgroundColor: Colors.red,
+                          backgroundColor: AppColors.error,
                         ),
                       );
                     }
                   },
                 );
               },
-              icon: const Icon(Icons.payment),
-              label: const Text('Pay Online (Razorpay)'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
             ),
           ],
         ),
@@ -148,103 +163,248 @@ class CartScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Your Cart', style: AppTextStyles.titleLarge),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.delete_sweep),
-            onPressed: () => context.read<CartProvider>().clearCart(),
-          )
-        ],
-      ),
-      body: Consumer<CartProvider>(
-        builder: (context, cart, child) {
-          if (cart.items.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.shopping_cart_outlined, size: 80, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text('Your cart is empty', style: AppTextStyles.bodyLarge),
-                ],
-              ),
-            );
-          }
-
-          return Column(
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: cart.items.length,
-                  itemBuilder: (context, index) {
-                    final item = cart.items.values.toList()[index];
-                    return Card(
-                      margin: const EdgeInsets.only(bottom: 12),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      child: ListTile(
-                        title: Text(item.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                        subtitle: Text('₹${item.price} x ${item.quantity}'),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.remove_circle_outline),
-                              onPressed: () => cart.removeSingleItem(item.foodId),
-                            ),
-                            Text('${item.quantity}', style: const TextStyle(fontSize: 16)),
-                            IconButton(
-                              icon: const Icon(Icons.add_circle_outline),
-                              onPressed: () => cart.incrementItem(item.foodId),
-                            ),
-                          ],
-                        ),
+      body: SafeArea(
+        child: Consumer<CartProvider>(
+          builder: (context, cart, child) {
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
+                  child: Row(
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Review', style: AppTextStyles.labelSmall),
+                          const SizedBox(height: 4),
+                          Text('Your Cart', style: AppTextStyles.displayLarge),
+                        ],
                       ),
-                    );
-                  },
+                      const Spacer(),
+                      if (cart.items.isNotEmpty)
+                        IconButton(
+                          icon: const Icon(Icons.delete_sweep_outlined,
+                              size: 22),
+                          onPressed: () => cart.clearCart(),
+                        ),
+                    ],
+                  ),
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.05),
-                      blurRadius: 10,
-                      offset: const Offset(0, -5),
-                    )
-                  ],
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+                Expanded(
+                  child: cart.items.isEmpty
+                      ? const StateView(
+                          icon: Icons.shopping_bag_outlined,
+                          title: 'Your cart is empty',
+                          message:
+                              'Browse the menu and add items to get started.',
+                        )
+                      : ListView.builder(
+                          padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                          itemCount: cart.items.length,
+                          itemBuilder: (context, index) {
+                            final item = cart.items.values.toList()[index];
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 12),
+                              child: AppCard(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 10),
+                                child: Row(
+                                  children: [
+                                    Container(
+                                      width: 48,
+                                      height: 48,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primaryTint,
+                                        borderRadius:
+                                            BorderRadius.circular(12),
+                                      ),
+                                      child: const Icon(
+                                          Icons.lunch_dining_outlined,
+                                          color: AppColors.primary),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(item.name,
+                                              style: AppTextStyles.titleSmall),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            '₹${item.price} each',
+                                            style: AppTextStyles.bodySmall,
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    _QtyStepper(
+                                      quantity: item.quantity,
+                                      onAdd: () =>
+                                          cart.incrementItem(item.foodId),
+                                      onRemove: () =>
+                                          cart.removeSingleItem(item.foodId),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
                 ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                if (cart.items.isNotEmpty) _checkoutBar(cart),
+              ],
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _checkoutBar(CartProvider cart) {
+    return Builder(
+      builder: (context) => Container(
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+        decoration: const BoxDecoration(
+          color: AppColors.surface,
+          border: Border(top: BorderSide(color: AppColors.border, width: 1)),
+        ),
+        child: SafeArea(
+          top: false,
+          child: Consumer<OrderProvider>(
+            builder: (context, orderProvider, child) {
+              return Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text('Total Amount', style: AppTextStyles.bodyLarge),
+                        Text('Total', style: AppTextStyles.bodySmall),
                         Text(
                           '₹${cart.totalAmount}',
-                          style: AppTextStyles.titleLarge.copyWith(color: AppColors.primary),
+                          style: AppTextStyles.titleLarge
+                              .copyWith(color: AppColors.textPrimary),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 24),
-                    Consumer<OrderProvider>(
-                      builder: (context, orderProvider, child) {
-                        return CustomElevatedButton(
-                          text: orderProvider.isLoading ? 'Processing...' : 'Place Order',
-                          onPressed: orderProvider.isLoading ? null : () => _handlePayment(context),
-                        );
-                      },
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    flex: 2,
+                    child: CustomElevatedButton(
+                      text: orderProvider.isLoading
+                          ? 'Processing...'
+                          : 'Place Order',
+                      loading: orderProvider.isLoading,
+                      onPressed: orderProvider.isLoading
+                          ? null
+                          : () => _handlePayment(context),
                     ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _QtyStepper extends StatelessWidget {
+  final int quantity;
+  final VoidCallback onAdd;
+  final VoidCallback onRemove;
+  const _QtyStepper(
+      {required this.quantity,
+      required this.onAdd,
+      required this.onRemove});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            icon: const Icon(Icons.remove_rounded, size: 18),
+            color: AppColors.textSecondary,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            onPressed: onRemove,
+          ),
+          Text('$quantity',
+              style: const TextStyle(fontWeight: FontWeight.w700)),
+          IconButton(
+            icon: const Icon(Icons.add_rounded, size: 18),
+            color: AppColors.primary,
+            padding: EdgeInsets.zero,
+            constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
+            onPressed: onAdd,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PaymentOption extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  const _PaymentOption({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.background,
+      borderRadius: BorderRadius.circular(14),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(14),
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: AppColors.border, width: 1),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: AppColors.primaryTint,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: AppColors.primary, size: 22),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: AppTextStyles.titleSmall),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: AppTextStyles.bodySmall),
                   ],
                 ),
               ),
+              const Icon(Icons.chevron_right_rounded,
+                  color: AppColors.textTertiary),
             ],
-          );
-        },
+          ),
+        ),
       ),
     );
   }

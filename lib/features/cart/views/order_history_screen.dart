@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../provider/order_provider.dart';
 import 'order_tracking_screen.dart';
@@ -25,7 +24,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('My Orders', style: AppTextStyles.titleLarge),
+        title: const Text('My Orders'),
       ),
       body: Consumer<OrderProvider>(
         builder: (context, orderProvider, child) {
@@ -33,72 +32,123 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (orderProvider.errorMessage != null && orderProvider.orderHistory.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(orderProvider.errorMessage!, style: const TextStyle(color: Colors.red)),
-                  ElevatedButton(
-                    onPressed: () => orderProvider.fetchOrderHistory(),
-                    child: const Text('Retry'),
-                  ),
-                ],
-              ),
+          if (orderProvider.errorMessage != null &&
+              orderProvider.orderHistory.isEmpty) {
+            return StateView(
+              icon: Icons.cloud_off_rounded,
+              iconColor: AppColors.textTertiary,
+              iconBg: AppColors.surfaceAlt,
+              title: 'Couldn\'t load orders',
+              message: orderProvider.errorMessage,
+              actionLabel: 'Retry',
+              onAction: () => orderProvider.fetchOrderHistory(),
             );
           }
 
           if (orderProvider.orderHistory.isEmpty) {
-            return const Center(
-              child: Text('No orders yet', style: AppTextStyles.bodyLarge),
+            return const StateView(
+              icon: Icons.receipt_long_outlined,
+              title: 'No orders yet',
+              message: 'Your past and active orders will show up here.',
             );
           }
 
           return RefreshIndicator(
             onRefresh: () => orderProvider.fetchOrderHistory(),
             child: ListView.builder(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
               itemCount: orderProvider.orderHistory.length,
               itemBuilder: (context, index) {
                 final order = orderProvider.orderHistory[index];
-                return Card(
-                  margin: const EdgeInsets.only(bottom: 16),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  child: ListTile(
-                    contentPadding: const EdgeInsets.all(16),
-                    title: Text(
-                      order.id.length >= 6 
-                        ? 'Order #${order.id.substring(order.id.length - 6)}'
-                        : 'Order #${order.id}',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 4),
-                        Text('${order.items.length} items • ₹${order.totalAmount}'),
-                        Text(
-                          'Status: ${order.status}',
-                          style: TextStyle(
-                            color: _getStatusColor(order.status),
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          'Date: ${order.createdAt.day}/${order.createdAt.month}/${order.createdAt.year}',
-                          style: const TextStyle(fontSize: 12),
-                        ),
-                      ],
-                    ),
-                    trailing: const Icon(Icons.chevron_right),
+                final statusInfo = _getStatusInfo(order.status);
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: AppCard(
                     onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => OrderTrackingScreen(orderId: order.id),
+                          builder: (context) =>
+                              OrderTrackingScreen(orderId: order.id),
                         ),
                       );
                     },
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: statusInfo.$2,
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Icon(statusInfo.$1,
+                                    color: statusInfo.$3, size: 22),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      order.id.length >= 6
+                                          ? 'Order #${order.id.substring(order.id.length - 6)}'
+                                          : 'Order #${order.id}',
+                                      style: AppTextStyles.titleSmall,
+                                    ),
+                                    const SizedBox(height: 2),
+                                    Text(
+                                      '${order.createdAt.day}/${order.createdAt.month}/${order.createdAt.year}',
+                                      style: AppTextStyles.bodySmall,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Icon(Icons.chevron_right_rounded,
+                                  color: AppColors.textTertiary),
+                            ],
+                          ),
+                          const SizedBox(height: 14),
+                          Row(
+                            mainAxisAlignment:
+                                MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                '${order.items.length} items',
+                                style: AppTextStyles.bodyMedium,
+                              ),
+                              Text(
+                                '₹${order.totalAmount}',
+                                style: AppTextStyles.titleSmall.copyWith(
+                                    color: AppColors.textPrimary),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: statusInfo.$2,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              _formatStatus(order.status),
+                              style: TextStyle(
+                                color: statusInfo.$3,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 );
               },
@@ -109,28 +159,38 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     );
   }
 
-  Color _getStatusColor(String status) {
+  String _formatStatus(String status) {
+    return status
+        .replaceAll('_', ' ')
+        .split(' ')
+        .map((w) =>
+            w.isEmpty ? w : '${w[0]}${w.substring(1).toLowerCase()}')
+        .join(' ');
+  }
+
+  /// Returns (icon, bgColor, fgColor).
+  (IconData, Color, Color) _getStatusInfo(String status) {
     final s = status.toUpperCase();
     switch (s) {
       case 'WAITING_FOR_CASH':
       case 'AWAITING_ONLINE_PAYMENT':
-        return Colors.orange;
+        return (Icons.access_time_rounded, AppColors.warningTint, AppColors.warning);
       case 'PENDING':
       case 'PLACED':
-        return Colors.blue;
+        return (Icons.receipt_outlined, AppColors.infoTint, AppColors.info);
       case 'PREPARING':
       case 'IN_KITCHEN':
-        return Colors.purple;
+        return (Icons.local_fire_department_outlined, AppColors.primaryTint, AppColors.primary);
       case 'READY':
       case 'READY_FOR_PICKUP':
-        return Colors.green;
+        return (Icons.check_circle_outline_rounded, AppColors.successTint, AppColors.success);
       case 'DELIVERED':
       case 'COMPLETED':
-        return Colors.grey;
+        return (Icons.done_all_rounded, AppColors.surfaceAlt, AppColors.textSecondary);
       case 'CANCELLED':
-        return Colors.red;
+        return (Icons.cancel_outlined, AppColors.errorTint, AppColors.error);
       default:
-        return Colors.black;
+        return (Icons.receipt_outlined, AppColors.surfaceAlt, AppColors.textSecondary);
     }
   }
 }

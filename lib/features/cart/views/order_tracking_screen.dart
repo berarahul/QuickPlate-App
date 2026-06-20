@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../provider/order_provider.dart';
 import '../models/order_model.dart';
@@ -46,24 +45,34 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         title: const Text('Cancel Order?'),
         content: const Text('Are you sure you want to cancel this order?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('No')),
-          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Yes, Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('No')),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Yes, Cancel'),
+          ),
         ],
       ),
     );
 
     if (confirmed == true) {
-      final success = await context.read<OrderProvider>().cancelOrder(widget.orderId);
+      final success =
+          await context.read<OrderProvider>().cancelOrder(widget.orderId);
       if (!context.mounted) return;
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Order cancelled successfully'), backgroundColor: Colors.green),
+          const SnackBar(
+              content: Text('Order cancelled successfully'),
+              backgroundColor: AppColors.success),
         );
         Navigator.pop(context);
       } else {
         final error = context.read<OrderProvider>().errorMessage;
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(error ?? 'Failed to cancel order'), backgroundColor: Colors.red),
+          SnackBar(
+              content: Text(error ?? 'Failed to cancel order'),
+              backgroundColor: AppColors.error),
         );
       }
     }
@@ -73,9 +82,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Order Tracking', style: AppTextStyles.titleLarge),
-      ),
+      appBar: AppBar(title: const Text('Order Tracking')),
       body: Consumer<OrderProvider>(
         builder: (context, orderProvider, child) {
           if (orderProvider.isLoading && orderProvider.orderDetails == null) {
@@ -84,35 +91,45 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
           final order = orderProvider.orderDetails;
           if (order == null) {
-            return Center(
-              child: Text(
-                orderProvider.errorMessage ?? 'Order not found',
-                style: const TextStyle(color: Colors.red),
-              ),
+            return StateView(
+              icon: Icons.error_outline_rounded,
+              iconColor: AppColors.error,
+              iconBg: AppColors.errorTint,
+              title: 'Order not found',
+              message: orderProvider.errorMessage,
             );
           }
 
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Live status banner
+                _StatusBanner(status: order.status),
+                const SizedBox(height: 20),
                 _buildOrderInfo(order),
-                const SizedBox(height: 32),
-                const Text('Order Status',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 28),
+                const Text('Order Status', style: AppTextStyles.titleMedium),
                 const SizedBox(height: 16),
                 _buildStatusTimeline(order),
-                const SizedBox(height: 32),
-                if (order.status == 'WAITING_FOR_CASH' || order.status == 'PENDING')
-                  ElevatedButton(
-                    onPressed: () => _handleCancel(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red.shade50,
-                      foregroundColor: Colors.red,
-                      side: const BorderSide(color: Colors.red),
+                const SizedBox(height: 28),
+                if (order.status == 'WAITING_FOR_CASH' ||
+                    order.status == 'PENDING')
+                  SizedBox(
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      onPressed: () => _handleCancel(context),
+                      icon: const Icon(Icons.close_rounded, size: 18),
+                      label: const Text('Cancel Order'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppColors.error,
+                        side: const BorderSide(color: AppColors.error),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
                     ),
-                    child: const Text('Cancel Order'),
                   ),
               ],
             ),
@@ -123,103 +140,255 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   }
 
   Widget _buildOrderInfo(OrderResponse order) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text('Order ID', style: TextStyle(color: Colors.grey.shade600)),
-                Text('#${order.id.substring(order.id.length - 8)}',
-                    style: const TextStyle(fontWeight: FontWeight.bold)),
-              ],
-            ),
-            const Divider(height: 24),
-            ...order.items.map((item) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text('${item.quantity}x Item ID: ${item.foodId.substring(0, 5)}...'),
-                    ],
-                  ),
-                )),
-            const Divider(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Total Amount', style: TextStyle(fontWeight: FontWeight.bold)),
-                Text('₹${order.totalAmount}',
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: AppColors.primary, fontSize: 18)),
-              ],
-            ),
-          ],
-        ),
+    return AppCard(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('Order ID', style: AppTextStyles.bodyMedium),
+              Text(
+                '#${order.id.substring(order.id.length - 8)}',
+                style: AppTextStyles.titleSmall,
+              ),
+            ],
+          ),
+          const Divider(height: 24),
+          ...order.items.map((item) => Padding(
+                padding: const EdgeInsets.only(bottom: 8.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                        '${item.quantity}x Item ID: ${item.foodId.substring(0, 5)}...',
+                        style: AppTextStyles.bodyMedium),
+                  ],
+                ),
+              )),
+          const Divider(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text('Total Amount', style: AppTextStyles.titleSmall),
+              Text('₹${order.totalAmount}',
+                  style: AppTextStyles.titleLarge.copyWith(
+                      color: AppColors.primary, fontSize: 20)),
+            ],
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildStatusTimeline(OrderResponse order) {
-    final steps = ['WAITING_FOR_CASH/PENDING', 'PREPARING', 'READY', 'DELIVERED'];
+    if (order.status == 'CANCELLED') {
+      return AppCard(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: const BoxDecoration(
+                  color: AppColors.errorTint,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.cancel_outlined,
+                    color: AppColors.error),
+              ),
+              const SizedBox(height: 12),
+              const Text('Order Cancelled',
+                  style: AppTextStyles.titleMedium),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final steps = <(String, IconData, String)>[
+      ('Order Placed', Icons.receipt_outlined, 'WAITING_FOR_CASH/PENDING'),
+      ('Preparing', Icons.local_fire_department_outlined, 'PREPARING'),
+      ('Ready for Pickup', Icons.check_circle_outline_rounded, 'READY'),
+      ('Delivered', Icons.done_all_rounded, 'DELIVERED'),
+    ];
+
     int currentStep = 0;
     if (order.status == 'PREPARING') currentStep = 1;
     if (order.status == 'READY') currentStep = 2;
     if (order.status == 'DELIVERED') currentStep = 3;
-    if (order.status == 'CANCELLED') {
-        return const Center(child: Text('ORDER CANCELLED', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)));
-    }
 
-    return Column(
-      children: List.generate(steps.length, (index) {
-        bool isCompleted = index <= currentStep;
-        bool isLast = index == steps.length - 1;
+    return AppCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        children: List.generate(steps.length, (index) {
+          final isCompleted = index <= currentStep;
+          final isCurrent = index == currentStep &&
+              order.status != 'DELIVERED';
+          final isLast = index == steps.length - 1;
 
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Column(
-              children: [
-                Container(
-                  width: 20,
-                  height: 20,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: isCompleted ? AppColors.primary : Colors.grey.shade300,
-                  ),
-                  child: isCompleted
-                      ? const Icon(Icons.check, size: 12, color: Colors.white)
-                      : null,
-                ),
-                if (!isLast)
-                  Container(
-                    width: 2,
-                    height: 40,
-                    color: index < currentStep ? AppColors.primary : Colors.grey.shade300,
-                  ),
-              ],
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Column(
                 children: [
-                  Text(
-                    steps[index],
-                    style: TextStyle(
-                      fontWeight: isCompleted ? FontWeight.bold : FontWeight.normal,
-                      color: isCompleted ? Colors.black : Colors.grey,
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isCompleted
+                          ? AppColors.primary
+                          : AppColors.surfaceAlt,
+                      border: isCurrent
+                          ? Border.all(
+                              color: AppColors.primary.withValues(alpha: 0.3),
+                              width: 4)
+                          : null,
+                    ),
+                    child: Icon(
+                      steps[index].$2,
+                      size: 16,
+                      color: isCompleted
+                          ? AppColors.white
+                          : AppColors.textTertiary,
                     ),
                   ),
-                  const SizedBox(height: 40),
+                  if (!isLast)
+                    Container(
+                      width: 2,
+                      height: 32,
+                      color: index < currentStep
+                          ? AppColors.primary
+                          : AppColors.border,
+                    ),
                 ],
               ),
-            ),
-          ],
-        );
-      }),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 4, bottom: 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        steps[index].$1,
+                        style: TextStyle(
+                          fontWeight: isCompleted
+                              ? FontWeight.w600
+                              : FontWeight.w500,
+                          color: isCompleted
+                              ? AppColors.textPrimary
+                              : AppColors.textTertiary,
+                          fontSize: 15,
+                        ),
+                      ),
+                      if (isCurrent)
+                        const Padding(
+                          padding: EdgeInsets.only(top: 2),
+                          child: Text(
+                            'In progress...',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: AppColors.primary,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          );
+        }),
+      ),
     );
+  }
+}
+
+class _StatusBanner extends StatelessWidget {
+  final String status;
+  const _StatusBanner({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final info = _info(status);
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: info.$2,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: info.$3),
+      ),
+      child: Row(
+        children: [
+          Icon(info.$1, color: info.$4),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(_format(status),
+                    style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: info.$4,
+                        fontSize: 15)),
+                Text(info.$5,
+                    style: TextStyle(color: info.$4, fontSize: 12.5)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _format(String s) => s
+      .replaceAll('_', ' ')
+      .split(' ')
+      .map((w) => w.isEmpty ? w : '${w[0]}${w.substring(1).toLowerCase()}')
+      .join(' ');
+
+  (IconData, Color, Color, Color, String) _info(String status) {
+    final s = status.toUpperCase();
+    switch (s) {
+      case 'PREPARING':
+      case 'IN_KITCHEN':
+        return (
+          Icons.local_fire_department_outlined,
+          AppColors.primaryTint,
+          AppColors.primaryLight,
+          AppColors.primary,
+          'The kitchen is preparing your food.'
+        );
+      case 'READY':
+      case 'READY_FOR_PICKUP':
+        return (
+          Icons.check_circle_outline_rounded,
+          AppColors.successTint,
+          AppColors.success,
+          AppColors.success,
+          'Your order is ready. Please collect it.'
+        );
+      case 'DELIVERED':
+      case 'COMPLETED':
+        return (
+          Icons.done_all_rounded,
+          AppColors.surfaceAlt,
+          AppColors.border,
+          AppColors.textSecondary,
+          'This order has been completed.'
+        );
+      default:
+        return (
+          Icons.access_time_rounded,
+          AppColors.warningTint,
+          AppColors.warning,
+          AppColors.warning,
+          'Waiting for confirmation.'
+        );
+    }
   }
 }

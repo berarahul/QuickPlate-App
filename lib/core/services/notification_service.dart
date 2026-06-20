@@ -9,6 +9,7 @@ import '../routes/app_routes.dart';
 import '../../features/notifications/provider/notification_provider.dart';
 import '../../features/notifications/model/notification_model.dart';
 import '../../features/cart/views/order_tracking_screen.dart';
+import '../../firebase_options.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -23,14 +24,25 @@ class NotificationService {
   bool get isFirebaseInitialized => _isFirebaseInitialized;
 
   /// Initialize Firebase and Messaging.
-  /// Standard try-catch blocks allow the app to run normally on local emulators/devices
-  /// even if Firebase native integration (google-services.json) is not configured.
+  /// NOTE: FirebaseMessaging.onBackgroundMessage() MUST be called in main.dart
+  /// before runApp(). It is NOT called here.
   Future<void> initNotifications(ApiClient apiClient) async {
     _apiClient = apiClient;
     try {
-      await Firebase.initializeApp();
+      // BUG A FIX: Check if Firebase is already initialized before calling initializeApp.
+      // If the OS previously woke up the background isolate (firebaseMessagingBackgroundHandler),
+      // it would have already called initializeApp. A second call throws
+      // "Firebase app '[DEFAULT]' already exists", which our catch block was silently
+      // converting into _isFirebaseInitialized=false — skipping the entire token fetch.
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        );
+        debugPrint("Firebase successfully initialized.");
+      } else {
+        debugPrint("Firebase already initialized — reusing existing app.");
+      }
       _isFirebaseInitialized = true;
-      debugPrint("Firebase successfully initialized.");
     } catch (e) {
       debugPrint("Firebase initialization failed/skipped: $e");
       _isFirebaseInitialized = false;
@@ -40,94 +52,133 @@ class NotificationService {
       try {
         FirebaseMessaging messaging = FirebaseMessaging.instance;
 
-        // Register background messaging handler as early as possible
-        FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-
-        // 1. Request Permission
+        // 1. Request Permission (shows dialog on Android 13+, auto-grants on older Android)
         NotificationSettings settings = await messaging.requestPermission(
           alert: true,
           badge: true,
           sound: true,
         );
+        debugPrint('Notification permission status: ${settings.authorizationStatus}');
 
-        debugPrint('User notification permission status: ${settings.authorizationStatus}');
+        // 2. Foreground Messaging Handler — shows the custom orange SnackBar banner
+        //    Set up BEFORE token fetch, regardless of permission status.
+        FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+          debugPrint('=============================================');
+          debugPrint('FCM FOREGROUND NOTIFICATION RECEIVED');
+          debugPrint('Message ID: ${message.messageId}');
+          debugPrint('Title: ${message.notification?.title}');
+          debugPrint('Body: ${message.notification?.body}');
+          debugPrint('Data payload: ${message.data}');
+          debugPrint('=============================================');
+          final notification = message.notification;
+          if (notification != null) {
+            _showForegroundNotificationBanner(
+              notification.title ?? 'Notification',
+              notification.body ?? '',
+              message.data,
+            );
+          }
+        });
 
-        if (settings.authorizationStatus == AuthorizationStatus.authorized ||
-            settings.authorizationStatus == AuthorizationStatus.provisional) {
-          // 2. Get Token
+        // 3. Notification tapped while app was in BACKGROUND (paused/resumed)
+        FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+          debugPrint('=============================================');
+          debugPrint('FCM NOTIFICATION CLICKED (APP IN BACKGROUND)');
+          debugPrint('Message ID: ${message.messageId}');
+          debugPrint('Title: ${message.notification?.title}');
+          debugPrint('Body: ${message.notification?.body}');
+          debugPrint('Data payload: ${message.data}');
+          debugPrint('=============================================');
+          _handleNotificationClick(message);
+        });
+
+        // 4. App opened from TERMINATED state by tapping a notification
+        messaging.getInitialMessage().then((RemoteMessage? message) {
+          if (message != null) {
+            debugPrint('=============================================');
+            debugPrint('FCM NOTIFICATION CLICKED (APP TERMINATED)');
+            debugPrint('Message ID: ${message.messageId}');
+            debugPrint('Title: ${message.notification?.title}');
+            debugPrint('Body: ${message.notification?.body}');
+            debugPrint('Data payload: ${message.data}');
+            debugPrint('=============================================');
+            Future.delayed(const Duration(seconds: 1), () {
+              _handleNotificationClick(message);
+            });
+          }
+        });
+
+        // STEP 1: Clear any stale mock token from SharedPrefs BEFORE fetching.
+        // On previous launches, a mock_fcm_token_... may have been saved to SharedPrefs.
+        // If getToken() fails below and we fall back to SharedPrefsHelper.getFcmToken(),
+        // the old mock token would be returned and sent to the backend — preventing
+        // real push notifications from ever reaching this device.
+        final existingCached = await SharedPrefsHelper.getFcmToken();
+        if (existingCached != null && existingCached.startsWith('mock_fcm_token_')) {
+          await SharedPrefsHelper.setFcmToken(''); // clear the stale mock token
+          debugPrint("[FCM] Cleared stale mock token from cache: $existingCached");
+        }
+
+        // STEP 2: Always fetch the real FCM token from Google Play Services.
+        // This is NOT gated by notification permission — that only controls whether
+        // the OS renders the notification banner on-screen.
+        try {
           _fcmToken = await messaging.getToken();
-          debugPrint("FCM Token retrieved: $_fcmToken");
+          if (_fcmToken != null) {
+            // Save real token to SharedPrefs so it survives app restarts
+            await SharedPrefsHelper.setFcmToken(_fcmToken!);
+            debugPrint("=====================================");
+            debugPrint("[FCM] REAL TOKEN: $_fcmToken");
+            debugPrint("=====================================");
+          } else {
+            debugPrint("[FCM] getToken() returned null — Google Play Services may be unavailable.");
+          }
+        } catch (tokenError) {
+          debugPrint("[FCM] getToken() threw an error: $tokenError");
+        }
 
-          // 3. Listen for token rotations
-          FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
-            debugPrint("FCM Token refreshed: $newToken");
-            _fcmToken = newToken;
-            _syncTokenWithBackend(newToken, apiClient);
-          });
+        // Listen for token rotations and re-sync with backend automatically
+        FirebaseMessaging.instance.onTokenRefresh.listen((newToken) {
+          debugPrint("[FCM] Token rotated — new token: $newToken");
+          _fcmToken = newToken;
+          SharedPrefsHelper.setFcmToken(newToken);
+          _syncTokenWithBackend(newToken, apiClient);
+        });
 
-          // 5. Foreground Messaging Handler
-          FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-            debugPrint('=============================================');
-            debugPrint('FCM FOREGROUND NOTIFICATION RECEIVED');
-            debugPrint('Message ID: ${message.messageId}');
-            debugPrint('Title: ${message.notification?.title}');
-            debugPrint('Body: ${message.notification?.body}');
-            debugPrint('Data payload: ${message.data}');
-            debugPrint('=============================================');
-            final notification = message.notification;
-            if (notification != null) {
-              _showForegroundNotificationBanner(
-                notification.title ?? 'Notification',
-                notification.body ?? '',
-                message.data,
-              );
-            }
-          });
-
-          // 6. Notification clicked in background handler
-          FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-            debugPrint('=============================================');
-            debugPrint('FCM NOTIFICATION CLICKED (APP IN BACKGROUND)');
-            debugPrint('Message ID: ${message.messageId}');
-            debugPrint('Title: ${message.notification?.title}');
-            debugPrint('Body: ${message.notification?.body}');
-            debugPrint('Data payload: ${message.data}');
-            debugPrint('=============================================');
-            _handleNotificationClick(message);
-          });
-
-          // 7. Initial message when app opened from terminated state
-          messaging.getInitialMessage().then((RemoteMessage? message) {
-            if (message != null) {
-              debugPrint('=============================================');
-              debugPrint('FCM NOTIFICATION CLICKED (APP TERMINATED)');
-              debugPrint('Message ID: ${message.messageId}');
-              debugPrint('Title: ${message.notification?.title}');
-              debugPrint('Body: ${message.notification?.body}');
-              debugPrint('Data payload: ${message.data}');
-              debugPrint('=============================================');
-              Future.delayed(const Duration(seconds: 1), () {
-                _handleNotificationClick(message);
-              });
-            }
-          });
+        // Warn clearly if notification permission is denied.
+        // On Android 13+ (API 33+) this permission is REQUIRED for the OS to
+        // show the notification banner. The FCM token still works, but the user
+        // will NOT see any notification popup until they grant this permission.
+        if (settings.authorizationStatus == AuthorizationStatus.denied) {
+          debugPrint("[FCM] WARNING: POST_NOTIFICATIONS permission DENIED.");
+          debugPrint("[FCM] The OS will SILENTLY DROP all background notification banners.");
+          debugPrint("[FCM] User must go to Settings > Apps > Quick Plate > Notifications and enable.");
+        } else {
+          debugPrint("[FCM] Notification permission: ${settings.authorizationStatus}");
         }
       } catch (e) {
-        debugPrint("Error initializing Firebase Messaging: $e");
+        debugPrint("[FCM] Error initializing Firebase Messaging: $e");
       }
     }
 
-    // Fallback: If Firebase failed or we couldn't get a token, use/create a local mock token
+    // Fallback: ONLY used if Firebase itself failed to initialize (e.g. no Google Play Services).
+    // We do NOT fall back to a mock token anymore — we fall back to whatever real token
+    // was previously saved. If nothing was saved, we log an error rather than sending
+    // a useless mock token to the backend.
     if (_fcmToken == null) {
-      _fcmToken = await SharedPrefsHelper.getFcmToken();
-      if (_fcmToken == null) {
-        _fcmToken = "mock_fcm_token_${DateTime.now().millisecondsSinceEpoch}";
-        await SharedPrefsHelper.setFcmToken(_fcmToken!);
+      final cached = await SharedPrefsHelper.getFcmToken();
+      if (cached != null && cached.isNotEmpty && !cached.startsWith('mock_fcm_token_')) {
+        _fcmToken = cached;
+        debugPrint("[FCM] Using previously saved real token from cache: $_fcmToken");
+      } else {
+        debugPrint("[FCM] ERROR: No real FCM token available. Push notifications will NOT work.");
+        debugPrint("[FCM] Ensure device has Google Play Services and notification permission is granted.");
+        // Do NOT send a mock token to the backend — it serves no purpose.
+        return;
       }
-      debugPrint("Using fallback/mock FCM token: $_fcmToken");
     }
 
-    // Always attempt to register token if user is logged in
+    // Always attempt to register token if user is already logged in (returning user)
     final authToken = await SharedPrefsHelper.getAuthToken();
     if (authToken != null && authToken.isNotEmpty) {
       await _syncTokenWithBackend(_fcmToken!, apiClient);
@@ -147,7 +198,8 @@ class NotificationService {
     }
   }
 
-  /// Sync token manually (e.g. after login)
+  /// Sync token manually — call this after a successful login so the backend
+  /// always has an up-to-date token associated with the authenticated user.
   Future<void> syncToken([ApiClient? apiClient]) async {
     final client = apiClient ?? _apiClient;
     if (_fcmToken != null && client != null) {
@@ -261,10 +313,18 @@ class NotificationService {
   }
 }
 
+/// Background message handler — must be a top-level function.
+/// This is registered in main.dart via FirebaseMessaging.onBackgroundMessage().
+/// The OS spawns a separate headless Dart isolate to run this when the app
+/// is in the background or terminated. No UI or BuildContext is available here.
 @pragma('vm:entry-point')
-Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   try {
-    await Firebase.initializeApp();
+    // FIX #5: Must use DefaultFirebaseOptions. The background isolate is completely
+    // independent of the main app and needs its own Firebase initialization.
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
     debugPrint('=============================================');
     debugPrint('FCM BACKGROUND NOTIFICATION RECEIVED');
     debugPrint('Message ID: ${message.messageId}');

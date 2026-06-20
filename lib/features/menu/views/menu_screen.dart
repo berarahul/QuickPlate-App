@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../provider/menu_provider.dart';
 import '../model/menu_response.dart';
@@ -6,7 +5,7 @@ import '../../cart/provider/cart_provider.dart';
 import '../../../core/app_exports.dart';
 
 class MenuScreen extends StatefulWidget {
-  const MenuScreen({Key? key}) : super(key: key);
+  const MenuScreen({super.key});
 
   @override
   State<MenuScreen> createState() => _MenuScreenState();
@@ -26,206 +25,309 @@ class _MenuScreenState extends State<MenuScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Quick Plate Menu', style: AppTextStyles.titleLarge),
-        actions: [
-          Consumer<CartProvider>(
-            builder: (context, cart, child) {
-              return Badge(
-                label: Text(cart.itemCount.toString()),
-                isLabelVisible: cart.itemCount > 0,
-                child: IconButton(
-                  icon: const Icon(Icons.shopping_cart),
-                  onPressed: () {
-                    // Navigate to cart tab or screen
-                  },
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-      body: Consumer<MenuProvider>(
-        builder: (context, menuProvider, child) {
-          if (menuProvider.isLoading) {
-            return const Center(
-              child: CircularProgressIndicator(color: AppColors.primary),
-            );
-          }
-
-          if (menuProvider.errorMessage != null) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+      body: SafeArea(
+        child: CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+              sliver: SliverToBoxAdapter(
+                child: Row(
                   children: [
-                    const Icon(Icons.error_outline, size: 64, color: Colors.red),
-                    const SizedBox(height: 16),
-                    Text(
-                      menuProvider.errorMessage!,
-                      style: AppTextStyles.bodyLarge.copyWith(color: Colors.red),
-                      textAlign: TextAlign.center,
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Browse', style: AppTextStyles.labelSmall),
+                        const SizedBox(height: 4),
+                        Text('Today\'s Menu', style: AppTextStyles.displayLarge),
+                      ],
                     ),
-                    const SizedBox(height: 24),
-                    ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                      ),
-                      onPressed: () => menuProvider.retryFetchMenu(),
-                      child: const Text('Retry'),
+                    const Spacer(),
+                    Consumer<CartProvider>(
+                      builder: (context, cart, child) {
+                        return GestureDetector(
+                          onTap: () {},
+                          child: Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(14),
+                              border:
+                                  Border.all(color: AppColors.border, width: 1),
+                            ),
+                            child: Stack(
+                              alignment: Alignment.center,
+                              children: [
+                                const Icon(Icons.shopping_bag_outlined,
+                                    size: 22, color: AppColors.textPrimary),
+                                if (cart.itemCount > 0)
+                                  Positioned(
+                                    right: 8,
+                                    top: 8,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(3),
+                                      decoration: const BoxDecoration(
+                                        color: AppColors.primary,
+                                        shape: BoxShape.circle,
+                                      ),
+                                      constraints: const BoxConstraints(
+                                        minWidth: 16,
+                                        minHeight: 16,
+                                      ),
+                                      child: Text(
+                                        cart.itemCount.toString(),
+                                        textAlign: TextAlign.center,
+                                        style: const TextStyle(
+                                          color: AppColors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),
               ),
-            );
-          }
-
-          if (menuProvider.menuItems.isEmpty) {
-            return const Center(
-              child: Text('No menu items available right now.', style: AppTextStyles.bodyLarge),
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: menuProvider.menuItems.length,
-            itemBuilder: (context, index) {
-              final MenuItem item = menuProvider.menuItems[index];
-              return Card(
-                elevation: 0,
-                margin: const EdgeInsets.only(bottom: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(color: Colors.grey.shade200),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Image Placeholder
-                      Container(
-                        width: 90,
-                        height: 90,
-                        decoration: BoxDecoration(
-                          color: Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(12),
-                          image: item.imageUrl != null && item.imageUrl!.isNotEmpty
-                              ? DecorationImage(
-                                  image: NetworkImage(item.imageUrl!),
-                                  fit: BoxFit.cover,
-                                )
-                              : null,
-                        ),
-                        child: item.imageUrl == null || item.imageUrl!.isEmpty
-                            ? const Icon(Icons.fastfood, color: Colors.grey, size: 40)
-                            : null,
-                      ),
-                      const SizedBox(width: 16),
-                      // Details
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item.name ?? 'Unknown Item',
-                              style: AppTextStyles.bodyLarge.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.textPrimary,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              item.description ?? '',
-                              style: AppTextStyles.bodyLarge.copyWith(
-                                fontSize: 13,
-                                color: AppColors.textSecondary,
-                              ),
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  '₹${item.price ?? 0}',
-                                  style: AppTextStyles.bodyLarge.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: AppColors.primary,
-                                  ),
-                                ),
-                                if (item.isAvailable == false)
-                                  const Text(
-                                    'Unavailable',
-                                    style: TextStyle(
-                                      color: Colors.redAccent,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                  )
-                                else
-                                  Consumer<CartProvider>(
-                                    builder: (context, cart, child) {
-                                      final cartItem = cart.items[item.id];
-                                      if (cartItem != null) {
-                                        return Row(
-                                          children: [
-                                            IconButton(
-                                              onPressed: () => cart.removeSingleItem(item.id!),
-                                              icon: const Icon(Icons.remove_circle_outline,
-                                                  color: AppColors.primary),
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(),
-                                            ),
-                                            Padding(
-                                              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                                              child: Text(
-                                                cartItem.quantity.toString(),
-                                                style: AppTextStyles.bodyLarge.copyWith(
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                            ),
-                                            IconButton(
-                                              onPressed: () => cart.addItem(item),
-                                              icon: const Icon(Icons.add_circle_outline,
-                                                  color: AppColors.primary),
-                                              padding: EdgeInsets.zero,
-                                              constraints: const BoxConstraints(),
-                                            ),
-                                          ],
-                                        );
-                                      }
-                                      return ElevatedButton(
-                                        onPressed: () => cart.addItem(item),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: AppColors.primary,
-                                          foregroundColor: Colors.white,
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 12, vertical: 4),
-                                          minimumSize: const Size(60, 30),
-                                          shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                        ),
-                                        child: const Text('Add'),
-                                      );
-                                    },
-                                  ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+                child: TextField(
+                  decoration: InputDecoration(
+                    hintText: 'Search dishes...',
+                    prefixIcon: const Icon(Icons.search_rounded, size: 20),
+                    filled: true,
+                    fillColor: AppColors.surface,
+                    isDense: true,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide:
+                          const BorderSide(color: AppColors.border, width: 1),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(14),
+                      borderSide:
+                          const BorderSide(color: AppColors.border, width: 1),
+                    ),
                   ),
                 ),
-              );
-            },
-          );
-        },
+              ),
+            ),
+            Consumer<MenuProvider>(
+              builder: (context, menuProvider, child) {
+                if (menuProvider.isLoading) {
+                  return const SliverFillRemaining(
+                    child: Center(child: CircularProgressIndicator()),
+                  );
+                }
+
+                if (menuProvider.errorMessage != null) {
+                  return SliverFillRemaining(
+                    child: StateView(
+                      icon: Icons.error_outline_rounded,
+                      iconColor: AppColors.error,
+                      iconBg: AppColors.errorTint,
+                      title: 'Couldn\'t load menu',
+                      message: menuProvider.errorMessage,
+                      actionLabel: 'Retry',
+                      onAction: () => menuProvider.retryFetchMenu(),
+                    ),
+                  );
+                }
+
+                if (menuProvider.menuItems.isEmpty) {
+                  return const SliverFillRemaining(
+                    child: StateView(
+                      icon: Icons.restaurant_menu_rounded,
+                      title: 'No items available',
+                      message: 'The canteen hasn\'t listed any dishes yet.',
+                    ),
+                  );
+                }
+
+                return SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+                  sliver: SliverList.separated(
+                    itemCount: menuProvider.menuItems.length,
+                    separatorBuilder: (_, _) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final MenuItem item = menuProvider.menuItems[index];
+                      return _MenuItemCard(item: item);
+                    },
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MenuItemCard extends StatelessWidget {
+  final MenuItem item;
+  const _MenuItemCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final unavailable = item.isAvailable == false;
+    return AppCard(
+      padding: const EdgeInsets.all(12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Image
+          ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Container(
+              width: 88,
+              height: 88,
+              color: AppColors.surfaceAlt,
+              child: item.imageUrl != null && item.imageUrl!.isNotEmpty
+                  ? Image.network(
+                      item.imageUrl!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => const Icon(
+                          Icons.broken_image_outlined,
+                          color: AppColors.textTertiary),
+                    )
+                  : const Icon(Icons.lunch_dining_outlined,
+                      size: 32, color: AppColors.textTertiary),
+            ),
+          ),
+          const SizedBox(width: 14),
+          // Details
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        item.name ?? 'Unknown Item',
+                        style: AppTextStyles.titleSmall,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    if (unavailable)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: AppColors.errorTint,
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          'Unavailable',
+                          style: TextStyle(
+                            color: AppColors.error,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  item.description ?? '',
+                  style: AppTextStyles.bodySmall.copyWith(
+                    fontSize: 12.5,
+                    color: AppColors.textSecondary,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Text(
+                      '₹${item.price ?? 0}',
+                      style: AppTextStyles.titleMedium.copyWith(
+                        color: AppColors.textPrimary,
+                        fontSize: 17,
+                      ),
+                    ),
+                    if (!unavailable)
+                      Consumer<CartProvider>(
+                        builder: (context, cart, child) {
+                          final cartItem = cart.items[item.id];
+                          if (cartItem != null) {
+                            return Container(
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryTint,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                children: [
+                                  IconButton(
+                                    onPressed: () => cart.removeSingleItem(item.id!),
+                                    icon: const Icon(Icons.remove_rounded,
+                                        size: 18, color: AppColors.primary),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(
+                                        minWidth: 32, minHeight: 32),
+                                  ),
+                                  Text(
+                                    cartItem.quantity.toString(),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                  IconButton(
+                                    onPressed: () => cart.addItem(item),
+                                    icon: const Icon(Icons.add_rounded,
+                                        size: 18, color: AppColors.primary),
+                                    padding: EdgeInsets.zero,
+                                    constraints: const BoxConstraints(
+                                        minWidth: 32, minHeight: 32),
+                                  ),
+                                ],
+                              ),
+                            );
+                          }
+                          return SizedBox(
+                            height: 34,
+                            child: ElevatedButton(
+                              onPressed: () => cart.addItem(item),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: AppColors.primary,
+                                foregroundColor: AppColors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16),
+                                minimumSize: Size.zero,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              child: const Text('Add',
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 13)),
+                            ),
+                          );
+                        },
+                      ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

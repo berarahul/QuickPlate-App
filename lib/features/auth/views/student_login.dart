@@ -17,6 +17,7 @@ class _StudentLoginState extends State<StudentLogin> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _obscure = true;
 
   @override
   void dispose() {
@@ -46,8 +47,8 @@ class _StudentLoginState extends State<StudentLogin> {
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(authProvider.loginResponse?.message ?? 'Login Successful!'),
-            backgroundColor: Colors.green,
+            content: Text(
+                authProvider.loginResponse?.message ?? 'Login Successful!'),
           ),
         );
         // Navigate to Dashboard screen upon successful login
@@ -56,7 +57,7 @@ class _StudentLoginState extends State<StudentLogin> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(authProvider.errorMessage ?? 'Login failed'),
-            backgroundColor: Colors.red,
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -67,49 +68,99 @@ class _StudentLoginState extends State<StudentLogin> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(title: const Text('Student Login', style: AppTextStyles.titleLarge)),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24.0),
+          padding: const EdgeInsets.fromLTRB(24, 32, 24, 24),
           child: Form(
             key: _formKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                // Brand mark
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  alignment: Alignment.center,
+                  child: const Icon(Icons.restaurant_menu_rounded,
+                      size: 32, color: AppColors.white),
+                ),
+                const SizedBox(height: 24),
+                Text('Welcome back', style: AppTextStyles.displayLarge),
+                const SizedBox(height: 8),
+                Text(
+                  'Sign in to continue ordering from your campus canteen.',
+                  style: AppTextStyles.bodyMedium,
+                ),
                 const SizedBox(height: 32),
-                Icon(Icons.lock_person_rounded, size: 100, color: AppColors.primaryLight),
-                const SizedBox(height: 48),
                 TextFormField(
                   controller: _emailController,
-                  decoration: const InputDecoration(labelText: 'Email Address'),
+                  decoration: const InputDecoration(
+                    labelText: 'Email Address',
+                    hintText: 'you@college.edu',
+                    prefixIcon: Icon(Icons.alternate_email_rounded, size: 20),
+                  ),
                   keyboardType: TextInputType.emailAddress,
-                  validator: (value) => value!.isEmpty ? 'Enter your email' : null,
+                  validator: (value) =>
+                      value!.isEmpty ? 'Enter your email' : null,
                 ),
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _passwordController,
-                  decoration: const InputDecoration(labelText: 'Password'),
-                  obscureText: true,
-                  validator: (value) => value!.isEmpty ? 'Enter your password' : null,
+                  decoration: InputDecoration(
+                    labelText: 'Password',
+                    hintText: '••••••••',
+                    prefixIcon:
+                        const Icon(Icons.lock_outline_rounded, size: 20),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscure
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        size: 20,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscure = !_obscure),
+                    ),
+                  ),
+                  obscureText: _obscure,
+                  validator: (value) =>
+                      value!.isEmpty ? 'Enter your password' : null,
                 ),
-                const SizedBox(height: 32),
-
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: TextButton(
+                    onPressed: () {},
+                    child: const Text('Forgot password?'),
+                  ),
+                ),
+                const SizedBox(height: 8),
                 Consumer<AuthProvider>(
                   builder: (context, authProvider, child) {
                     if (authProvider.isLoading) {
-                      return const Center(
-                        child: CircularProgressIndicator(color: AppColors.primary),
+                      return const CustomElevatedButton(
+                        text: '',
+                        loading: true,
+                        onPressed: null,
                       );
                     }
-
-                    return CustomElevatedButton(text: 'Login', onPressed: () => _submit(context));
+                    return CustomElevatedButton(
+                      text: 'Sign In',
+                      leading: const Icon(Icons.arrow_forward_rounded,
+                          size: 20, color: AppColors.white),
+                      onPressed: () => _submit(context),
+                    );
                   },
                 ),
                 const SizedBox(height: 24),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Text('Don\'t have an account? ', style: AppTextStyles.bodyLarge),
+                    Text('Don\'t have an account? ',
+                        style: AppTextStyles.bodyMedium),
                     TextButton(
                       onPressed: () {
                         Navigator.pushReplacementNamed(
@@ -117,7 +168,7 @@ class _StudentLoginState extends State<StudentLogin> {
                           AppRoutes.studentRegistrationScreen,
                         );
                       },
-                      child: const Text('Register', style: AppTextStyles.textButton),
+                      child: const Text('Register'),
                     ),
                   ],
                 ),

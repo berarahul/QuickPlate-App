@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:provider/provider.dart';
 import '../provider/scan_provider.dart';
@@ -46,16 +45,17 @@ class _ScanScreenState extends State<ScanScreen> {
           if (success) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(scanProvider.sessionResponse?.message ?? 'Table session started!'),
-                backgroundColor: Colors.green,
+                content: Text(scanProvider.sessionResponse?.message ??
+                    'Table session started!'),
               ),
             );
             // Optionally navigate to cart or menu automatically
           } else {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(scanProvider.errorMessage ?? 'Failed to start session.'),
-                backgroundColor: Colors.red,
+                content: Text(
+                    scanProvider.errorMessage ?? 'Failed to start session.'),
+                backgroundColor: AppColors.error,
               ),
             );
             setState(() {
@@ -77,77 +77,158 @@ class _ScanScreenState extends State<ScanScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Scan Table QR', style: AppTextStyles.titleLarge),
-        actions: [
-          IconButton(
-            icon: ValueListenableBuilder<MobileScannerState>(
-              valueListenable: _scannerController,
-              builder: (context, state, child) {
-                switch (state.torchState) {
-                  case TorchState.off:
-                  case TorchState.unavailable:
-                    return const Icon(Icons.flash_off);
-                  case TorchState.on:
-                  case TorchState.auto:
-                    return const Icon(Icons.flash_on);
-                }
-              },
-            ),
-            iconSize: 32.0,
-            onPressed: () => _scannerController.toggleTorch(),
-          ),
-        ],
-      ),
-      body: Consumer<ScanProvider>(
-        builder: (context, scanProvider, child) {
-          if (scanProvider.isLoading) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(color: AppColors.primary),
-                  SizedBox(height: 16),
-                  Text('Starting table session...', style: AppTextStyles.bodyLarge),
-                ],
-              ),
-            );
-          }
-
-          return Stack(
-            children: [
-              MobileScanner(controller: _scannerController, onDetect: _onDetect),
-              // Scanner overlay (simple target box)
-              Center(
-                child: Container(
-                  width: 250,
-                  height: 250,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.primary, width: 4.0),
-                    borderRadius: BorderRadius.circular(16.0),
+      body: SafeArea(
+        child: Consumer<ScanProvider>(
+          builder: (context, scanProvider, child) {
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 12, 8),
+                  child: Row(
+                    children: [
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Ready to order?', style: AppTextStyles.labelSmall),
+                          const SizedBox(height: 4),
+                          Text('Scan Table QR', style: AppTextStyles.displayLarge),
+                        ],
+                      ),
+                      const Spacer(),
+                      ValueListenableBuilder<MobileScannerState>(
+                        valueListenable: _scannerController,
+                        builder: (context, state, child) {
+                          final on = state.torchState == TorchState.on ||
+                              state.torchState == TorchState.auto;
+                          return Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(color: AppColors.border),
+                            ),
+                            child: IconButton(
+                              padding: EdgeInsets.zero,
+                              icon: Icon(on ? Icons.flash_on_rounded : Icons.flash_off_rounded,
+                                  size: 20),
+                              onPressed: () => _scannerController.toggleTorch(),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ),
                 ),
-              ),
-              const Positioned(
-                bottom: 80,
-                left: 0,
-                right: 0,
-                child: Center(
+                Expanded(
+                  child: scanProvider.isLoading
+                      ? const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 16),
+                            Text('Starting table session...',
+                                style: AppTextStyles.bodyMedium),
+                          ],
+                        )
+                      : Stack(
+                          children: [
+                            MobileScanner(
+                                controller: _scannerController,
+                                onDetect: _onDetect),
+                            // Dark vignette with cut-out feel using borders
+                            ColorFiltered(
+                              colorFilter: ColorFilter.mode(
+                                Colors.black.withValues(alpha: 0.35),
+                                BlendMode.srcOver,
+                              ),
+                              child: Container(
+                                color: Colors.black,
+                              ),
+                            ),
+                            // Scanner frame
+                            Center(
+                              child: Container(
+                                width: 250,
+                                height: 250,
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                      color: Colors.transparent, width: 0),
+                                  borderRadius: BorderRadius.circular(24),
+                                ),
+                                child: Stack(
+                                  children: [
+                                    // Corner accents
+                                    ..._buildCorners(),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            Positioned(
+                              bottom: 48,
+                              left: 24,
+                              right: 24,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: Colors.black.withValues(alpha: 0.6),
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.qr_code_2_rounded,
+                                        color: Colors.white, size: 18),
+                                    SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        'Align the table QR code within the frame',
+                                        textAlign: TextAlign.center,
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
                   child: Text(
-                    'Align QR code within the frame',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      backgroundColor: Colors.black54,
-                    ),
+                    'Scanning links your device to your table so the kitchen knows exactly where to bring your order.',
+                    textAlign: TextAlign.center,
+                    style: AppTextStyles.bodySmall,
                   ),
                 ),
-              ),
-            ],
-          );
-        },
+              ],
+            );
+          },
+        ),
       ),
     );
+  }
+
+  List<Widget> _buildCorners() {
+    const size = 36.0;
+    const thick = 4.0;
+    const color = AppColors.primary;
+    return [
+      Positioned(top: 0, left: 0, child: Container(width: size, height: thick, color: color)),
+      Positioned(top: 0, left: 0, child: Container(width: thick, height: size, color: color)),
+      Positioned(top: 0, right: 0, child: Container(width: size, height: thick, color: color)),
+      Positioned(top: 0, right: 0, child: Container(width: thick, height: size, color: color)),
+      Positioned(bottom: 0, left: 0, child: Container(width: size, height: thick, color: color)),
+      Positioned(bottom: 0, left: 0, child: Container(width: thick, height: size, color: color)),
+      Positioned(bottom: 0, right: 0, child: Container(width: size, height: thick, color: color)),
+      Positioned(bottom: 0, right: 0, child: Container(width: thick, height: size, color: color)),
+    ];
   }
 }

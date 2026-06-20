@@ -66,6 +66,12 @@ class AuthProvider extends ChangeNotifier {
         _authToken = _loginResponse?.data?.token;
         if (_authToken != null) {
           await SharedPrefsHelper.setAuthToken(_authToken!);
+          // FIX #4: Sync FCM token to backend right after login.
+          // initNotifications() runs at startup before the user is logged in,
+          // so the backend never has a valid auth header during the initial sync.
+          // Calling syncToken() here ensures the token is registered with a
+          // valid Bearer token in the Authorization header.
+          await NotificationService.instance.syncToken();
         }
         return true;
       } else {

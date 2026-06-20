@@ -25,6 +25,8 @@ android {
         applicationId = "com.example.quick_plate"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
+        // FIX #7: FCM requires minSdk 21 (Android 5.0). flutter.minSdkVersion
+        // can be lower than 21, which breaks Firebase Cloud Messaging at runtime.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode

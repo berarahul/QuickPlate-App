@@ -10,31 +10,27 @@ class ProfileScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Confirm Logout', style: TextStyle(fontWeight: FontWeight.bold)),
+        title: const Text('Confirm Logout'),
         content: const Text('Are you sure you want to log out from QuickPlate?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
+              backgroundColor: AppColors.error,
               foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(8),
-              ),
             ),
             onPressed: () async {
               Navigator.pop(dialogContext); // close dialog
-              
+
               // Show loading overlay
               showDialog(
                 context: context,
                 barrierDismissible: false,
-                builder: (overlayContext) => const Center(
-                  child: CircularProgressIndicator(color: AppColors.primary),
-                ),
+                builder: (overlayContext) =>
+                    const Center(child: CircularProgressIndicator()),
               );
 
               await context.read<AuthProvider>().logout();
@@ -48,7 +44,7 @@ class ProfileScreen extends StatelessWidget {
                 );
               }
             },
-            child: const Text('Logout', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text('Logout'),
           ),
         ],
       ),
@@ -59,71 +55,107 @@ class ProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('Profile', style: AppTextStyles.titleLarge),
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            const CircleAvatar(
-              radius: 50,
-              backgroundColor: AppColors.primaryLight,
-              child: Icon(Icons.person, size: 60, color: Colors.white),
-            ),
-            const SizedBox(height: 16),
-            const Text('Student Name', style: AppTextStyles.titleLarge),
-            const Text('student@email.com', style: AppTextStyles.bodyLarge),
-            const SizedBox(height: 32),
-            _buildProfileOption(
-              icon: Icons.history,
-              title: 'My Orders',
-              onTap: () {
-                Navigator.pushNamed(context, AppRoutes.orderHistoryScreen);
-              },
-            ),
-            Consumer<NotificationProvider>(
-              builder: (context, notificationProvider, child) {
-                final unreadCount = notificationProvider.unreadCount;
-                return _buildProfileOption(
-                  icon: Icons.notifications_none,
-                  title: 'Notifications',
-                  trailing: unreadCount > 0
-                      ? Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            '$unreadCount',
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Account', style: AppTextStyles.labelSmall),
+              const SizedBox(height: 4),
+              Text('Profile', style: AppTextStyles.displayLarge),
+              const SizedBox(height: 24),
+              // Profile header card
+              AppCard(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Icon(Icons.person_rounded,
+                          size: 34, color: AppColors.white),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Student Name', style: AppTextStyles.titleMedium),
+                          const SizedBox(height: 2),
+                          Text('student@email.com',
+                              style: AppTextStyles.bodySmall),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Text('ACTIVITY', style: AppTextStyles.labelSmall),
+              const SizedBox(height: 8),
+              _buildProfileOption(
+                icon: Icons.receipt_long_outlined,
+                title: 'My Orders',
+                subtitle: 'View past orders & track active ones',
+                onTap: () {
+                  Navigator.pushNamed(context, AppRoutes.orderHistoryScreen);
+                },
+              ),
+              Consumer<NotificationProvider>(
+                builder: (context, notificationProvider, child) {
+                  final unreadCount = notificationProvider.unreadCount;
+                  return _buildProfileOption(
+                    icon: Icons.notifications_none_rounded,
+                    title: 'Notifications',
+                    subtitle: 'Order updates and announcements',
+                    trailing: unreadCount > 0
+                        ? Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: AppColors.primary,
+                              borderRadius: BorderRadius.circular(10),
                             ),
-                          ),
-                        )
-                      : null,
-                  onTap: () {
-                    Navigator.pushNamed(context, AppRoutes.notificationScreen);
-                  },
-                );
-              },
-            ),
-            _buildProfileOption(
-              icon: Icons.settings_outlined,
-              title: 'Settings',
-              onTap: () {},
-            ),
-            const SizedBox(height: 32),
-            _buildProfileOption(
-              icon: Icons.logout,
-              title: 'Logout',
-              color: Colors.red,
-              onTap: () => _showLogoutDialog(context),
-            ),
-          ],
+                            child: Text(
+                              '$unreadCount',
+                              style: const TextStyle(
+                                color: AppColors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          )
+                        : null,
+                    onTap: () {
+                      Navigator.pushNamed(context, AppRoutes.notificationScreen);
+                    },
+                  );
+                },
+              ),
+              _buildProfileOption(
+                icon: Icons.settings_outlined,
+                title: 'Settings',
+                subtitle: 'Preferences and account details',
+                onTap: () {},
+              ),
+              const SizedBox(height: 24),
+              const Text('ACCOUNT', style: AppTextStyles.labelSmall),
+              const SizedBox(height: 8),
+              _buildProfileOption(
+                icon: Icons.logout_rounded,
+                title: 'Logout',
+                subtitle: 'Sign out of this device',
+                iconColor: AppColors.error,
+                iconBg: AppColors.errorTint,
+                onTap: () => _showLogoutDialog(context),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -132,18 +164,38 @@ class ProfileScreen extends StatelessWidget {
   Widget _buildProfileOption({
     required IconData icon,
     required String title,
+    required String subtitle,
     required VoidCallback onTap,
-    Color? color,
+    Color iconColor = AppColors.primary,
+    Color iconBg = AppColors.primaryTint,
     Widget? trailing,
   }) {
-    return ListTile(
-      leading: Icon(icon, color: color ?? AppColors.primary),
-      title: Text(
-        title,
-        style: TextStyle(color: color, fontWeight: FontWeight.w500),
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: AppCard(
+        padding: EdgeInsets.zero,
+        onTap: onTap,
+        child: ListTile(
+          contentPadding:
+              const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          leading: Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: iconBg,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          title: Text(title, style: AppTextStyles.titleSmall),
+          subtitle: Text(subtitle, style: AppTextStyles.bodySmall),
+          trailing: trailing ??
+              const Icon(Icons.chevron_right_rounded,
+                  color: AppColors.textTertiary),
+        ),
       ),
-      trailing: trailing ?? const Icon(Icons.chevron_right, size: 20),
-      onTap: onTap,
     );
   }
 }

@@ -11,6 +11,13 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   late OnboardingProvider _provider;
 
+  // Distinct icon per step (illustration stand-in).
+  static const _icons = <IconData>[
+    Icons.restaurant_menu_rounded,
+    Icons.delivery_dining_rounded,
+    Icons.payments_rounded,
+  ];
+
   @override
   void initState() {
     super.initState();
@@ -31,23 +38,42 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: AnimatedBuilder(
           animation: _provider,
           builder: (context, child) {
+            final isLast =
+                _provider.currentIndex == _provider.onboardingData.length - 1;
             return Column(
               children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    if (_provider.currentIndex <
-                        _provider.onboardingData.length - 1)
-                      TextButton(
-                        onPressed: _provider.skipToLastPage,
-                        child: const Text(
-                          AppStrings.skip,
-                          style: AppTextStyles.textButton,
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 16, 16, 0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Progress pips
+                      Row(
+                        children: List.generate(
+                          _provider.onboardingData.length,
+                          (index) => AnimatedContainer(
+                            duration: const Duration(milliseconds: 300),
+                            margin: const EdgeInsets.only(right: 8),
+                            height: 6,
+                            width: _provider.currentIndex == index ? 28 : 6,
+                            decoration: BoxDecoration(
+                              color: _provider.currentIndex == index
+                                  ? AppColors.primary
+                                  : AppColors.border,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
                         ),
-                      )
-                    else
-                      const SizedBox(height: 48),
-                  ],
+                      ),
+                      if (!isLast)
+                        TextButton(
+                          onPressed: _provider.skipToLastPage,
+                          child: const Text(AppStrings.skip),
+                        )
+                      else
+                        const SizedBox(height: 48),
+                    ],
+                  ),
                 ),
                 Expanded(
                   child: PageView.builder(
@@ -56,76 +82,69 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     itemCount: _provider.onboardingData.length,
                     itemBuilder: (context, index) {
                       final data = _provider.onboardingData[index];
-                      return Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.fastfood_rounded,
-                            size: 150,
-                            color: AppColors.primaryLight,
-                          ),
-                          const SizedBox(height: 40),
-                          Text(data.title, style: AppTextStyles.titleLarge),
-                          const SizedBox(height: 16),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 32.0,
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: 168,
+                              height: 168,
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryTint,
+                                shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                              child: Container(
+                                width: 112,
+                                height: 112,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  borderRadius: BorderRadius.circular(28),
+                                ),
+                                alignment: Alignment.center,
+                                child: Icon(
+                                  _icons[index],
+                                  size: 56,
+                                  color: AppColors.white,
+                                ),
+                              ),
                             ),
-                            child: Text(
+                            const SizedBox(height: 48),
+                            Text(data.title, style: AppTextStyles.displayLarge),
+                            const SizedBox(height: 16),
+                            Text(
                               data.description,
                               textAlign: TextAlign.center,
                               style: AppTextStyles.bodyLarge,
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       );
                     },
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Row(
-                        children: List.generate(
-                          _provider.onboardingData.length,
-                          (index) => AnimatedContainer(
-                            duration: const Duration(milliseconds: 300),
-                            margin: const EdgeInsets.only(right: 8),
-                            height: 10,
-                            width: _provider.currentIndex == index ? 24 : 10,
-                            decoration: BoxDecoration(
-                              color: _provider.currentIndex == index
-                                  ? AppColors.primary
-                                  : AppColors.primaryLight,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                      CustomElevatedButton(
-                        text:
-                            _provider.currentIndex ==
-                                _provider.onboardingData.length - 1
-                            ? AppStrings.getStarted
-                            : AppStrings.next,
-                        onPressed: () async {
-                          if (_provider.currentIndex ==
-                              _provider.onboardingData.length - 1) {
-                            await SharedPrefsHelper.setHasSeenOnboarding(true);
-                            if (mounted) {
-                              Navigator.pushReplacementNamed(
-                                context,
-                                AppRoutes.studentRegistrationScreen,
-                              );
-                            }
-                          } else {
-                            _provider.nextPage();
-                          }
-                        },
-                      ),
-                    ],
+                  padding: const EdgeInsets.fromLTRB(24, 0, 24, 24),
+                  child: CustomElevatedButton(
+                    text: isLast ? AppStrings.getStarted : AppStrings.next,
+                    leading: isLast
+                        ? const Icon(Icons.arrow_forward_rounded,
+                            size: 20, color: AppColors.white)
+                        : null,
+                    onPressed: () async {
+                      if (isLast) {
+                        await SharedPrefsHelper.setHasSeenOnboarding(true);
+                        if (mounted) {
+                          Navigator.pushReplacementNamed(
+                            context,
+                            AppRoutes.studentRegistrationScreen,
+                          );
+                        }
+                      } else {
+                        _provider.nextPage();
+                      }
+                    },
                   ),
                 ),
               ],
