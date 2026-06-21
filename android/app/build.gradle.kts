@@ -14,6 +14,7 @@ android {
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
+        isCoreLibraryDesugaringEnabled = true
     }
 
     kotlinOptions {
@@ -25,8 +26,10 @@ android {
         applicationId = "com.example.quick_plate"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        // FIX #7: FCM requires minSdk 21 (Android 5.0). flutter.minSdkVersion
-        // can be lower than 21, which breaks Firebase Cloud Messaging at runtime.
+        // Firebase Cloud Messaging requires minSdk 21 (Android 5.0 Lollipop).
+        // Using flutter.minSdkVersion can resolve to a lower value depending
+        // on the Flutter SDK version, which causes a runtime crash when
+        // FirebaseMessaging tries to register with Google Play Services.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -44,4 +47,8 @@ android {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.1.4")
 }

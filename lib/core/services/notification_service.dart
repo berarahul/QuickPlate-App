@@ -1,6 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:provider/provider.dart';
 import '../network/api_client.dart';
 import '../network/api_endpoints.dart';
@@ -10,6 +11,12 @@ import '../../features/notifications/provider/notification_provider.dart';
 import '../../features/notifications/model/notification_model.dart';
 import '../../features/cart/views/order_tracking_screen.dart';
 import '../../firebase_options.dart';
+
+/// Android notification channel ID — must match the value in
+/// AndroidManifest.xml `com.google.firebase.messaging.default_notification_channel_id`.
+const _androidChannelId = 'high_importance_channel';
+const _androidChannelName = 'Orders & Updates';
+const _androidChannelDesc = 'Notifications for order status, payments, and promotions.';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -59,6 +66,25 @@ class NotificationService {
           sound: true,
         );
         debugPrint('Notification permission status: ${settings.authorizationStatus}');
+
+        // ── Create the Android notification channel ─────────────────────
+        // Android 8.0+ (API 26) REQUIRES a notification channel to be created
+        // before any notification can appear. The manifest declares
+        // default_notification_channel_id = "high_importance_channel" but the
+        // channel itself must be created programmatically.  Without this step
+        // the OS silently drops every background notification on physical
+        // devices running Android 8+.
+        final androidImpl = AndroidFlutterLocalNotificationsPlugin();
+        await androidImpl.initialize(
+          const AndroidInitializationSettings('@mipmap/ic_launcher'),
+        );
+        await androidImpl.createNotificationChannel(const AndroidNotificationChannel(
+          _androidChannelId,
+          _androidChannelName,
+          description: _androidChannelDesc,
+          importance: Importance.high,
+        ));
+        debugPrint("[FCM] Android notification channel '$_androidChannelId' created.");
 
         // 2. Foreground Messaging Handler — shows the custom orange SnackBar banner
         //    Set up BEFORE token fetch, regardless of permission status.

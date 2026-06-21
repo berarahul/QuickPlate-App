@@ -1,4 +1,6 @@
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import 'package:quick_plate/features/dashboard/dashboard_tab_controller.dart';
 import '../../scan/views/scan_screen.dart';
 import '../../menu/views/menu_screen.dart';
 import '../../cart/views/cart_screen.dart';
@@ -13,7 +15,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  int _selectedIndex = 0;
+  final DashboardTabController _tabController = DashboardTabController();
 
   static const _labels = ['Menu', 'Scan', 'Cart', 'Profile'];
   static const _icons = [
@@ -29,15 +31,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
     Icons.person_rounded,
   ];
 
-  final List<Widget> _screens = [
-    const MenuScreen(),
-    const ScanScreen(),
-    const CartScreen(),
-    const ProfileScreen(),
-  ];
+  late final List<Widget> _screens;
+
+  @override
+  void initState() {
+    super.initState();
+    _screens = [
+      MenuScreen(onCartTap: () => _tabController.switchTo(2)),
+      const ScanScreen(),
+      const CartScreen(),
+      const ProfileScreen(),
+    ];
+    _tabController.addListener(_onTabChanged);
+  }
+
+  @override
+  void dispose() {
+    _tabController.removeListener(_onTabChanged);
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  void _onTabChanged() {
+    if (mounted) setState(() {});
+  }
 
   @override
   Widget build(BuildContext context) {
+    final selectedIndex = _tabController.index;
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -45,7 +67,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       child: Scaffold(
         backgroundColor: AppColors.background,
-        body: IndexedStack(index: _selectedIndex, children: _screens),
+        body: IndexedStack(index: selectedIndex, children: _screens),
         bottomNavigationBar: Container(
           decoration: const BoxDecoration(
             color: AppColors.surface,
@@ -61,12 +83,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: List.generate(_labels.length, (index) {
-                  final selected = _selectedIndex == index;
+                  final selected = selectedIndex == index;
                   return _NavItem(
                     label: _labels[index],
                     icon: selected ? _iconsActive[index] : _icons[index],
                     selected: selected,
-                    onTap: () => setState(() => _selectedIndex = index),
+                    onTap: () => _tabController.switchTo(index),
                   );
                 }),
               ),

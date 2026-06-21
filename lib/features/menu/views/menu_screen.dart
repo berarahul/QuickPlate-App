@@ -5,7 +5,9 @@ import '../../cart/provider/cart_provider.dart';
 import '../../../core/app_exports.dart';
 
 class MenuScreen extends StatefulWidget {
-  const MenuScreen({super.key});
+  final VoidCallback? onCartTap;
+
+  const MenuScreen({super.key, this.onCartTap});
 
   @override
   State<MenuScreen> createState() => _MenuScreenState();
@@ -45,7 +47,7 @@ class _MenuScreenState extends State<MenuScreen> {
                     Consumer<CartProvider>(
                       builder: (context, cart, child) {
                         return GestureDetector(
-                          onTap: () {},
+                          onTap: widget.onCartTap,
                           child: Container(
                             width: 44,
                             height: 44,
