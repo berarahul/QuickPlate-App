@@ -100,6 +100,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             );
           }
 
+          final upperStatus = order.status.toUpperCase();
+
           return SingleChildScrollView(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
             child: Column(
@@ -114,8 +116,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 const SizedBox(height: 16),
                 _buildStatusTimeline(order),
                 const SizedBox(height: 28),
-                if (order.status == 'WAITING_FOR_CASH' ||
-                    order.status == 'PENDING')
+                if (upperStatus == 'WAITING_FOR_CASH' ||
+                    upperStatus == 'PENDING')
                   SizedBox(
                     height: 48,
                     child: OutlinedButton.icon(
@@ -182,7 +184,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
   }
 
   Widget _buildStatusTimeline(OrderResponse order) {
-    if (order.status == 'CANCELLED') {
+    final status = order.status.toUpperCase();
+    if (status == 'CANCELLED') {
       return AppCard(
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -215,9 +218,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     ];
 
     int currentStep = 0;
-    if (order.status == 'PREPARING') currentStep = 1;
-    if (order.status == 'READY') currentStep = 2;
-    if (order.status == 'DELIVERED') currentStep = 3;
+    if (status == 'PREPARING') currentStep = 1;
+    if (status == 'READY') currentStep = 2;
+    if (status == 'DELIVERED') currentStep = 3;
 
     return AppCard(
       padding: const EdgeInsets.all(20),
@@ -225,7 +228,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         children: List.generate(steps.length, (index) {
           final isCompleted = index <= currentStep;
           final isCurrent = index == currentStep &&
-              order.status != 'DELIVERED';
+              status != 'DELIVERED';
           final isLast = index == steps.length - 1;
 
           return Row(

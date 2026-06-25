@@ -136,14 +136,28 @@ class _ScanScreenState extends State<ScanScreen> {
                             MobileScanner(
                                 controller: _scannerController,
                                 onDetect: _onDetect),
-                            // Dark vignette with cut-out feel using borders
+                            // Dark vignette with cut-out hole
                             ColorFiltered(
                               colorFilter: ColorFilter.mode(
-                                Colors.black.withValues(alpha: 0.35),
-                                BlendMode.srcOver,
+                                Colors.black.withValues(alpha: 0.55),
+                                BlendMode.srcOut,
                               ),
-                              child: Container(
-                                color: Colors.black,
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    color: Colors.transparent,
+                                  ),
+                                  Center(
+                                    child: Container(
+                                      width: 250,
+                                      height: 250,
+                                      decoration: BoxDecoration(
+                                        color: Colors.black,
+                                        borderRadius: BorderRadius.circular(24),
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                             // Scanner frame
