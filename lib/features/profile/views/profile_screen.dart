@@ -66,37 +66,46 @@ class ProfileScreen extends StatelessWidget {
               Text('Profile', style: AppTextStyles.displayLarge),
               const SizedBox(height: 24),
               // Profile header card
-              AppCard(
-                padding: const EdgeInsets.all(20),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 64,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: const Icon(Icons.person_rounded,
-                          size: 34, color: AppColors.white),
+              Consumer<AuthProvider>(
+                builder: (context, authProvider, child) {
+                  return AppCard(
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            color: AppColors.primary,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: const Icon(Icons.person_rounded,
+                              size: 34, color: AppColors.white),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                authProvider.userName ?? 'Student Name',
+                                style: AppTextStyles.titleMedium,
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                authProvider.userEmail ?? 'student@email.com',
+                                style: AppTextStyles.bodySmall,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Student Name', style: AppTextStyles.titleMedium),
-                          const SizedBox(height: 2),
-                          Text('student@email.com',
-                              style: AppTextStyles.bodySmall),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
+                  );
+                },
               ),
               const SizedBox(height: 24),
-              const Text('ACTIVITY', style: AppTextStyles.labelSmall),
+              Text('ACTIVITY', style: AppTextStyles.labelSmall),
               const SizedBox(height: 8),
               _buildProfileOption(
                 icon: Icons.receipt_long_outlined,
@@ -137,14 +146,35 @@ class ProfileScreen extends StatelessWidget {
                   );
                 },
               ),
-              _buildProfileOption(
-                icon: Icons.settings_outlined,
-                title: 'Settings',
-                subtitle: 'Preferences and account details',
-                onTap: () {},
+              Consumer<ThemeProvider>(
+                builder: (context, themeProvider, child) {
+                  return _buildProfileOption(
+                    icon: themeProvider.isDarkMode
+                        ? Icons.dark_mode_outlined
+                        : Icons.light_mode_outlined,
+                    title: 'Dark Theme',
+                    subtitle: themeProvider.isDarkMode
+                        ? 'Dark mode enabled'
+                        : 'Dark mode disabled',
+                    iconColor: themeProvider.isDarkMode ? Colors.purpleAccent : AppColors.primary,
+                    iconBg: themeProvider.isDarkMode
+                        ? Colors.purpleAccent.withValues(alpha: 0.15)
+                        : AppColors.primaryTint,
+                    onTap: () {
+                      themeProvider.toggleTheme(!themeProvider.isDarkMode);
+                    },
+                    trailing: Switch.adaptive(
+                      value: themeProvider.isDarkMode,
+                      activeTrackColor: AppColors.primary,
+                      onChanged: (value) {
+                        themeProvider.toggleTheme(value);
+                      },
+                    ),
+                  );
+                },
               ),
               const SizedBox(height: 24),
-              const Text('ACCOUNT', style: AppTextStyles.labelSmall),
+              Text('ACCOUNT', style: AppTextStyles.labelSmall),
               const SizedBox(height: 8),
               _buildProfileOption(
                 icon: Icons.logout_rounded,
@@ -166,10 +196,12 @@ class ProfileScreen extends StatelessWidget {
     required String title,
     required String subtitle,
     required VoidCallback onTap,
-    Color iconColor = AppColors.primary,
-    Color iconBg = AppColors.primaryTint,
+    Color? iconColor,
+    Color? iconBg,
     Widget? trailing,
   }) {
+    final effectiveIconColor = iconColor ?? AppColors.primary;
+    final effectiveIconBg = iconBg ?? AppColors.primaryTint;
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: AppCard(
@@ -184,15 +216,15 @@ class ProfileScreen extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: iconBg,
+              color: effectiveIconBg,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(icon, color: iconColor, size: 20),
+            child: Icon(icon, color: effectiveIconColor, size: 20),
           ),
           title: Text(title, style: AppTextStyles.titleSmall),
           subtitle: Text(subtitle, style: AppTextStyles.bodySmall),
           trailing: trailing ??
-              const Icon(Icons.chevron_right_rounded,
+              Icon(Icons.chevron_right_rounded,
                   color: AppColors.textTertiary),
         ),
       ),

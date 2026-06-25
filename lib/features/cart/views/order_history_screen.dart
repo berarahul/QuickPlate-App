@@ -109,7 +109,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                   ],
                                 ),
                               ),
-                              const Icon(Icons.chevron_right_rounded,
+                              Icon(Icons.chevron_right_rounded,
                                   color: AppColors.textTertiary),
                             ],
                           ),

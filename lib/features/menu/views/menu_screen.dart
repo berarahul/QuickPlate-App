@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:provider/provider.dart';
 import '../provider/menu_provider.dart';
 import '../model/menu_response.dart';
@@ -14,13 +15,24 @@ class MenuScreen extends StatefulWidget {
 }
 
 class _MenuScreenState extends State<MenuScreen> {
+  Timer? _debounce;
+  final TextEditingController _searchController = TextEditingController();
+
   @override
   void initState() {
     super.initState();
     // Fetch menu data when screen is loaded
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<MenuProvider>(context, listen: false).fetchMenu();
+      Provider.of<CartProvider>(context, listen: false).fetchCart();
     });
+  }
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _searchController.dispose();
+    super.dispose();
   }
 
   @override
@@ -60,7 +72,7 @@ class _MenuScreenState extends State<MenuScreen> {
                             child: Stack(
                               alignment: Alignment.center,
                               children: [
-                                const Icon(Icons.shopping_bag_outlined,
+                                Icon(Icons.shopping_bag_outlined,
                                     size: 22, color: AppColors.textPrimary),
                                 if (cart.itemCount > 0)
                                   Positioned(
@@ -68,7 +80,7 @@ class _MenuScreenState extends State<MenuScreen> {
                                     top: 8,
                                     child: Container(
                                       padding: const EdgeInsets.all(3),
-                                      decoration: const BoxDecoration(
+                                      decoration: BoxDecoration(
                                         color: AppColors.primary,
                                         shape: BoxShape.circle,
                                       ),
@@ -101,6 +113,16 @@ class _MenuScreenState extends State<MenuScreen> {
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
                 child: TextField(
+                  controller: _searchController,
+                  onChanged: (value) {
+                    if (_debounce?.isActive ?? false) _debounce?.cancel();
+                    _debounce = Timer(const Duration(milliseconds: 500), () {
+                      if (mounted) {
+                        Provider.of<MenuProvider>(context, listen: false)
+                            .fetchMenu(search: value);
+                      }
+                    });
+                  },
                   decoration: InputDecoration(
                     hintText: 'Search dishes...',
                     prefixIcon: const Icon(Icons.search_rounded, size: 20),
@@ -111,12 +133,12 @@ class _MenuScreenState extends State<MenuScreen> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                       borderSide:
-                          const BorderSide(color: AppColors.border, width: 1),
+                          BorderSide(color: AppColors.border, width: 1),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                       borderSide:
-                          const BorderSide(color: AppColors.border, width: 1),
+                          BorderSide(color: AppColors.border, width: 1),
                     ),
                   ),
                 ),
@@ -197,11 +219,11 @@ class _MenuItemCard extends StatelessWidget {
                   ? Image.network(
                       item.imageUrl!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => const Icon(
+                      errorBuilder: (_, _, _) => Icon(
                           Icons.broken_image_outlined,
                           color: AppColors.textTertiary),
                     )
-                  : const Icon(Icons.lunch_dining_outlined,
+                  : Icon(Icons.lunch_dining_outlined,
                       size: 32, color: AppColors.textTertiary),
             ),
           ),
@@ -229,7 +251,7 @@ class _MenuItemCard extends StatelessWidget {
                           color: AppColors.errorTint,
                           borderRadius: BorderRadius.circular(6),
                         ),
-                        child: const Text(
+                        child: Text(
                           'Unavailable',
                           style: TextStyle(
                             color: AppColors.error,
@@ -276,7 +298,7 @@ class _MenuItemCard extends StatelessWidget {
                                 children: [
                                   IconButton(
                                     onPressed: () => cart.removeSingleItem(item.id!),
-                                    icon: const Icon(Icons.remove_rounded,
+                                    icon: Icon(Icons.remove_rounded,
                                         size: 18, color: AppColors.primary),
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(
@@ -284,14 +306,14 @@ class _MenuItemCard extends StatelessWidget {
                                   ),
                                   Text(
                                     cartItem.quantity.toString(),
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontWeight: FontWeight.w700,
                                       color: AppColors.textPrimary,
                                     ),
                                   ),
                                   IconButton(
                                     onPressed: () => cart.addItem(item),
-                                    icon: const Icon(Icons.add_rounded,
+                                    icon: Icon(Icons.add_rounded,
                                         size: 18, color: AppColors.primary),
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(

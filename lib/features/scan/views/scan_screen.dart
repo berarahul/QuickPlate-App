@@ -122,11 +122,11 @@ class _ScanScreenState extends State<ScanScreen> {
                 ),
                 Expanded(
                   child: scanProvider.isLoading
-                      ? const Column(
+                      ? Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            CircularProgressIndicator(),
-                            SizedBox(height: 16),
+                            const CircularProgressIndicator(),
+                            const SizedBox(height: 16),
                             Text('Starting table session...',
                                 style: AppTextStyles.bodyMedium),
                           ],
@@ -233,7 +233,7 @@ class _ScanScreenState extends State<ScanScreen> {
   List<Widget> _buildCorners() {
     const size = 36.0;
     const thick = 4.0;
-    const color = AppColors.primary;
+    final color = AppColors.primary;
     return [
       Positioned(top: 0, left: 0, child: Container(width: size, height: thick, color: color)),
       Positioned(top: 0, left: 0, child: Container(width: thick, height: size, color: color)),

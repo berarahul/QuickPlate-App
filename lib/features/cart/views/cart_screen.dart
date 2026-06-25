@@ -16,11 +16,11 @@ class CartScreen extends StatelessWidget {
         icon: Container(
           width: 56,
           height: 56,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColors.successTint,
             shape: BoxShape.circle,
           ),
-          child: const Icon(Icons.check_rounded, color: AppColors.success, size: 32),
+          child: Icon(Icons.check_rounded, color: AppColors.success, size: 32),
         ),
         title: const Text('Order Placed!'),
         content: Text(message),
@@ -51,8 +51,8 @@ class CartScreen extends StatelessWidget {
 
     if (tableId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please scan a table QR code first!'),
+        SnackBar(
+          content: const Text('Please scan a table QR code first!'),
           backgroundColor: AppColors.warning,
         ),
       );
@@ -89,7 +89,7 @@ class CartScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            const Text('Select Payment Method',
+            Text('Select Payment Method',
                 style: AppTextStyles.titleLarge, textAlign: TextAlign.center),
             const SizedBox(height: 6),
             Text('Choose how you\'d like to pay for this order.',
@@ -218,7 +218,7 @@ class CartScreen extends StatelessWidget {
                                         borderRadius:
                                             BorderRadius.circular(12),
                                       ),
-                                      child: const Icon(
+                                      child: Icon(
                                           Icons.lunch_dining_outlined,
                                           color: AppColors.primary),
                                     ),
@@ -265,7 +265,7 @@ class CartScreen extends StatelessWidget {
     return Builder(
       builder: (context) => Container(
         padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.surface,
           border: Border(top: BorderSide(color: AppColors.border, width: 1)),
         ),
@@ -400,7 +400,7 @@ class _PaymentOption extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded,
+              Icon(Icons.chevron_right_rounded,
                   color: AppColors.textTertiary),
             ],
           ),

@@ -216,7 +216,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                                     const SizedBox(width: 8),
                                     Text(
                                       _formatTimestamp(notification.createdAt),
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 11,
                                         color: AppColors.textTertiary,
                                       ),
@@ -242,7 +242,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                               margin: const EdgeInsets.only(left: 6, top: 6),
                               width: 8,
                               height: 8,
-                              decoration: const BoxDecoration(
+                              decoration: BoxDecoration(
                                 color: AppColors.primary,
                                 shape: BoxShape.circle,
                               ),
@@ -256,23 +256,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
             ),
           );
         },
-      ),
-      floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: AppColors.primary,
-        foregroundColor: AppColors.white,
-        elevation: 0,
-        onPressed: () {
-          final provider = context.read<NotificationProvider>();
-          provider.simulateIncomingNotification();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Simulated push notification received!'),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        },
-        icon: const Icon(Icons.add_alert_rounded),
-        label: const Text('Simulate Alert'),
       ),
     );
   }

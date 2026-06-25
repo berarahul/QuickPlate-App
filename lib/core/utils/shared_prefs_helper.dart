@@ -5,6 +5,8 @@ class SharedPrefsHelper {
   static const String _keyIsRegistered = 'is_registered';
   static const String _keyAuthToken = 'auth_token';
   static const String _keyFcmToken = 'fcm_token';
+  static const String _keyUserName = 'user_name';
+  static const String _keyUserEmail = 'user_email';
 
   static Future<bool> getHasSeenOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
@@ -49,5 +51,25 @@ class SharedPrefsHelper {
   static Future<void> clearFcmToken() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_keyFcmToken);
+  }
+
+  static Future<String?> getUserName() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyUserName);
+  }
+
+  static Future<void> setUserName(String name) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyUserName, name);
+  }
+
+  static Future<String?> getUserEmail() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_keyUserEmail);
+  }
+
+  static Future<void> setUserEmail(String email) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_keyUserEmail, email);
   }
 }

@@ -83,7 +83,7 @@ class CustomElevatedButton extends StatelessWidget {
     );
 
     final side = variant == ButtonVariant.outlined
-        ? const BorderSide(color: AppColors.border, width: 1)
+        ? BorderSide(color: AppColors.border, width: 1)
         : BorderSide.none;
 
     final elevation = variant == ButtonVariant.filled ? 0.0 : 0.0;

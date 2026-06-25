@@ -2,6 +2,7 @@ export 'package:flutter/material.dart';
 export 'theme/app_colors.dart';
 export 'theme/app_theme.dart';
 export 'theme/app_text_styles.dart';
+export 'theme/theme_provider.dart';
 export 'constants/app_strings.dart';
 export 'constants/image_constant.dart';
 export 'routes/app_routes.dart';

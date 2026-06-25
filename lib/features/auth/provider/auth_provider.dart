@@ -12,7 +12,22 @@ import '../../../core/services/notification_service.dart';
 class AuthProvider extends ChangeNotifier {
   final AuthRepository _authRepository;
 
-  AuthProvider(this._authRepository);
+  String? _userName;
+  String? get userName => _userName ?? _loginResponse?.data?.user?.name;
+
+  String? _userEmail;
+  String? get userEmail => _userEmail ?? _loginResponse?.data?.user?.email;
+
+  AuthProvider(this._authRepository) {
+    _loadUserInfo();
+  }
+
+  Future<void> _loadUserInfo() async {
+    _userName = await SharedPrefsHelper.getUserName();
+    _userEmail = await SharedPrefsHelper.getUserEmail();
+    _authToken = await SharedPrefsHelper.getAuthToken();
+    notifyListeners();
+  }
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
@@ -66,6 +81,13 @@ class AuthProvider extends ChangeNotifier {
         _authToken = _loginResponse?.data?.token;
         if (_authToken != null) {
           await SharedPrefsHelper.setAuthToken(_authToken!);
+          final user = _loginResponse?.data?.user;
+          if (user != null) {
+            await SharedPrefsHelper.setUserName(user.name);
+            await SharedPrefsHelper.setUserEmail(user.email);
+            _userName = user.name;
+            _userEmail = user.email;
+          }
           // FIX #4: Sync FCM token to backend right after login.
           // initNotifications() runs at startup before the user is logged in,
           // so the backend never has a valid auth header during the initial sync.
@@ -92,6 +114,8 @@ class AuthProvider extends ChangeNotifier {
   Future<void> logout() async {
     _authToken = null;
     _loginResponse = null;
+    _userName = null;
+    _userEmail = null;
 
     try {
       // Unregister token first (needs the auth header/token that is currently active)
@@ -103,6 +127,8 @@ class AuthProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('auth_token');
     await prefs.remove('fcm_token');
+    await prefs.remove('user_name');
+    await prefs.remove('user_email');
     notifyListeners();
   }
 

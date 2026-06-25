@@ -62,7 +62,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       if (!context.mounted) return;
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
               content: Text('Order cancelled successfully'),
               backgroundColor: AppColors.success),
         );
@@ -112,7 +112,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                 const SizedBox(height: 20),
                 _buildOrderInfo(order),
                 const SizedBox(height: 28),
-                const Text('Order Status', style: AppTextStyles.titleMedium),
+                Text('Order Status', style: AppTextStyles.titleMedium),
                 const SizedBox(height: 16),
                 _buildStatusTimeline(order),
                 const SizedBox(height: 28),
@@ -126,7 +126,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                       label: const Text('Cancel Order'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.error,
-                        side: const BorderSide(color: AppColors.error),
+                        side: BorderSide(color: AppColors.error),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
@@ -172,7 +172,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text('Total Amount', style: AppTextStyles.titleSmall),
+              Text('Total Amount', style: AppTextStyles.titleSmall),
               Text('₹${order.totalAmount}',
                   style: AppTextStyles.titleLarge.copyWith(
                       color: AppColors.primary, fontSize: 20)),
@@ -194,15 +194,15 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               Container(
                 width: 48,
                 height: 48,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: AppColors.errorTint,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.cancel_outlined,
+                child: Icon(Icons.cancel_outlined,
                     color: AppColors.error),
               ),
               const SizedBox(height: 12),
-              const Text('Order Cancelled',
+              Text('Order Cancelled',
                   style: AppTextStyles.titleMedium),
             ],
           ),
@@ -288,8 +288,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                         ),
                       ),
                       if (isCurrent)
-                        const Padding(
-                          padding: EdgeInsets.only(top: 2),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
                           child: Text(
                             'In progress...',
                             style: TextStyle(

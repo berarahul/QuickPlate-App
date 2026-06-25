@@ -27,4 +27,10 @@ class ApiEndpoints {
   static const String notifications = '/notifications';
   static String readNotification(String id) => '/notifications/$id/read';
   static const String readAllNotifications = '/notifications/read-all';
+
+  // Cart
+  static const String cart = '/student/cart';
+  static const String cartAdd = '/student/cart/add';
+  static const String cartRemove = '/student/cart/remove';
+  static const String cartClear = '/student/cart/clear';
 }

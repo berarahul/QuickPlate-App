@@ -69,7 +69,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         backgroundColor: AppColors.background,
         body: IndexedStack(index: selectedIndex, children: _screens),
         bottomNavigationBar: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColors.surface,
             border: Border(
               top: BorderSide(color: AppColors.border, width: 1),

@@ -17,13 +17,13 @@ class MenuProvider extends ChangeNotifier {
   List<MenuItem> _menuItems = [];
   List<MenuItem> get menuItems => _menuItems;
 
-  Future<void> fetchMenu() async {
+  Future<void> fetchMenu({String? search}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final response = await _menuRepository.getMenu();
+      final response = await _menuRepository.getMenu(search: search);
 
       if (response.success == true && response.data != null) {
         _menuItems = response.data!;
@@ -40,7 +40,7 @@ class MenuProvider extends ChangeNotifier {
     }
   }
 
-  void retryFetchMenu() {
-    fetchMenu();
+  void retryFetchMenu({String? search}) {
+    fetchMenu(search: search);
   }
 }

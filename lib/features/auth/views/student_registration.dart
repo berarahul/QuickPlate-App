@@ -204,7 +204,7 @@ class _StudentRegistrationState extends State<StudentRegistration> {
                 const SizedBox(height: 24),
 
                 // Image Picker
-                const Align(
+                Align(
                   alignment: Alignment.centerLeft,
                   child: Text('ID Card Image', style: AppTextStyles.labelSmall),
                 ),
@@ -244,7 +244,7 @@ class _StudentRegistrationState extends State<StudentRegistration> {
                                   color: AppColors.primaryTint,
                                   shape: BoxShape.circle,
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   Icons.camera_alt_rounded,
                                   size: 24,
                                   color: AppColors.primary,

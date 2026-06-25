@@ -15,6 +15,7 @@ import 'features/menu/repository/menu_repository.dart';
 import 'features/cart/provider/order_provider.dart';
 import 'features/cart/repository/order_repository.dart';
 import 'features/cart/provider/cart_provider.dart';
+import 'features/cart/repository/cart_repository.dart';
 import 'features/notifications/provider/notification_provider.dart';
 import 'features/notifications/repository/notification_repository.dart';
 import 'core/services/notification_service.dart';
@@ -42,6 +43,7 @@ void main() async {
   final menuRepository = MenuRepository(apiClient);
   final orderRepository = OrderRepository(apiClient);
   final notificationRepository = NotificationRepository(apiClient);
+  final cartRepository = CartRepository(apiClient);
 
   // FIX #3: Added `await` here. Without await, runApp() fires immediately while
   // initNotifications is still running, causing a race condition where
@@ -52,11 +54,12 @@ void main() async {
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => NetworkProvider(networkInfo)),
+        ChangeNotifierProvider(create: (_) => ThemeProvider()),
         ChangeNotifierProvider(create: (_) => AuthProvider(authRepository)),
         ChangeNotifierProvider(create: (_) => ScanProvider(scanRepository)),
         ChangeNotifierProvider(create: (_) => MenuProvider(menuRepository)),
         ChangeNotifierProvider(create: (_) => OrderProvider(orderRepository)),
-        ChangeNotifierProvider(create: (_) => CartProvider()),
+        ChangeNotifierProvider(create: (_) => CartProvider(cartRepository)),
         ChangeNotifierProvider(create: (_) => NotificationProvider(notificationRepository)),
       ],
       child: const MyApp(),
@@ -69,13 +72,17 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Quick Plate',
-      navigatorKey: AppRoutes.navigatorKey,
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      initialRoute: AppRoutes.splashScreen,
-      routes: AppRoutes.routes,
+    return Consumer<ThemeProvider>(
+      builder: (context, themeProvider, child) {
+        return MaterialApp(
+          title: 'Quick Plate',
+          navigatorKey: AppRoutes.navigatorKey,
+          debugShowCheckedModeBanner: false,
+          theme: AppTheme.lightTheme,
+          initialRoute: AppRoutes.splashScreen,
+          routes: AppRoutes.routes,
+        );
+      },
     );
   }
 }
