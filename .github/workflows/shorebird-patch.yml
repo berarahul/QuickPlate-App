@@ -48,6 +48,9 @@ jobs:
         with:
           shorebird-token: ${{ secrets.SHOREBIRD_TOKEN }}
 
+      - name: Create Dummy .env
+        run: touch .env
+
       - name: Install Dependencies
         run: flutter pub get
 

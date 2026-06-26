@@ -40,6 +40,9 @@ jobs:
           storeFile=upload-keystore.jks
           EOF
 
+      - name: Create Dummy .env
+        run: touch .env
+
       - name: Install Dependencies
         run: flutter pub get
 
