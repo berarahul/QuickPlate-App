@@ -35,7 +35,24 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
-          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > android/app/upload-keystore.jks
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ]; then
+            echo "Error: ANDROID_KEYSTORE_BASE64 secret is not set or is empty."
+            exit 1
+          fi
+          echo "$ANDROID_KEYSTORE_BASE64" | tr -d '\r\n[:space:]' | base64 --decode > android/app/upload-keystore.jks
+          
+          FILE_SIZE=$(wc -c < android/app/upload-keystore.jks)
+          echo "Decoded keystore size: $FILE_SIZE bytes"
+          if [ "$FILE_SIZE" -eq 0 ]; then
+            echo "Error: Decoded keystore file is empty."
+            exit 1
+          fi
+          
+          if ! keytool -list -keystore android/app/upload-keystore.jks -storepass "$KEYSTORE_PASSWORD" -alias "$KEY_ALIAS" > /dev/null; then
+            echo "Error: Keystore validation failed. Please check if the passwords or key alias are correct, or if the base64 secret is corrupted."
+            exit 1
+          fi
+          
           cat <<EOF > android/key.properties
           storePassword=$KEYSTORE_PASSWORD
           keyPassword=$KEY_PASSWORD
