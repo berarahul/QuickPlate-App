@@ -7,12 +7,14 @@ import '../../features/dashboard/views/dashboard_screen.dart';
 import '../../features/menu/views/menu_screen.dart';
 import '../../features/cart/views/order_history_screen.dart';
 import '../../features/notifications/views/notification_screen.dart';
+
 class AppRoutes {
-  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+  static final GlobalKey<NavigatorState> navigatorKey =
+      GlobalKey<NavigatorState>();
 
   static const String splashScreen = '/splash';
   static const String onboardingScreen = '/onboarding';
-  
+
   // Future auth and home routes
   static const String loginScreen = '/login';
   static const String studentRegistrationScreen = '/student_registration';

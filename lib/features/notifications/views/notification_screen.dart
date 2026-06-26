@@ -114,8 +114,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (provider.errorMessage != null &&
-              provider.notifications.isEmpty) {
+          if (provider.errorMessage != null && provider.notifications.isEmpty) {
             return StateView(
               icon: Icons.cloud_off_rounded,
               iconColor: AppColors.textTertiary,
@@ -123,8 +122,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
               title: 'Couldn\'t load notifications',
               message: provider.errorMessage,
               actionLabel: 'Retry',
-              onAction: () =>
-                  provider.fetchNotifications(isRefresh: true),
+              onAction: () => provider.fetchNotifications(isRefresh: true),
             );
           }
 
@@ -138,8 +136,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           }
 
           return RefreshIndicator(
-            onRefresh: () =>
-                provider.fetchNotifications(isRefresh: true),
+            onRefresh: () => provider.fetchNotifications(isRefresh: true),
             child: ListView.builder(
               controller: _scrollController,
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 88),

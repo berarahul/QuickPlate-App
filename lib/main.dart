@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
@@ -60,7 +59,9 @@ void main() async {
         ChangeNotifierProvider(create: (_) => MenuProvider(menuRepository)),
         ChangeNotifierProvider(create: (_) => OrderProvider(orderRepository)),
         ChangeNotifierProvider(create: (_) => CartProvider(cartRepository)),
-        ChangeNotifierProvider(create: (_) => NotificationProvider(notificationRepository)),
+        ChangeNotifierProvider(
+          create: (_) => NotificationProvider(notificationRepository),
+        ),
       ],
       child: const MyApp(),
     ),

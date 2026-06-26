@@ -37,7 +37,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: AnimatedBuilder(
           animation: _provider,
-          builder: (context, child) {
+          builder: (_, child) {
             final isLast =
                 _provider.currentIndex == _provider.onboardingData.length - 1;
             return Column(
@@ -129,18 +129,20 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: CustomElevatedButton(
                     text: isLast ? AppStrings.getStarted : AppStrings.next,
                     leading: isLast
-                        ? const Icon(Icons.arrow_forward_rounded,
-                            size: 20, color: AppColors.white)
+                        ? const Icon(
+                            Icons.arrow_forward_rounded,
+                            size: 20,
+                            color: AppColors.white,
+                          )
                         : null,
                     onPressed: () async {
                       if (isLast) {
                         await SharedPrefsHelper.setHasSeenOnboarding(true);
-                        if (mounted) {
-                          Navigator.pushReplacementNamed(
-                            context,
-                            AppRoutes.studentRegistrationScreen,
-                          );
-                        }
+                        if (!context.mounted) return;
+                        Navigator.pushReplacementNamed(
+                          context,
+                          AppRoutes.studentRegistrationScreen,
+                        );
                       } else {
                         _provider.nextPage();
                       }

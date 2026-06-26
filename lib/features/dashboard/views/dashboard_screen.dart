@@ -1,5 +1,4 @@
 import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
 import 'package:quick_plate/features/dashboard/dashboard_tab_controller.dart';
 import '../../scan/views/scan_screen.dart';
 import '../../menu/views/menu_screen.dart';
@@ -71,15 +70,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
             color: AppColors.surface,
-            border: Border(
-              top: BorderSide(color: AppColors.border, width: 1),
-            ),
+            border: Border(top: BorderSide(color: AppColors.border, width: 1)),
           ),
           child: SafeArea(
             top: false,
             child: Padding(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: List.generate(_labels.length, (index) {

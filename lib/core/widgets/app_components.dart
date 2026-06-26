@@ -59,7 +59,11 @@ class StateView extends StatelessWidget {
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
-              child: Icon(icon, size: 40, color: iconColor ?? AppColors.primary),
+              child: Icon(
+                icon,
+                size: 40,
+                color: iconColor ?? AppColors.primary,
+              ),
             ),
             const SizedBox(height: 20),
             Text(
@@ -81,8 +85,10 @@ class StateView extends StatelessWidget {
                 onPressed: onAction,
                 style: TextButton.styleFrom(
                   backgroundColor: AppColors.primaryTint,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 10,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),

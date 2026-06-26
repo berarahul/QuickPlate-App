@@ -52,7 +52,10 @@ class _MenuScreenState extends State<MenuScreen> {
                       children: [
                         Text('Browse', style: AppTextStyles.labelSmall),
                         const SizedBox(height: 4),
-                        Text('Today\'s Menu', style: AppTextStyles.displayLarge),
+                        Text(
+                          'Today\'s Menu',
+                          style: AppTextStyles.displayLarge,
+                        ),
                       ],
                     ),
                     const Spacer(),
@@ -66,14 +69,19 @@ class _MenuScreenState extends State<MenuScreen> {
                             decoration: BoxDecoration(
                               color: AppColors.surface,
                               borderRadius: BorderRadius.circular(14),
-                              border:
-                                  Border.all(color: AppColors.border, width: 1),
+                              border: Border.all(
+                                color: AppColors.border,
+                                width: 1,
+                              ),
                             ),
                             child: Stack(
                               alignment: Alignment.center,
                               children: [
-                                Icon(Icons.shopping_bag_outlined,
-                                    size: 22, color: AppColors.textPrimary),
+                                Icon(
+                                  Icons.shopping_bag_outlined,
+                                  size: 22,
+                                  color: AppColors.textPrimary,
+                                ),
                                 if (cart.itemCount > 0)
                                   Positioned(
                                     right: 8,
@@ -118,8 +126,10 @@ class _MenuScreenState extends State<MenuScreen> {
                     if (_debounce?.isActive ?? false) _debounce?.cancel();
                     _debounce = Timer(const Duration(milliseconds: 500), () {
                       if (mounted) {
-                        Provider.of<MenuProvider>(context, listen: false)
-                            .fetchMenu(search: value);
+                        Provider.of<MenuProvider>(
+                          context,
+                          listen: false,
+                        ).fetchMenu(search: value);
                       }
                     });
                   },
@@ -132,13 +142,11 @@ class _MenuScreenState extends State<MenuScreen> {
                     contentPadding: const EdgeInsets.symmetric(vertical: 12),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide:
-                          BorderSide(color: AppColors.border, width: 1),
+                      borderSide: BorderSide(color: AppColors.border, width: 1),
                     ),
                     enabledBorder: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
-                      borderSide:
-                          BorderSide(color: AppColors.border, width: 1),
+                      borderSide: BorderSide(color: AppColors.border, width: 1),
                     ),
                   ),
                 ),
@@ -220,11 +228,15 @@ class _MenuItemCard extends StatelessWidget {
                       item.imageUrl!,
                       fit: BoxFit.cover,
                       errorBuilder: (_, _, _) => Icon(
-                          Icons.broken_image_outlined,
-                          color: AppColors.textTertiary),
+                        Icons.broken_image_outlined,
+                        color: AppColors.textTertiary,
+                      ),
                     )
-                  : Icon(Icons.lunch_dining_outlined,
-                      size: 32, color: AppColors.textTertiary),
+                  : Icon(
+                      Icons.lunch_dining_outlined,
+                      size: 32,
+                      color: AppColors.textTertiary,
+                    ),
             ),
           ),
           const SizedBox(width: 14),
@@ -246,7 +258,9 @@ class _MenuItemCard extends StatelessWidget {
                     if (unavailable)
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
                         decoration: BoxDecoration(
                           color: AppColors.errorTint,
                           borderRadius: BorderRadius.circular(6),
@@ -297,12 +311,18 @@ class _MenuItemCard extends StatelessWidget {
                               child: Row(
                                 children: [
                                   IconButton(
-                                    onPressed: () => cart.removeSingleItem(item.id!),
-                                    icon: Icon(Icons.remove_rounded,
-                                        size: 18, color: AppColors.primary),
+                                    onPressed: () =>
+                                        cart.removeSingleItem(item.id!),
+                                    icon: Icon(
+                                      Icons.remove_rounded,
+                                      size: 18,
+                                      color: AppColors.primary,
+                                    ),
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(
-                                        minWidth: 32, minHeight: 32),
+                                      minWidth: 32,
+                                      minHeight: 32,
+                                    ),
                                   ),
                                   Text(
                                     cartItem.quantity.toString(),
@@ -313,11 +333,16 @@ class _MenuItemCard extends StatelessWidget {
                                   ),
                                   IconButton(
                                     onPressed: () => cart.addItem(item),
-                                    icon: Icon(Icons.add_rounded,
-                                        size: 18, color: AppColors.primary),
+                                    icon: Icon(
+                                      Icons.add_rounded,
+                                      size: 18,
+                                      color: AppColors.primary,
+                                    ),
                                     padding: EdgeInsets.zero,
                                     constraints: const BoxConstraints(
-                                        minWidth: 32, minHeight: 32),
+                                      minWidth: 32,
+                                      minHeight: 32,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -332,16 +357,20 @@ class _MenuItemCard extends StatelessWidget {
                                 foregroundColor: AppColors.white,
                                 elevation: 0,
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 16),
+                                  horizontal: 16,
+                                ),
                                 minimumSize: Size.zero,
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(10),
                                 ),
                               ),
-                              child: const Text('Add',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      fontSize: 13)),
+                              child: const Text(
+                                'Add',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 13,
+                                ),
+                              ),
                             ),
                           );
                         },

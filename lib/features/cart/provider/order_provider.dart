@@ -53,7 +53,8 @@ class OrderProvider extends ChangeNotifier {
     serviceEnabled = await Geolocator.isLocationServiceEnabled();
     if (!serviceEnabled) {
       // Location services are not enabled, ask user to enable it.
-      _errorMessage = 'Location services are disabled. Please enable GPS and try again.';
+      _errorMessage =
+          'Location services are disabled. Please enable GPS and try again.';
       notifyListeners();
       return null;
     }
@@ -62,7 +63,8 @@ class OrderProvider extends ChangeNotifier {
     if (permission == LocationPermission.denied) {
       permission = await Geolocator.requestPermission();
       if (permission == LocationPermission.denied) {
-        _errorMessage = 'Location permissions are denied. Please allow location access to proceed.';
+        _errorMessage =
+            'Location permissions are denied. Please allow location access to proceed.';
         notifyListeners();
         return null;
       }
@@ -70,7 +72,8 @@ class OrderProvider extends ChangeNotifier {
 
     if (permission == LocationPermission.deniedForever) {
       // Permissions are denied forever, handle appropriately.
-      _errorMessage = 'Location permissions are permanently denied. Please enable them in settings.';
+      _errorMessage =
+          'Location permissions are permanently denied. Please enable them in settings.';
       notifyListeners();
       return null;
     }
@@ -88,7 +91,7 @@ class OrderProvider extends ChangeNotifier {
       // Fallback to last known position if current position fails (e.g. timeout)
       final lastKnown = await Geolocator.getLastKnownPosition();
       if (lastKnown != null) return lastKnown;
-      
+
       _errorMessage = 'Could not determine your location. Please try again.';
       notifyListeners();
       return null;
@@ -154,7 +157,7 @@ class OrderProvider extends ChangeNotifier {
       );
 
       _checkoutData = await _orderRepository.initiateCheckout(request);
-      
+
       if (_checkoutData != null) {
         _setLoading(false);
         // Small delay to let UI settle before launching native Razorpay activity
@@ -177,10 +180,15 @@ class OrderProvider extends ChangeNotifier {
 
   void _openRazorpay(CheckoutResponse checkout) {
     final key = dotenv.env['RAZORPAY_KEY_ID'] ?? '';
-    
+
     if (key.isEmpty || key == 'rzp_test_your_key_here') {
-      debugPrint('Error: Razorpay Key is missing or using placeholder in .env file');
-      _onPaymentCompleted?.call(false, 'Payment configuration error. Please check RAZORPAY_KEY_ID.');
+      debugPrint(
+        'Error: Razorpay Key is missing or using placeholder in .env file',
+      );
+      _onPaymentCompleted?.call(
+        false,
+        'Payment configuration error. Please check RAZORPAY_KEY_ID.',
+      );
       return;
     }
 
@@ -191,10 +199,7 @@ class OrderProvider extends ChangeNotifier {
       'order_id': checkout.gatewayOrderId,
       'description': 'Food Order Payment',
       'timeout': 300, // in seconds
-      'prefill': {
-        'contact': '',
-        'email': '',
-      }
+      'prefill': {'contact': '', 'email': ''},
     };
 
     try {
@@ -224,7 +229,10 @@ class OrderProvider extends ChangeNotifier {
     } on ApiException catch (e) {
       _onPaymentCompleted?.call(false, e.message);
     } catch (e) {
-      _onPaymentCompleted?.call(false, 'An unexpected error occurred during verification');
+      _onPaymentCompleted?.call(
+        false,
+        'An unexpected error occurred during verification',
+      );
     } finally {
       _setLoading(false);
     }

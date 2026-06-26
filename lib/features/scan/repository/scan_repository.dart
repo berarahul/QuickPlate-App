@@ -1,4 +1,3 @@
-
 import '../model/table_session_request.dart';
 import '../model/table_session_response.dart';
 import '../../../core/network/api_client.dart';
@@ -10,15 +9,22 @@ class ScanRepository {
 
   ScanRepository(this._apiClient);
 
-  Future<TableSessionResponse> createTableSession(TableSessionRequest request) async {
+  Future<TableSessionResponse> createTableSession(
+    TableSessionRequest request,
+  ) async {
     try {
-      final response = await _apiClient.post(ApiEndpoints.tableSession, data: request.toJson());
+      final response = await _apiClient.post(
+        ApiEndpoints.tableSession,
+        data: request.toJson(),
+      );
 
       return TableSessionResponse.fromJson(response.data);
     } on ApiException catch (_) {
       rethrow;
     } catch (e) {
-      throw DefaultException('An unexpected error occurred during table session creation');
+      throw DefaultException(
+        'An unexpected error occurred during table session creation',
+      );
     }
   }
 }

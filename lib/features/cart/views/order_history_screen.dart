@@ -23,9 +23,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      appBar: AppBar(
-        title: const Text('My Orders'),
-      ),
+      appBar: AppBar(title: const Text('My Orders')),
       body: Consumer<OrderProvider>(
         builder: (context, orderProvider, child) {
           if (orderProvider.isLoading && orderProvider.orderHistory.isEmpty) {
@@ -87,8 +85,11 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                   color: statusInfo.$2,
                                   borderRadius: BorderRadius.circular(12),
                                 ),
-                                child: Icon(statusInfo.$1,
-                                    color: statusInfo.$3, size: 22),
+                                child: Icon(
+                                  statusInfo.$1,
+                                  color: statusInfo.$3,
+                                  size: 22,
+                                ),
                               ),
                               const SizedBox(width: 12),
                               Expanded(
@@ -109,14 +110,15 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                   ],
                                 ),
                               ),
-                              Icon(Icons.chevron_right_rounded,
-                                  color: AppColors.textTertiary),
+                              Icon(
+                                Icons.chevron_right_rounded,
+                                color: AppColors.textTertiary,
+                              ),
                             ],
                           ),
                           const SizedBox(height: 14),
                           Row(
-                            mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
                                 '${order.items.length} items',
@@ -125,14 +127,17 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                               Text(
                                 '₹${order.totalAmount}',
                                 style: AppTextStyles.titleSmall.copyWith(
-                                    color: AppColors.textPrimary),
+                                  color: AppColors.textPrimary,
+                                ),
                               ),
                             ],
                           ),
                           const SizedBox(height: 12),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
+                              horizontal: 10,
+                              vertical: 5,
+                            ),
                             decoration: BoxDecoration(
                               color: statusInfo.$2,
                               borderRadius: BorderRadius.circular(8),
@@ -163,8 +168,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     return status
         .replaceAll('_', ' ')
         .split(' ')
-        .map((w) =>
-            w.isEmpty ? w : '${w[0]}${w.substring(1).toLowerCase()}')
+        .map((w) => w.isEmpty ? w : '${w[0]}${w.substring(1).toLowerCase()}')
         .join(' ');
   }
 
@@ -174,23 +178,43 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
     switch (s) {
       case 'WAITING_FOR_CASH':
       case 'AWAITING_ONLINE_PAYMENT':
-        return (Icons.access_time_rounded, AppColors.warningTint, AppColors.warning);
+        return (
+          Icons.access_time_rounded,
+          AppColors.warningTint,
+          AppColors.warning,
+        );
       case 'PENDING':
       case 'PLACED':
         return (Icons.receipt_outlined, AppColors.infoTint, AppColors.info);
       case 'PREPARING':
       case 'IN_KITCHEN':
-        return (Icons.local_fire_department_outlined, AppColors.primaryTint, AppColors.primary);
+        return (
+          Icons.local_fire_department_outlined,
+          AppColors.primaryTint,
+          AppColors.primary,
+        );
       case 'READY':
       case 'READY_FOR_PICKUP':
-        return (Icons.check_circle_outline_rounded, AppColors.successTint, AppColors.success);
+        return (
+          Icons.check_circle_outline_rounded,
+          AppColors.successTint,
+          AppColors.success,
+        );
       case 'DELIVERED':
       case 'COMPLETED':
-        return (Icons.done_all_rounded, AppColors.surfaceAlt, AppColors.textSecondary);
+        return (
+          Icons.done_all_rounded,
+          AppColors.surfaceAlt,
+          AppColors.textSecondary,
+        );
       case 'CANCELLED':
         return (Icons.cancel_outlined, AppColors.errorTint, AppColors.error);
       default:
-        return (Icons.receipt_outlined, AppColors.surfaceAlt, AppColors.textSecondary);
+        return (
+          Icons.receipt_outlined,
+          AppColors.surfaceAlt,
+          AppColors.textSecondary,
+        );
     }
   }
 }

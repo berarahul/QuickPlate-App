@@ -43,7 +43,9 @@ class MenuItem {
       name: json['name'],
       description: json['description'],
       category: json['category'],
-      price: json['price'] is int ? json['price'] : (json['price'] as num?)?.toInt(),
+      price: json['price'] is int
+          ? json['price']
+          : (json['price'] as num?)?.toInt(),
       imageUrl: json['imageUrl'],
       isAvailable: json['isAvailable'],
       preparationTimeInMinutes: json['preparationTimeInMinutes'],

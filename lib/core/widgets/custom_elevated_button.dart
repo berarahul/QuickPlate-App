@@ -70,11 +70,12 @@ class CustomElevatedButton extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              if (leading != null) ...[
-                leading!,
-                const SizedBox(width: 8),
-              ],
-              Text(text, style: textStyle ?? AppTextStyles.buttonText.copyWith(color: fg)),
+              if (leading != null) ...[leading!, const SizedBox(width: 8)],
+              Text(
+                text,
+                style:
+                    textStyle ?? AppTextStyles.buttonText.copyWith(color: fg),
+              ),
             ],
           );
 
@@ -99,7 +100,8 @@ class CustomElevatedButton extends StatelessWidget {
         child: Container(
           width: expanded ? double.infinity : width,
           height: height ?? 52,
-          padding: padding ??
+          padding:
+              padding ??
               const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
           alignment: Alignment.center,
           child: child,

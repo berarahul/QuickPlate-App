@@ -45,17 +45,13 @@ class NotificationRepository {
 
   /// PATCH /api/v1/notifications/:id/read
   Future<NotificationModel> markAsRead(String id) async {
-    final response = await _apiClient.patch(
-      ApiEndpoints.readNotification(id),
-    );
+    final response = await _apiClient.patch(ApiEndpoints.readNotification(id));
     final data = response.data['data'] ?? {};
     return NotificationModel.fromJson(data);
   }
 
   /// PATCH /api/v1/notifications/read-all
   Future<void> markAllAsRead() async {
-    await _apiClient.patch(
-      ApiEndpoints.readAllNotifications,
-    );
+    await _apiClient.patch(ApiEndpoints.readAllNotifications);
   }
 }

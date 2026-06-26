@@ -11,8 +11,7 @@ class ApiException implements Exception {
 }
 
 class DefaultException extends ApiException {
-  DefaultException([String message = 'An unexpected error occurred.'])
-    : super(message);
+  DefaultException([super.message = 'An unexpected error occurred.']);
 }
 
 class NoInternetException extends ApiException {

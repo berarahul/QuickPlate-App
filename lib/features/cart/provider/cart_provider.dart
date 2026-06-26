@@ -42,7 +42,7 @@ class CartProvider extends ChangeNotifier {
 
   Future<void> addItem(MenuItem menuItem) async {
     if (menuItem.id == null) return;
-    
+
     // Optimistic UI update
     final tempId = DateTime.now().toString();
     if (_items.containsKey(menuItem.id)) {

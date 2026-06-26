@@ -45,12 +45,13 @@ class _StudentRegistrationState extends State<StudentRegistration> {
     }
   }
 
-  void _submit(BuildContext context) async {
+  void _submit() async {
     if (_idCardImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: const Text(
-              'Please select an ID Card Image from your device.'),
+            'Please select an ID Card Image from your device.',
+          ),
           backgroundColor: AppColors.error,
         ),
       );
@@ -74,7 +75,6 @@ class _StudentRegistrationState extends State<StudentRegistration> {
       });
 
       if (uploadedImageUrl == null) {
-        if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Failed to upload image. Please try again.'),
@@ -96,7 +96,7 @@ class _StudentRegistrationState extends State<StudentRegistration> {
 
       final success = await authProvider.registerStudent(request);
 
-      if (!context.mounted) return;
+      if (!mounted) return;
 
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -184,8 +184,10 @@ class _StudentRegistrationState extends State<StudentRegistration> {
                   decoration: InputDecoration(
                     labelText: 'Password',
                     hintText: '••••••••',
-                    prefixIcon:
-                        const Icon(Icons.lock_outline_rounded, size: 20),
+                    prefixIcon: const Icon(
+                      Icons.lock_outline_rounded,
+                      size: 20,
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscure
@@ -193,8 +195,7 @@ class _StudentRegistrationState extends State<StudentRegistration> {
                             : Icons.visibility_outlined,
                         size: 20,
                       ),
-                      onPressed: () =>
-                          setState(() => _obscure = !_obscure),
+                      onPressed: () => setState(() => _obscure = !_obscure),
                     ),
                   ),
                   obscureText: _obscure,
@@ -253,8 +254,9 @@ class _StudentRegistrationState extends State<StudentRegistration> {
                               const SizedBox(height: 10),
                               Text(
                                 'Tap to upload ID Card',
-                                style: AppTextStyles.bodyMedium
-                                    .copyWith(color: AppColors.textSecondary),
+                                style: AppTextStyles.bodyMedium.copyWith(
+                                  color: AppColors.textSecondary,
+                                ),
                               ),
                               const SizedBox(height: 2),
                               Text(
@@ -280,9 +282,12 @@ class _StudentRegistrationState extends State<StudentRegistration> {
                     }
                     return CustomElevatedButton(
                       text: 'Create Account',
-                      leading: const Icon(Icons.arrow_forward_rounded,
-                          size: 20, color: AppColors.white),
-                      onPressed: () => _submit(context),
+                      leading: const Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 20,
+                        color: AppColors.white,
+                      ),
+                      onPressed: _submit,
                     );
                   },
                 ),
@@ -290,8 +295,10 @@ class _StudentRegistrationState extends State<StudentRegistration> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('Already have an account? ',
-                        style: AppTextStyles.bodyMedium),
+                    Text(
+                      'Already have an account? ',
+                      style: AppTextStyles.bodyMedium,
+                    ),
                     TextButton(
                       onPressed: () {
                         Navigator.pushReplacementNamed(

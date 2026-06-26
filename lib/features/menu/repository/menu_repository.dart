@@ -22,7 +22,9 @@ class MenuRepository {
     } on ApiException catch (_) {
       rethrow;
     } catch (e) {
-      throw DefaultException('An unexpected error occurred while fetching the menu');
+      throw DefaultException(
+        'An unexpected error occurred while fetching the menu',
+      );
     }
   }
 }

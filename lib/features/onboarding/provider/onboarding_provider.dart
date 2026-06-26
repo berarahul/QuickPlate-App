@@ -1,6 +1,5 @@
 import '../../../core/app_exports.dart';
 import '../model/onboarding_model.dart';
-import '../../../core/utils/shared_prefs_helper.dart';
 
 class OnboardingProvider extends ChangeNotifier {
   int _currentIndex = 0;

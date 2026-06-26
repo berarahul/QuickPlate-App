@@ -12,7 +12,10 @@ class CartRepository {
     return _parseCart(response.data);
   }
 
-  Future<Map<String, CartItem>> addToCart(String foodId, {int quantity = 1}) async {
+  Future<Map<String, CartItem>> addToCart(
+    String foodId, {
+    int quantity = 1,
+  }) async {
     final response = await _apiClient.post(
       ApiEndpoints.cartAdd,
       data: {'foodId': foodId, 'quantity': quantity},

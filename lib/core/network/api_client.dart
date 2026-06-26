@@ -18,11 +18,14 @@ class ApiClient {
   void _initializeDio() {
     _dio.options = BaseOptions(
       baseUrl: ApiEndpoints.baseUrl,
-      
-       // Replace with dev/prod url
+
+      // Replace with dev/prod url
       connectTimeout: const Duration(seconds: 30),
       receiveTimeout: const Duration(seconds: 30),
-      headers: {'Accept': 'application/json', 'Content-Type': 'application/json'},
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+      },
     );
 
     // Debug logging interceptor
@@ -72,7 +75,10 @@ class ApiClient {
 
   // --- HTTP Methods ---
 
-  Future<Response> get(String path, {Map<String, dynamic>? queryParameters}) async {
+  Future<Response> get(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+  }) async {
     try {
       final response = await _dio.get(path, queryParameters: queryParameters);
       return response;
@@ -83,9 +89,17 @@ class ApiClient {
     }
   }
 
-  Future<Response> post(String path, {dynamic data, Map<String, dynamic>? queryParameters}) async {
+  Future<Response> post(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+  }) async {
     try {
-      final response = await _dio.post(path, data: data, queryParameters: queryParameters);
+      final response = await _dio.post(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+      );
       return response;
     } on DioException catch (e) {
       throw AppErrorHandler.handleDioError(e);

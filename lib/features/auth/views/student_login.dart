@@ -43,12 +43,15 @@ class _StudentLoginState extends State<StudentLogin> {
         // Synchronize notification token with backend
         NotificationService.instance.syncToken();
         // Pre-fetch notifications history and unread badge count
-        context.read<NotificationProvider>().fetchNotifications(isRefresh: true);
+        context.read<NotificationProvider>().fetchNotifications(
+          isRefresh: true,
+        );
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-                authProvider.loginResponse?.message ?? 'Login Successful!'),
+              authProvider.loginResponse?.message ?? 'Login Successful!',
+            ),
           ),
         );
         // Navigate to Dashboard screen upon successful login
@@ -85,8 +88,11 @@ class _StudentLoginState extends State<StudentLogin> {
                     borderRadius: BorderRadius.circular(18),
                   ),
                   alignment: Alignment.center,
-                  child: const Icon(Icons.restaurant_menu_rounded,
-                      size: 32, color: AppColors.white),
+                  child: const Icon(
+                    Icons.restaurant_menu_rounded,
+                    size: 32,
+                    color: AppColors.white,
+                  ),
                 ),
                 const SizedBox(height: 24),
                 Text('Welcome back', style: AppTextStyles.displayLarge),
@@ -113,8 +119,10 @@ class _StudentLoginState extends State<StudentLogin> {
                   decoration: InputDecoration(
                     labelText: 'Password',
                     hintText: '••••••••',
-                    prefixIcon:
-                        const Icon(Icons.lock_outline_rounded, size: 20),
+                    prefixIcon: const Icon(
+                      Icons.lock_outline_rounded,
+                      size: 20,
+                    ),
                     suffixIcon: IconButton(
                       icon: Icon(
                         _obscure
@@ -122,8 +130,7 @@ class _StudentLoginState extends State<StudentLogin> {
                             : Icons.visibility_outlined,
                         size: 20,
                       ),
-                      onPressed: () =>
-                          setState(() => _obscure = !_obscure),
+                      onPressed: () => setState(() => _obscure = !_obscure),
                     ),
                   ),
                   obscureText: _obscure,
@@ -149,8 +156,11 @@ class _StudentLoginState extends State<StudentLogin> {
                     }
                     return CustomElevatedButton(
                       text: 'Sign In',
-                      leading: const Icon(Icons.arrow_forward_rounded,
-                          size: 20, color: AppColors.white),
+                      leading: const Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 20,
+                        color: AppColors.white,
+                      ),
                       onPressed: () => _submit(context),
                     );
                   },
@@ -159,8 +169,10 @@ class _StudentLoginState extends State<StudentLogin> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Text('Don\'t have an account? ',
-                        style: AppTextStyles.bodyMedium),
+                    Text(
+                      'Don\'t have an account? ',
+                      style: AppTextStyles.bodyMedium,
+                    ),
                     TextButton(
                       onPressed: () {
                         Navigator.pushReplacementNamed(

@@ -12,7 +12,7 @@ class CheckoutResponse {
   factory CheckoutResponse.fromJson(Map<String, dynamic> json) {
     // The API returns the order details nested inside an 'order' object
     final order = json['order'] as Map<String, dynamic>?;
-    
+
     if (order != null) {
       return CheckoutResponse(
         orderId: order['_id'] ?? '',

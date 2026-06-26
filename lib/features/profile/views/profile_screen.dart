@@ -11,7 +11,9 @@ class ProfileScreen extends StatelessWidget {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Confirm Logout'),
-        content: const Text('Are you sure you want to log out from QuickPlate?'),
+        content: const Text(
+          'Are you sure you want to log out from QuickPlate?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(dialogContext),
@@ -79,8 +81,11 @@ class ProfileScreen extends StatelessWidget {
                             color: AppColors.primary,
                             borderRadius: BorderRadius.circular(20),
                           ),
-                          child: const Icon(Icons.person_rounded,
-                              size: 34, color: AppColors.white),
+                          child: const Icon(
+                            Icons.person_rounded,
+                            size: 34,
+                            color: AppColors.white,
+                          ),
                         ),
                         const SizedBox(width: 16),
                         Expanded(
@@ -125,7 +130,9 @@ class ProfileScreen extends StatelessWidget {
                     trailing: unreadCount > 0
                         ? Container(
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 3),
+                              horizontal: 8,
+                              vertical: 3,
+                            ),
                             decoration: BoxDecoration(
                               color: AppColors.primary,
                               borderRadius: BorderRadius.circular(10),
@@ -141,7 +148,10 @@ class ProfileScreen extends StatelessWidget {
                           )
                         : null,
                     onTap: () {
-                      Navigator.pushNamed(context, AppRoutes.notificationScreen);
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.notificationScreen,
+                      );
                     },
                   );
                 },
@@ -156,7 +166,9 @@ class ProfileScreen extends StatelessWidget {
                     subtitle: themeProvider.isDarkMode
                         ? 'Dark mode enabled'
                         : 'Dark mode disabled',
-                    iconColor: themeProvider.isDarkMode ? Colors.purpleAccent : AppColors.primary,
+                    iconColor: themeProvider.isDarkMode
+                        ? Colors.purpleAccent
+                        : AppColors.primary,
                     iconBg: themeProvider.isDarkMode
                         ? Colors.purpleAccent.withValues(alpha: 0.15)
                         : AppColors.primaryTint,
@@ -208,10 +220,13 @@ class ProfileScreen extends StatelessWidget {
         padding: EdgeInsets.zero,
         onTap: onTap,
         child: ListTile(
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 6,
+          ),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
           leading: Container(
             width: 40,
             height: 40,
@@ -223,9 +238,9 @@ class ProfileScreen extends StatelessWidget {
           ),
           title: Text(title, style: AppTextStyles.titleSmall),
           subtitle: Text(subtitle, style: AppTextStyles.bodySmall),
-          trailing: trailing ??
-              Icon(Icons.chevron_right_rounded,
-                  color: AppColors.textTertiary),
+          trailing:
+              trailing ??
+              Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary),
         ),
       ),
     );

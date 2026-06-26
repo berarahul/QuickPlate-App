@@ -2,16 +2,10 @@ class OrderItem {
   final String foodId;
   final int quantity;
 
-  OrderItem({
-    required this.foodId,
-    required this.quantity,
-  });
+  OrderItem({required this.foodId, required this.quantity});
 
   Map<String, dynamic> toJson() {
-    return {
-      'foodId': foodId,
-      'quantity': quantity,
-    };
+    return {'foodId': foodId, 'quantity': quantity};
   }
 
   factory OrderItem.fromJson(Map<String, dynamic> json) {
@@ -21,10 +15,7 @@ class OrderItem {
     } else {
       id = json['foodId']?.toString() ?? '';
     }
-    
-    return OrderItem(
-      foodId: id,
-      quantity: json['quantity'] ?? 0,
-    );
+
+    return OrderItem(foodId: id, quantity: json['quantity'] ?? 0);
   }
 }

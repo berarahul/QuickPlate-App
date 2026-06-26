@@ -38,7 +38,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
     context.read<OrderProvider>().fetchOrderDetails(widget.orderId);
   }
 
-  void _handleCancel(BuildContext context) async {
+  void _handleCancel() async {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -46,8 +46,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
         content: const Text('Are you sure you want to cancel this order?'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('No')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('No'),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Yes, Cancel'),
@@ -56,23 +57,28 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       ),
     );
 
+    if (!mounted) return;
+
     if (confirmed == true) {
-      final success =
-          await context.read<OrderProvider>().cancelOrder(widget.orderId);
-      if (!context.mounted) return;
+      final success = await context.read<OrderProvider>().cancelOrder(
+        widget.orderId,
+      );
+      if (!mounted) return;
       if (success) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text('Order cancelled successfully'),
-              backgroundColor: AppColors.success),
+            content: Text('Order cancelled successfully'),
+            backgroundColor: AppColors.success,
+          ),
         );
         Navigator.pop(context);
       } else {
         final error = context.read<OrderProvider>().errorMessage;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(error ?? 'Failed to cancel order'),
-              backgroundColor: AppColors.error),
+            content: Text(error ?? 'Failed to cancel order'),
+            backgroundColor: AppColors.error,
+          ),
         );
       }
     }
@@ -121,7 +127,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   SizedBox(
                     height: 48,
                     child: OutlinedButton.icon(
-                      onPressed: () => _handleCancel(context),
+                      onPressed: _handleCancel,
                       icon: const Icon(Icons.close_rounded, size: 18),
                       label: const Text('Cancel Order'),
                       style: OutlinedButton.styleFrom(
@@ -157,25 +163,32 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
             ],
           ),
           const Divider(height: 24),
-          ...order.items.map((item) => Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                        '${item.quantity}x Item ID: ${item.foodId.substring(0, 5)}...',
-                        style: AppTextStyles.bodyMedium),
-                  ],
-                ),
-              )),
+          ...order.items.map(
+            (item) => Padding(
+              padding: const EdgeInsets.only(bottom: 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '${item.quantity}x Item ID: ${item.foodId.substring(0, 5)}...',
+                    style: AppTextStyles.bodyMedium,
+                  ),
+                ],
+              ),
+            ),
+          ),
           const Divider(height: 24),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Total Amount', style: AppTextStyles.titleSmall),
-              Text('₹${order.totalAmount}',
-                  style: AppTextStyles.titleLarge.copyWith(
-                      color: AppColors.primary, fontSize: 20)),
+              Text(
+                '₹${order.totalAmount}',
+                style: AppTextStyles.titleLarge.copyWith(
+                  color: AppColors.primary,
+                  fontSize: 20,
+                ),
+              ),
             ],
           ),
         ],
@@ -198,12 +211,10 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                   color: AppColors.errorTint,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(Icons.cancel_outlined,
-                    color: AppColors.error),
+                child: Icon(Icons.cancel_outlined, color: AppColors.error),
               ),
               const SizedBox(height: 12),
-              Text('Order Cancelled',
-                  style: AppTextStyles.titleMedium),
+              Text('Order Cancelled', style: AppTextStyles.titleMedium),
             ],
           ),
         ),
@@ -227,8 +238,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       child: Column(
         children: List.generate(steps.length, (index) {
           final isCompleted = index <= currentStep;
-          final isCurrent = index == currentStep &&
-              status != 'DELIVERED';
+          final isCurrent = index == currentStep && status != 'DELIVERED';
           final isLast = index == steps.length - 1;
 
           return Row(
@@ -247,7 +257,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                       border: isCurrent
                           ? Border.all(
                               color: AppColors.primary.withValues(alpha: 0.3),
-                              width: 4)
+                              width: 4,
+                            )
                           : null,
                     ),
                     child: Icon(
@@ -333,13 +344,15 @@ class _StatusBanner extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(_format(status),
-                    style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: info.$4,
-                        fontSize: 15)),
-                Text(info.$5,
-                    style: TextStyle(color: info.$4, fontSize: 12.5)),
+                Text(
+                  _format(status),
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: info.$4,
+                    fontSize: 15,
+                  ),
+                ),
+                Text(info.$5, style: TextStyle(color: info.$4, fontSize: 12.5)),
               ],
             ),
           ),
@@ -364,7 +377,7 @@ class _StatusBanner extends StatelessWidget {
           AppColors.primaryTint,
           AppColors.primaryLight,
           AppColors.primary,
-          'The kitchen is preparing your food.'
+          'The kitchen is preparing your food.',
         );
       case 'READY':
       case 'READY_FOR_PICKUP':
@@ -373,7 +386,7 @@ class _StatusBanner extends StatelessWidget {
           AppColors.successTint,
           AppColors.success,
           AppColors.success,
-          'Your order is ready. Please collect it.'
+          'Your order is ready. Please collect it.',
         );
       case 'DELIVERED':
       case 'COMPLETED':
@@ -382,7 +395,7 @@ class _StatusBanner extends StatelessWidget {
           AppColors.surfaceAlt,
           AppColors.border,
           AppColors.textSecondary,
-          'This order has been completed.'
+          'This order has been completed.',
         );
       default:
         return (
@@ -390,7 +403,7 @@ class _StatusBanner extends StatelessWidget {
           AppColors.warningTint,
           AppColors.warning,
           AppColors.warning,
-          'Waiting for confirmation.'
+          'Waiting for confirmation.',
         );
     }
   }

@@ -16,7 +16,8 @@ import '../../firebase_options.dart';
 /// AndroidManifest.xml `com.google.firebase.messaging.default_notification_channel_id`.
 const _androidChannelId = 'high_importance_channel';
 const _androidChannelName = 'Orders & Updates';
-const _androidChannelDesc = 'Notifications for order status, payments, and promotions.';
+const _androidChannelDesc =
+    'Notifications for order status, payments, and promotions.';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -65,7 +66,9 @@ class NotificationService {
           badge: true,
           sound: true,
         );
-        debugPrint('Notification permission status: ${settings.authorizationStatus}');
+        debugPrint(
+          'Notification permission status: ${settings.authorizationStatus}',
+        );
 
         // ── Create the Android notification channel ─────────────────────
         // Android 8.0+ (API 26) REQUIRES a notification channel to be created
@@ -78,13 +81,17 @@ class NotificationService {
         await androidImpl.initialize(
           const AndroidInitializationSettings('@mipmap/ic_launcher'),
         );
-        await androidImpl.createNotificationChannel(const AndroidNotificationChannel(
-          _androidChannelId,
-          _androidChannelName,
-          description: _androidChannelDesc,
-          importance: Importance.high,
-        ));
-        debugPrint("[FCM] Android notification channel '$_androidChannelId' created.");
+        await androidImpl.createNotificationChannel(
+          const AndroidNotificationChannel(
+            _androidChannelId,
+            _androidChannelName,
+            description: _androidChannelDesc,
+            importance: Importance.high,
+          ),
+        );
+        debugPrint(
+          "[FCM] Android notification channel '$_androidChannelId' created.",
+        );
 
         // 2. Foreground Messaging Handler — shows the custom orange SnackBar banner
         //    Set up BEFORE token fetch, regardless of permission status.
@@ -140,9 +147,12 @@ class NotificationService {
         // the old mock token would be returned and sent to the backend — preventing
         // real push notifications from ever reaching this device.
         final existingCached = await SharedPrefsHelper.getFcmToken();
-        if (existingCached != null && existingCached.startsWith('mock_fcm_token_')) {
+        if (existingCached != null &&
+            existingCached.startsWith('mock_fcm_token_')) {
           await SharedPrefsHelper.setFcmToken(''); // clear the stale mock token
-          debugPrint("[FCM] Cleared stale mock token from cache: $existingCached");
+          debugPrint(
+            "[FCM] Cleared stale mock token from cache: $existingCached",
+          );
         }
 
         // STEP 2: Always fetch the real FCM token from Google Play Services.
@@ -157,7 +167,9 @@ class NotificationService {
             debugPrint("[FCM] REAL TOKEN: $_fcmToken");
             debugPrint("=====================================");
           } else {
-            debugPrint("[FCM] getToken() returned null — Google Play Services may be unavailable.");
+            debugPrint(
+              "[FCM] getToken() returned null — Google Play Services may be unavailable.",
+            );
           }
         } catch (tokenError) {
           debugPrint("[FCM] getToken() threw an error: $tokenError");
@@ -177,10 +189,16 @@ class NotificationService {
         // will NOT see any notification popup until they grant this permission.
         if (settings.authorizationStatus == AuthorizationStatus.denied) {
           debugPrint("[FCM] WARNING: POST_NOTIFICATIONS permission DENIED.");
-          debugPrint("[FCM] The OS will SILENTLY DROP all background notification banners.");
-          debugPrint("[FCM] User must go to Settings > Apps > Quick Plate > Notifications and enable.");
+          debugPrint(
+            "[FCM] The OS will SILENTLY DROP all background notification banners.",
+          );
+          debugPrint(
+            "[FCM] User must go to Settings > Apps > Quick Plate > Notifications and enable.",
+          );
         } else {
-          debugPrint("[FCM] Notification permission: ${settings.authorizationStatus}");
+          debugPrint(
+            "[FCM] Notification permission: ${settings.authorizationStatus}",
+          );
         }
       } catch (e) {
         debugPrint("[FCM] Error initializing Firebase Messaging: $e");
@@ -193,12 +211,20 @@ class NotificationService {
     // a useless mock token to the backend.
     if (_fcmToken == null) {
       final cached = await SharedPrefsHelper.getFcmToken();
-      if (cached != null && cached.isNotEmpty && !cached.startsWith('mock_fcm_token_')) {
+      if (cached != null &&
+          cached.isNotEmpty &&
+          !cached.startsWith('mock_fcm_token_')) {
         _fcmToken = cached;
-        debugPrint("[FCM] Using previously saved real token from cache: $_fcmToken");
+        debugPrint(
+          "[FCM] Using previously saved real token from cache: $_fcmToken",
+        );
       } else {
-        debugPrint("[FCM] ERROR: No real FCM token available. Push notifications will NOT work.");
-        debugPrint("[FCM] Ensure device has Google Play Services and notification permission is granted.");
+        debugPrint(
+          "[FCM] ERROR: No real FCM token available. Push notifications will NOT work.",
+        );
+        debugPrint(
+          "[FCM] Ensure device has Google Play Services and notification permission is granted.",
+        );
         // Do NOT send a mock token to the backend — it serves no purpose.
         return;
       }
@@ -249,17 +275,28 @@ class NotificationService {
     }
   }
 
-  void _showForegroundNotificationBanner(String title, String body, Map<String, dynamic> data) {
+  void _showForegroundNotificationBanner(
+    String title,
+    String body,
+    Map<String, dynamic> data,
+  ) {
     final context = AppRoutes.navigatorKey.currentContext;
     if (context == null) {
-      debugPrint("Cannot show foreground notification banner: currentContext is null");
+      debugPrint(
+        "Cannot show foreground notification banner: currentContext is null",
+      );
       return;
     }
 
     try {
-      final provider = Provider.of<NotificationProvider>(context, listen: false);
+      final provider = Provider.of<NotificationProvider>(
+        context,
+        listen: false,
+      );
       final model = NotificationModel(
-        id: data['notificationId'] ?? 'fcm_${DateTime.now().millisecondsSinceEpoch}',
+        id:
+            data['notificationId'] ??
+            'fcm_${DateTime.now().millisecondsSinceEpoch}',
         userId: '',
         title: title,
         body: body,
@@ -286,7 +323,10 @@ class NotificationService {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
                   Text(
                     body,
@@ -326,11 +366,14 @@ class NotificationService {
     final eventType = data['eventType']?.toString().toLowerCase();
     final orderId = data['orderId'];
 
-    if (eventType == 'order_status_update' && orderId != null && orderId.toString().isNotEmpty) {
+    if (eventType == 'order_status_update' &&
+        orderId != null &&
+        orderId.toString().isNotEmpty) {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => OrderTrackingScreen(orderId: orderId.toString()),
+          builder: (context) =>
+              OrderTrackingScreen(orderId: orderId.toString()),
         ),
       );
     } else {

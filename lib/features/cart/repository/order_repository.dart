@@ -16,10 +16,12 @@ class OrderRepository {
       data: request.toJson(),
     );
     debugPrint('placeCashOrder response: ${response.data}');
-    
+
     final data = response.data['data'];
     if (data == null) {
-      throw DefaultException(response.data['message'] ?? 'Failed to place cash order');
+      throw DefaultException(
+        response.data['message'] ?? 'Failed to place cash order',
+      );
     }
     return OrderResponse.fromJson(data);
   }
@@ -30,10 +32,12 @@ class OrderRepository {
       data: request.toJson(),
     );
     debugPrint('initiateCheckout response: ${response.data}');
-    
+
     final data = response.data['data'];
     if (data == null) {
-      throw DefaultException(response.data['message'] ?? 'Failed to initiate checkout');
+      throw DefaultException(
+        response.data['message'] ?? 'Failed to initiate checkout',
+      );
     }
     return CheckoutResponse.fromJson(data);
   }
@@ -56,10 +60,10 @@ class OrderRepository {
       ApiEndpoints.studentOrders,
       queryParameters: queryParams,
     );
-    
+
     final List? data = response.data['data'];
     if (data == null) return [];
-    
+
     return data.map((o) => OrderResponse.fromJson(o)).toList();
   }
 

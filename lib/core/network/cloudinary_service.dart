@@ -38,6 +38,7 @@ class CloudinaryService {
       }
       return null;
     } catch (e) {
+      // ignore: avoid_print
       print('Cloudinary Upload Error: $e');
       return null;
     }

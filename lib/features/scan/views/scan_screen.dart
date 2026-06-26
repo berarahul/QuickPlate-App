@@ -45,8 +45,10 @@ class _ScanScreenState extends State<ScanScreen> {
           if (success) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
-                content: Text(scanProvider.sessionResponse?.message ??
-                    'Table session started!'),
+                content: Text(
+                  scanProvider.sessionResponse?.message ??
+                      'Table session started!',
+                ),
               ),
             );
             // Optionally navigate to cart or menu automatically
@@ -54,7 +56,8 @@ class _ScanScreenState extends State<ScanScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(
                 content: Text(
-                    scanProvider.errorMessage ?? 'Failed to start session.'),
+                  scanProvider.errorMessage ?? 'Failed to start session.',
+                ),
                 backgroundColor: AppColors.error,
               ),
             );
@@ -89,16 +92,23 @@ class _ScanScreenState extends State<ScanScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Ready to order?', style: AppTextStyles.labelSmall),
+                          Text(
+                            'Ready to order?',
+                            style: AppTextStyles.labelSmall,
+                          ),
                           const SizedBox(height: 4),
-                          Text('Scan Table QR', style: AppTextStyles.displayLarge),
+                          Text(
+                            'Scan Table QR',
+                            style: AppTextStyles.displayLarge,
+                          ),
                         ],
                       ),
                       const Spacer(),
                       ValueListenableBuilder<MobileScannerState>(
                         valueListenable: _scannerController,
                         builder: (context, state, child) {
-                          final on = state.torchState == TorchState.on ||
+                          final on =
+                              state.torchState == TorchState.on ||
                               state.torchState == TorchState.auto;
                           return Container(
                             width: 44,
@@ -110,8 +120,12 @@ class _ScanScreenState extends State<ScanScreen> {
                             ),
                             child: IconButton(
                               padding: EdgeInsets.zero,
-                              icon: Icon(on ? Icons.flash_on_rounded : Icons.flash_off_rounded,
-                                  size: 20),
+                              icon: Icon(
+                                on
+                                    ? Icons.flash_on_rounded
+                                    : Icons.flash_off_rounded,
+                                size: 20,
+                              ),
                               onPressed: () => _scannerController.toggleTorch(),
                             ),
                           );
@@ -127,15 +141,18 @@ class _ScanScreenState extends State<ScanScreen> {
                           children: [
                             const CircularProgressIndicator(),
                             const SizedBox(height: 16),
-                            Text('Starting table session...',
-                                style: AppTextStyles.bodyMedium),
+                            Text(
+                              'Starting table session...',
+                              style: AppTextStyles.bodyMedium,
+                            ),
                           ],
                         )
                       : Stack(
                           children: [
                             MobileScanner(
-                                controller: _scannerController,
-                                onDetect: _onDetect),
+                              controller: _scannerController,
+                              onDetect: _onDetect,
+                            ),
                             // Dark vignette with cut-out hole
                             ColorFiltered(
                               colorFilter: ColorFilter.mode(
@@ -144,9 +161,7 @@ class _ScanScreenState extends State<ScanScreen> {
                               ),
                               child: Stack(
                                 children: [
-                                  Container(
-                                    color: Colors.transparent,
-                                  ),
+                                  Container(color: Colors.transparent),
                                   Center(
                                     child: Container(
                                       width: 250,
@@ -167,7 +182,9 @@ class _ScanScreenState extends State<ScanScreen> {
                                 height: 250,
                                 decoration: BoxDecoration(
                                   border: Border.all(
-                                      color: Colors.transparent, width: 0),
+                                    color: Colors.transparent,
+                                    width: 0,
+                                  ),
                                   borderRadius: BorderRadius.circular(24),
                                 ),
                                 child: Stack(
@@ -184,7 +201,9 @@ class _ScanScreenState extends State<ScanScreen> {
                               right: 24,
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 16, vertical: 12),
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
                                 decoration: BoxDecoration(
                                   color: Colors.black.withValues(alpha: 0.6),
                                   borderRadius: BorderRadius.circular(14),
@@ -193,8 +212,11 @@ class _ScanScreenState extends State<ScanScreen> {
                                   mainAxisSize: MainAxisSize.min,
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: [
-                                    Icon(Icons.qr_code_2_rounded,
-                                        color: Colors.white, size: 18),
+                                    Icon(
+                                      Icons.qr_code_2_rounded,
+                                      color: Colors.white,
+                                      size: 18,
+                                    ),
                                     SizedBox(width: 8),
                                     Flexible(
                                       child: Text(
@@ -235,14 +257,46 @@ class _ScanScreenState extends State<ScanScreen> {
     const thick = 4.0;
     final color = AppColors.primary;
     return [
-      Positioned(top: 0, left: 0, child: Container(width: size, height: thick, color: color)),
-      Positioned(top: 0, left: 0, child: Container(width: thick, height: size, color: color)),
-      Positioned(top: 0, right: 0, child: Container(width: size, height: thick, color: color)),
-      Positioned(top: 0, right: 0, child: Container(width: thick, height: size, color: color)),
-      Positioned(bottom: 0, left: 0, child: Container(width: size, height: thick, color: color)),
-      Positioned(bottom: 0, left: 0, child: Container(width: thick, height: size, color: color)),
-      Positioned(bottom: 0, right: 0, child: Container(width: size, height: thick, color: color)),
-      Positioned(bottom: 0, right: 0, child: Container(width: thick, height: size, color: color)),
+      Positioned(
+        top: 0,
+        left: 0,
+        child: Container(width: size, height: thick, color: color),
+      ),
+      Positioned(
+        top: 0,
+        left: 0,
+        child: Container(width: thick, height: size, color: color),
+      ),
+      Positioned(
+        top: 0,
+        right: 0,
+        child: Container(width: size, height: thick, color: color),
+      ),
+      Positioned(
+        top: 0,
+        right: 0,
+        child: Container(width: thick, height: size, color: color),
+      ),
+      Positioned(
+        bottom: 0,
+        left: 0,
+        child: Container(width: size, height: thick, color: color),
+      ),
+      Positioned(
+        bottom: 0,
+        left: 0,
+        child: Container(width: thick, height: size, color: color),
+      ),
+      Positioned(
+        bottom: 0,
+        right: 0,
+        child: Container(width: size, height: thick, color: color),
+      ),
+      Positioned(
+        bottom: 0,
+        right: 0,
+        child: Container(width: thick, height: size, color: color),
+      ),
     ];
   }
 }

@@ -1,6 +1,7 @@
 class ApiEndpoints {
   // Base URL
-  static const String baseUrl = 'https://quickplate-backend-z3j0.onrender.com/api/v1';
+  static const String baseUrl =
+      'https://quickplate-backend-z3j0.onrender.com/api/v1';
 
   // Auth
   static const String register = '/auth/register';

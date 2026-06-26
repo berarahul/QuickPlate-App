@@ -68,8 +68,8 @@ class OrderResponse {
       totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0.0,
       statusTimeline: json['statusTimeline'] != null
           ? (json['statusTimeline'] as List)
-              .map((s) => StatusTimeline.fromJson(s))
-              .toList()
+                .map((s) => StatusTimeline.fromJson(s))
+                .toList()
           : null,
       createdAt: parseDate(json['createdAt']),
     );
@@ -81,11 +81,7 @@ class StatusTimeline {
   final DateTime timestamp;
   final String? message;
 
-  StatusTimeline({
-    required this.status,
-    required this.timestamp,
-    this.message,
-  });
+  StatusTimeline({required this.status, required this.timestamp, this.message});
 
   factory StatusTimeline.fromJson(Map<String, dynamic> json) {
     DateTime parseDate(dynamic date) {

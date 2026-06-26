@@ -21,9 +21,10 @@ class _SplashScreenState extends State<SplashScreen>
       vsync: this,
       duration: const Duration(milliseconds: 900),
     );
-    _scale = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(parent: _controller, curve: Curves.easeOutBack),
-    );
+    _scale = Tween<double>(
+      begin: 0.8,
+      end: 1.0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
     _fade = CurvedAnimation(parent: _controller, curve: Curves.easeIn);
     _controller.forward();
 
@@ -44,7 +45,9 @@ class _SplashScreenState extends State<SplashScreen>
       } else if (isRegistered) {
         Navigator.of(context).pushReplacementNamed(AppRoutes.loginScreen);
       } else if (hasSeenOnboarding) {
-        Navigator.of(context).pushReplacementNamed(AppRoutes.studentRegistrationScreen);
+        Navigator.of(
+          context,
+        ).pushReplacementNamed(AppRoutes.studentRegistrationScreen);
       } else {
         Navigator.of(context).pushReplacementNamed(AppRoutes.onboardingScreen);
       }

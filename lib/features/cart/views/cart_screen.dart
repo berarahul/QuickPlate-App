@@ -7,8 +7,11 @@ import '../../../core/app_exports.dart';
 class CartScreen extends StatelessWidget {
   const CartScreen({super.key});
 
-  void _showOrderSuccess(BuildContext context, String message,
-      {bool isOnline = false}) {
+  void _showOrderSuccess(
+    BuildContext context,
+    String message, {
+    bool isOnline = false,
+  }) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -60,9 +63,9 @@ class CartScreen extends StatelessWidget {
     }
 
     if (cart.items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Your cart is empty!')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Your cart is empty!')));
       return;
     }
 
@@ -89,12 +92,17 @@ class CartScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 20),
-            Text('Select Payment Method',
-                style: AppTextStyles.titleLarge, textAlign: TextAlign.center),
+            Text(
+              'Select Payment Method',
+              style: AppTextStyles.titleLarge,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 6),
-            Text('Choose how you\'d like to pay for this order.',
-                style: AppTextStyles.bodySmall,
-                textAlign: TextAlign.center),
+            Text(
+              'Choose how you\'d like to pay for this order.',
+              style: AppTextStyles.bodySmall,
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 24),
             _PaymentOption(
               icon: Icons.payments_outlined,
@@ -115,8 +123,9 @@ class CartScreen extends StatelessWidget {
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content:
-                          Text(orderProvider.errorMessage ?? 'Order failed'),
+                      content: Text(
+                        orderProvider.errorMessage ?? 'Order failed',
+                      ),
                       backgroundColor: AppColors.error,
                     ),
                   );
@@ -183,8 +192,10 @@ class CartScreen extends StatelessWidget {
                       const Spacer(),
                       if (cart.items.isNotEmpty)
                         IconButton(
-                          icon: const Icon(Icons.delete_sweep_outlined,
-                              size: 22),
+                          icon: const Icon(
+                            Icons.delete_sweep_outlined,
+                            size: 22,
+                          ),
                           onPressed: () => cart.clearCart(),
                         ),
                     ],
@@ -207,7 +218,9 @@ class CartScreen extends StatelessWidget {
                               padding: const EdgeInsets.only(bottom: 12),
                               child: AppCard(
                                 padding: const EdgeInsets.symmetric(
-                                    horizontal: 12, vertical: 10),
+                                  horizontal: 12,
+                                  vertical: 10,
+                                ),
                                 child: Row(
                                   children: [
                                     Container(
@@ -215,12 +228,12 @@ class CartScreen extends StatelessWidget {
                                       height: 48,
                                       decoration: BoxDecoration(
                                         color: AppColors.primaryTint,
-                                        borderRadius:
-                                            BorderRadius.circular(12),
+                                        borderRadius: BorderRadius.circular(12),
                                       ),
                                       child: Icon(
-                                          Icons.lunch_dining_outlined,
-                                          color: AppColors.primary),
+                                        Icons.lunch_dining_outlined,
+                                        color: AppColors.primary,
+                                      ),
                                     ),
                                     const SizedBox(width: 12),
                                     Expanded(
@@ -228,8 +241,10 @@ class CartScreen extends StatelessWidget {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          Text(item.name,
-                                              style: AppTextStyles.titleSmall),
+                                          Text(
+                                            item.name,
+                                            style: AppTextStyles.titleSmall,
+                                          ),
                                           const SizedBox(height: 2),
                                           Text(
                                             '₹${item.price} each',
@@ -283,8 +298,9 @@ class CartScreen extends StatelessWidget {
                         Text('Total', style: AppTextStyles.bodySmall),
                         Text(
                           '₹${cart.totalAmount}',
-                          style: AppTextStyles.titleLarge
-                              .copyWith(color: AppColors.textPrimary),
+                          style: AppTextStyles.titleLarge.copyWith(
+                            color: AppColors.textPrimary,
+                          ),
                         ),
                       ],
                     ),
@@ -316,10 +332,11 @@ class _QtyStepper extends StatelessWidget {
   final int quantity;
   final VoidCallback onAdd;
   final VoidCallback onRemove;
-  const _QtyStepper(
-      {required this.quantity,
-      required this.onAdd,
-      required this.onRemove});
+  const _QtyStepper({
+    required this.quantity,
+    required this.onAdd,
+    required this.onRemove,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -337,8 +354,10 @@ class _QtyStepper extends StatelessWidget {
             constraints: const BoxConstraints(minWidth: 32, minHeight: 32),
             onPressed: onRemove,
           ),
-          Text('$quantity',
-              style: const TextStyle(fontWeight: FontWeight.w700)),
+          Text(
+            '$quantity',
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
           IconButton(
             icon: const Icon(Icons.add_rounded, size: 18),
             color: AppColors.primary,
@@ -400,8 +419,7 @@ class _PaymentOption extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(Icons.chevron_right_rounded,
-                  color: AppColors.textTertiary),
+              Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary),
             ],
           ),
         ),

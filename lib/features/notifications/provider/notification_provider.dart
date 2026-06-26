@@ -50,7 +50,9 @@ class NotificationProvider extends ChangeNotifier {
         _notifications = response.notifications;
       } else {
         final existingIds = _notifications.map((n) => n.id).toSet();
-        final newItems = response.notifications.where((n) => !existingIds.contains(n.id));
+        final newItems = response.notifications.where(
+          (n) => !existingIds.contains(n.id),
+        );
         _notifications.addAll(newItems);
       }
 
@@ -93,7 +95,7 @@ class NotificationProvider extends ChangeNotifier {
     if (index == -1) return false;
 
     final wasUnread = !_notifications[index].isRead;
-    
+
     // Optimistic UI update
     if (wasUnread) {
       _notifications[index] = _notifications[index].copyWith(isRead: true);
@@ -158,7 +160,9 @@ class NotificationProvider extends ChangeNotifier {
       id: 'sim_${DateTime.now().millisecondsSinceEpoch}',
       userId: 'user_123',
       title: title ?? 'Order Prepared 🍔',
-      body: body ?? 'Your order #QP-${1000 + _notifications.length} is prepared. Please collect it from Counter A.',
+      body:
+          body ??
+          'Your order #QP-${1000 + _notifications.length} is prepared. Please collect it from Counter A.',
       isRead: false,
       data: {
         'eventType': 'ORDER_STATUS_UPDATE',
@@ -181,13 +185,14 @@ class NotificationProvider extends ChangeNotifier {
         id: 'mock_1',
         userId: 'student_user',
         title: 'Order Ready for Pickup 🍲',
-        body: 'Your order #QP-2942 for Table 4 is prepared and ready at Counter A.',
+        body:
+            'Your order #QP-2942 for Table 4 is prepared and ready at Counter A.',
         isRead: false,
         data: {
           'eventType': 'ORDER_STATUS_UPDATE',
           'orderId': '60a8f812...',
           'status': 'ready',
-          'tableId': '4'
+          'tableId': '4',
         },
         createdAt: DateTime.now().subtract(const Duration(minutes: 5)),
         updatedAt: DateTime.now().subtract(const Duration(minutes: 5)),
@@ -196,7 +201,8 @@ class NotificationProvider extends ChangeNotifier {
         id: 'mock_2',
         userId: 'student_user',
         title: 'Payment Successful ✅',
-        body: 'Payment of ₹240.00 verified successfully for transaction ID pay_98124.',
+        body:
+            'Payment of ₹240.00 verified successfully for transaction ID pay_98124.',
         isRead: true,
         data: {
           'eventType': 'PAYMENT_VERIFICATION',
@@ -210,12 +216,10 @@ class NotificationProvider extends ChangeNotifier {
         id: 'mock_3',
         userId: 'student_user',
         title: 'Flash Sale! 🍕',
-        body: 'Get 20% off on all items from the Italian Cafe between 3:00 PM and 5:00 PM today.',
+        body:
+            'Get 20% off on all items from the Italian Cafe between 3:00 PM and 5:00 PM today.',
         isRead: true,
-        data: {
-          'eventType': 'PROMOTION',
-          'discount': '20%',
-        },
+        data: {'eventType': 'PROMOTION', 'discount': '20%'},
         createdAt: DateTime.now().subtract(const Duration(days: 1)),
         updatedAt: DateTime.now().subtract(const Duration(days: 1)),
       ),

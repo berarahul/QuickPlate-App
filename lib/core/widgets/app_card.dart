@@ -41,10 +41,7 @@ class AppCard extends StatelessWidget {
     final content = Container(
       margin: margin,
       decoration: decoration,
-      child: Padding(
-        padding: padding,
-        child: child,
-      ),
+      child: Padding(padding: padding, child: child),
     );
 
     if (onTap == null) return content;

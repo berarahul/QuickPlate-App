@@ -36,7 +36,8 @@ class AuthProvider extends ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   StudentRegistrationResponse? _registrationResponse;
-  StudentRegistrationResponse? get registrationResponse => _registrationResponse;
+  StudentRegistrationResponse? get registrationResponse =>
+      _registrationResponse;
 
   LoginResponse? _loginResponse;
   LoginResponse? get loginResponse => _loginResponse;
