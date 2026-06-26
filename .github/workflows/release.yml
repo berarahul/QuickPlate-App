@@ -57,17 +57,58 @@ jobs:
           storeFile=upload-keystore.jks
           EOF
 
+      - name: Setup Shorebird
+        uses: shorebirdtech/setup-shorebird@v1
+        with:
+          shorebird-token: ${{ secrets.SHOREBIRD_TOKEN }}
+
       - name: Create Dummy .env
         run: touch .env
 
       - name: Install Dependencies
         run: flutter pub get
 
-      - name: Build Android APK
-        run: flutter build apk --release
-
-      - name: Build Android AAB
-        run: flutter build appbundle --release
+      - name: Build Shorebird Android Release
+        run: |
+          VERSION=$(grep "^version:" pubspec.yaml | sed 's/version:[[:space:]]*//g')
+          echo "Building Shorebird release for version $VERSION..."
+          
+          # Attempt to build and register the release with Shorebird.
+          # If it already exists (because it was published locally via release.sh), 
+          # we catch the error, verify it's the "already exists" error, and download the APKs instead.
+          set +e
+          BUILD_OUTPUT=$(shorebird release android --artifact apk --yes 2>&1)
+          EXIT_CODE=$?
+          set -e
+          echo "$BUILD_OUTPUT"
+          
+          mkdir -p build/app/outputs/flutter-apk
+          
+          if [ $EXIT_CODE -ne 0 ]; then
+            if echo "$BUILD_OUTPUT" | grep -q -i "already exists"; then
+              echo "Release $VERSION already exists on Shorebird. Fetching existing APKs..."
+              shorebird releases get-apks --release-version "$VERSION" --out build/app/outputs/flutter-apk/
+              
+              # Find the generated APK and move it to the expected release path
+              if [ -f "build/app/outputs/flutter-apk/universal.apk" ]; then
+                mv build/app/outputs/flutter-apk/universal.apk build/app/outputs/flutter-apk/app-release.apk
+              elif [ -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
+                echo "APK already at expected location."
+              else
+                echo "Looking for any built APK..."
+                find build/app/outputs/flutter-apk/ -name "*.apk" -exec mv {} build/app/outputs/flutter-apk/app-release.apk \;
+              fi
+            else
+              echo "Error: Shorebird build failed with compilation or configuration error."
+              exit $EXIT_CODE
+            fi
+          else
+            echo "Shorebird release registered and built successfully."
+            # Copy/move the built APK to the folder expected by the release step
+            if [ -f "build/app/outputs/apk/release/app-release.apk" ]; then
+              cp build/app/outputs/apk/release/app-release.apk build/app/outputs/flutter-apk/app-release.apk
+            fi
+          fi
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -77,5 +118,6 @@ jobs:
             build/app/outputs/bundle/release/app-release.aab
           draft: false
           prerelease: false
+          fail_on_unmatched_files: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

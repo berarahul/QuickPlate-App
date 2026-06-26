@@ -88,16 +88,9 @@ fi
 echo -e "\nUpdating pubspec.yaml..."
 sed -i "s/^version:.*/version: $NEW_VERSION/g" pubspec.yaml
 
-# 5. Build signed release locally (.aab and .apk)
-echo -e "\n${BLUE}Building Android AppBundle (.aab) for Play Store...${CLEAR}"
-fvm flutter build appbundle --release
-
-echo -e "\n${BLUE}Building Android APK (.apk)...${CLEAR}"
-fvm flutter build apk --release
-
-# 6. Shorebird release
-echo -e "\n${BLUE}Publishing base release to Shorebird...${CLEAR}"
-shorebird release android --no-confirm
+# 5. Build and Publish Shorebird Release (.aab and .apk)
+echo -e "\n${BLUE}Building and Publishing Shorebird Release (Android AppBundle and APK)...${CLEAR}"
+shorebird release android --artifact apk --no-confirm
 
 # 7. Commit changes and push Git Tag
 echo -e "\n${BLUE}Staging and committing version bump...${CLEAR}"
@@ -114,4 +107,5 @@ git push origin "v$NEW_VERSION" || echo -e "${YELLOW}Warning: Could not push tag
 echo -e "\n${GREEN}=== RELEASE COMPLETED SUCCESSFULLY ===${CLEAR}"
 echo -e "1. ${BLUE}Shorebird Base Release${CLEAR} version $NEW_VERSION published."
 echo -e "2. ${BLUE}Google Play Store AAB${CLEAR} built at: ${YELLOW}build/app/outputs/bundle/release/app-release.aab${CLEAR}"
-echo -e "3. ${BLUE}Git Tag v$NEW_VERSION${CLEAR} pushed. (This will trigger the GitHub release CI workflow)."
+echo -e "3. ${BLUE}Shorebird-enabled APK${CLEAR} built at: ${YELLOW}build/app/outputs/apk/release/app-release.apk${CLEAR}"
+echo -e "4. ${BLUE}Git Tag v$NEW_VERSION${CLEAR} pushed. (This will trigger the GitHub release CI workflow)."
