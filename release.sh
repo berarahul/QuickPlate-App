@@ -97,7 +97,7 @@ fvm flutter build apk --release
 
 # 6. Shorebird release
 echo -e "\n${BLUE}Publishing base release to Shorebird...${CLEAR}"
-shorebird release android --yes
+shorebird release android --no-confirm
 
 # 7. Commit changes and push Git Tag
 echo -e "\n${BLUE}Staging and committing version bump...${CLEAR}"

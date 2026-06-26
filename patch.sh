@@ -31,7 +31,7 @@ fi
 
 # 2. Run Shorebird patch command
 echo -e "\n${BLUE}Building and publishing Shorebird patch...${CLEAR}"
-shorebird patch android --yes
+shorebird patch android --no-confirm
 
 echo -e "\n${GREEN}=== PATCH SHIPPED SUCCESSFULLY ===${CLEAR}"
 echo -e "Shorebird OTA patch for version ${GREEN}${CURRENT_VERSION}${CLEAR} has been successfully published."
