@@ -47,3 +47,7 @@ app.*.map.json
 
 # FVM Version Cache
 .fvm/
+
+# Kotlin compiler session
+.kotlin/
+**/android/.kotlin/

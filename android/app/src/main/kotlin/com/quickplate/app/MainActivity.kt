@@ -1,4 +1,4 @@
-package com.example.quick_plate
+package com.quickplate.app
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
