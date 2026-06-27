@@ -1,4 +1,3 @@
-import 'package:provider/provider.dart';
 import '../../../core/app_exports.dart';
 import '../provider/notification_provider.dart';
 
@@ -89,6 +88,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(

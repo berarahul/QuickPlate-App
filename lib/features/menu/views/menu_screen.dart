@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:provider/provider.dart';
 import '../provider/menu_provider.dart';
 import '../model/menu_response.dart';
 import '../../cart/provider/cart_provider.dart';
@@ -37,6 +36,7 @@ class _MenuScreenState extends State<MenuScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(

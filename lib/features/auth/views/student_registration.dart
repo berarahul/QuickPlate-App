@@ -2,9 +2,8 @@ import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/app_exports.dart';
 import '../../../core/network/cloudinary_service.dart';
-import '../provider/auth_provider.dart';
 import '../model/student_registration_request.dart';
-import 'package:provider/provider.dart';
+import '../provider/auth_provider.dart';
 
 class StudentRegistration extends StatefulWidget {
   const StudentRegistration({super.key});
@@ -121,6 +120,7 @@ class _StudentRegistrationState extends State<StudentRegistration> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(

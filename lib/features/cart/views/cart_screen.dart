@@ -1,4 +1,3 @@
-import 'package:provider/provider.dart';
 import '../provider/cart_provider.dart';
 import '../provider/order_provider.dart';
 import '../../scan/provider/scan_provider.dart';
@@ -170,6 +169,7 @@ class CartScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(

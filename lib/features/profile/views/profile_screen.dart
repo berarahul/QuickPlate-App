@@ -1,4 +1,3 @@
-import 'package:provider/provider.dart';
 import '../../../core/app_exports.dart';
 import '../../notifications/provider/notification_provider.dart';
 import '../../auth/provider/auth_provider.dart';
@@ -55,6 +54,7 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(

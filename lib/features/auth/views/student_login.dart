@@ -1,5 +1,3 @@
-import 'package:provider/provider.dart';
-
 import '../../../core/app_exports.dart';
 import '../model/login_request.dart';
 import '../provider/auth_provider.dart';
@@ -69,6 +67,7 @@ class _StudentLoginState extends State<StudentLogin> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(

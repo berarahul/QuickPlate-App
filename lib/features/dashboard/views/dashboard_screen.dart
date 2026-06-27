@@ -30,17 +30,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     Icons.person_rounded,
   ];
 
-  late final List<Widget> _screens;
-
   @override
   void initState() {
     super.initState();
-    _screens = [
-      MenuScreen(onCartTap: () => _tabController.switchTo(2)),
-      const ScanScreen(),
-      const CartScreen(),
-      const ProfileScreen(),
-    ];
     _tabController.addListener(_onTabChanged);
   }
 
@@ -57,16 +49,25 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     final selectedIndex = _tabController.index;
 
+    final screens = [
+      MenuScreen(onCartTap: () => _tabController.switchTo(2)),
+      ScanScreen(isActive: selectedIndex == 1),
+      const CartScreen(),
+      const ProfileScreen(),
+    ];
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.dark,
+        statusBarIconBrightness: AppColors.isDarkMode ? Brightness.light : Brightness.dark,
+        statusBarBrightness: AppColors.isDarkMode ? Brightness.dark : Brightness.light,
       ),
       child: Scaffold(
         backgroundColor: AppColors.background,
-        body: IndexedStack(index: selectedIndex, children: _screens),
+        body: IndexedStack(index: selectedIndex, children: screens),
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
             color: AppColors.surface,

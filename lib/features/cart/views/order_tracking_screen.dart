@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:provider/provider.dart';
 import '../provider/order_provider.dart';
 import '../models/order_model.dart';
 import '../../../core/app_exports.dart';
@@ -86,6 +85,7 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('Order Tracking')),

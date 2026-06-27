@@ -1,4 +1,3 @@
-import 'package:provider/provider.dart';
 import '../provider/order_provider.dart';
 import 'order_tracking_screen.dart';
 import '../../../core/app_exports.dart';
@@ -21,6 +20,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(title: const Text('My Orders')),

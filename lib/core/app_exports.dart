@@ -1,4 +1,5 @@
 export 'package:flutter/material.dart';
+export 'package:provider/provider.dart';
 export 'theme/app_colors.dart';
 export 'theme/app_theme.dart';
 export 'theme/app_text_styles.dart';

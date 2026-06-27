@@ -1,10 +1,10 @@
 import 'package:mobile_scanner/mobile_scanner.dart';
-import 'package:provider/provider.dart';
 import '../provider/scan_provider.dart';
 import '../../../core/app_exports.dart';
 
 class ScanScreen extends StatefulWidget {
-  const ScanScreen({super.key});
+  final bool isActive;
+  const ScanScreen({super.key, this.isActive = true});
 
   @override
   State<ScanScreen> createState() => _ScanScreenState();
@@ -13,6 +13,7 @@ class ScanScreen extends StatefulWidget {
 class _ScanScreenState extends State<ScanScreen> {
   final MobileScannerController _scannerController = MobileScannerController(
     detectionSpeed: DetectionSpeed.noDuplicates,
+    autoStart: false,
   );
   bool _isProcessing = false;
 
@@ -71,6 +72,42 @@ class _ScanScreenState extends State<ScanScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.isActive) {
+      _startScanner();
+    }
+  }
+
+  @override
+  void didUpdateWidget(ScanScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.isActive != oldWidget.isActive) {
+      if (widget.isActive) {
+        _startScanner();
+      } else {
+        _stopScanner();
+      }
+    }
+  }
+
+  void _startScanner() {
+    try {
+      _scannerController.start();
+    } catch (e) {
+      debugPrint('Error starting scanner: $e');
+    }
+  }
+
+  void _stopScanner() {
+    try {
+      _scannerController.stop();
+    } catch (e) {
+      debugPrint('Error stopping scanner: $e');
+    }
+  }
+
+  @override
   void dispose() {
     _scannerController.dispose();
     super.dispose();
@@ -78,6 +115,7 @@ class _ScanScreenState extends State<ScanScreen> {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
@@ -149,10 +187,13 @@ class _ScanScreenState extends State<ScanScreen> {
                         )
                       : Stack(
                           children: [
-                            MobileScanner(
-                              controller: _scannerController,
-                              onDetect: _onDetect,
-                            ),
+                            if (widget.isActive)
+                              MobileScanner(
+                                controller: _scannerController,
+                                onDetect: _onDetect,
+                              )
+                            else
+                              Container(color: Colors.black),
                             // Dark vignette with cut-out hole
                             ColorFiltered(
                               colorFilter: ColorFilter.mode(
