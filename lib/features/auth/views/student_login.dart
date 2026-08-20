@@ -139,7 +139,12 @@ class _StudentLoginState extends State<StudentLogin> {
                 Align(
                   alignment: Alignment.centerRight,
                   child: TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.pushNamed(
+                        context,
+                        AppRoutes.forgotPasswordScreen,
+                      );
+                    },
                     child: const Text('Forgot password?'),
                   ),
                 ),

@@ -133,6 +133,60 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  Future<bool> forgotPassword(String email) async {
+    _setLoading(true);
+    _errorMessage = null;
+
+    try {
+      final res = await _authRepository.forgotPassword(email);
+      if (res['success'] == true) {
+        return true;
+      } else {
+        _errorMessage = res['message'] ?? 'Failed to request password reset';
+        return false;
+      }
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      return false;
+    } catch (e) {
+      _errorMessage = 'An unexpected error occurred';
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<bool> resetPassword({
+    required String email,
+    required String otp,
+    required String newPassword,
+  }) async {
+    _setLoading(true);
+    _errorMessage = null;
+
+    try {
+      final res = await _authRepository.resetPassword(
+        email: email,
+        otp: otp,
+        newPassword: newPassword,
+      );
+      if (res['success'] == true) {
+        return true;
+      } else {
+        _errorMessage = res['message'] ?? 'Failed to reset password';
+        return false;
+      }
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      return false;
+    } catch (e) {
+      _errorMessage = 'An unexpected error occurred';
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   void _setLoading(bool value) {
     _isLoading = value;
     notifyListeners();
