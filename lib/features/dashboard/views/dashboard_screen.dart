@@ -62,8 +62,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
-        statusBarIconBrightness: AppColors.isDarkMode ? Brightness.light : Brightness.dark,
-        statusBarBrightness: AppColors.isDarkMode ? Brightness.dark : Brightness.light,
+        statusBarIconBrightness: AppColors.isDarkMode
+            ? Brightness.light
+            : Brightness.dark,
+        statusBarBrightness: AppColors.isDarkMode
+            ? Brightness.dark
+            : Brightness.light,
       ),
       child: Scaffold(
         backgroundColor: AppColors.background,

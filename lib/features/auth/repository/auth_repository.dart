@@ -45,11 +45,7 @@ class AuthRepository {
   }) async {
     final response = await _apiClient.post(
       ApiEndpoints.resetPassword,
-      data: {
-        'email': email,
-        'otp': otp,
-        'newPassword': newPassword,
-      },
+      data: {'email': email, 'otp': otp, 'newPassword': newPassword},
     );
     return response.data;
   }
