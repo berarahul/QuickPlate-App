@@ -35,6 +35,9 @@ class AuthProvider extends ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
+  String? _successMessage;
+  String? get successMessage => _successMessage;
+
   StudentRegistrationResponse? _registrationResponse;
   StudentRegistrationResponse? get registrationResponse =>
       _registrationResponse;
@@ -136,10 +139,12 @@ class AuthProvider extends ChangeNotifier {
   Future<bool> forgotPassword(String email) async {
     _setLoading(true);
     _errorMessage = null;
+    _successMessage = null;
 
     try {
       final res = await _authRepository.forgotPassword(email);
       if (res['success'] == true) {
+        _successMessage = res['message'] ?? 'Password reset OTP code sent!';
         return true;
       } else {
         _errorMessage = res['message'] ?? 'Failed to request password reset';

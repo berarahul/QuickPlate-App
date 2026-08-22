@@ -42,8 +42,9 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
         });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text(
-              'Reset OTP generated! Check server logs or enter your 6-digit code.',
+            content: Text(
+              authProvider.successMessage ??
+                  'Password reset OTP sent to your email!',
             ),
             backgroundColor: AppColors.primary,
           ),
