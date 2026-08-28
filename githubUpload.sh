@@ -65,8 +65,10 @@ if [ -z "$APK_SOURCE" ] || [ ! -f "$APK_SOURCE" ]; then
   exit 1
 fi
 
-# Copy to quickplate-release.apk
-cp "$APK_SOURCE" "quickplate-release.apk"
+# Copy to quickplate-release.apk if source is different
+if [ "$APK_SOURCE" != "quickplate-release.apk" ]; then
+  cp "$APK_SOURCE" "quickplate-release.apk"
+fi
 echo -e "${GREEN}Prepared artifact: quickplate-release.apk${CLEAR}"
 
 # 6. Publish / Upload Release to GitHub
