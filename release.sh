@@ -92,6 +92,24 @@ sed -i "s/^version:.*/version: $NEW_VERSION/g" pubspec.yaml
 echo -e "\n${BLUE}Building and Publishing Shorebird Release (Android AppBundle and APK)...${CLEAR}"
 shorebird release android --artifact apk --no-confirm
 
+# 6. Locate Shorebird-enabled APK and prepare quickplate-release.apk
+echo -e "\n${BLUE}Preparing quickplate-release.apk for GitHub Release...${CLEAR}"
+APK_SOURCE=""
+if [ -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
+  APK_SOURCE="build/app/outputs/flutter-apk/app-release.apk"
+elif [ -f "build/app/outputs/apk/release/app-release.apk" ]; then
+  APK_SOURCE="build/app/outputs/apk/release/app-release.apk"
+else
+  APK_SOURCE=$(find build/app/outputs/ -name "*.apk" 2>/dev/null | head -n 1)
+fi
+
+if [ -n "$APK_SOURCE" ] && [ -f "$APK_SOURCE" ]; then
+  cp "$APK_SOURCE" "quickplate-release.apk"
+  echo -e "${GREEN}Shorebird-enabled APK copied to: quickplate-release.apk${CLEAR}"
+else
+  echo -e "${YELLOW}Warning: Could not locate built app-release.apk file.${CLEAR}"
+fi
+
 # 7. Commit changes and push Git Tag
 echo -e "\n${BLUE}Staging and committing version bump...${CLEAR}"
 git add pubspec.yaml
@@ -104,8 +122,10 @@ echo -e "Creating Git tag v$NEW_VERSION..."
 git tag "v$NEW_VERSION"
 git push origin "v$NEW_VERSION" || echo -e "${YELLOW}Warning: Could not push tag. Please push manually.${CLEAR}"
 
-echo -e "\n${GREEN}=== RELEASE COMPLETED SUCCESSFULLY ===${CLEAR}"
+echo -e "\n${GREEN}=== SHOREBIRD RELEASE COMPLETED SUCCESSFULLY ===${CLEAR}"
 echo -e "1. ${BLUE}Shorebird Base Release${CLEAR} version $NEW_VERSION published."
-echo -e "2. ${BLUE}Google Play Store AAB${CLEAR} built at: ${YELLOW}build/app/outputs/bundle/release/app-release.aab${CLEAR}"
-echo -e "3. ${BLUE}Shorebird-enabled APK${CLEAR} built at: ${YELLOW}build/app/outputs/apk/release/app-release.apk${CLEAR}"
-echo -e "4. ${BLUE}Git Tag v$NEW_VERSION${CLEAR} pushed. (This will trigger the GitHub release CI workflow)."
+echo -e "2. ${BLUE}Shorebird-enabled APK${CLEAR} saved as: ${YELLOW}quickplate-release.apk${CLEAR}"
+echo -e "3. ${BLUE}Git Tag v$NEW_VERSION${CLEAR} pushed to remote."
+echo -e "\n${YELLOW}👉 Next Step:${CLEAR} Run '${GREEN}./githubUpload.sh${CLEAR}' to enter release notes and publish ${GREEN}quickplate-release.apk${CLEAR} to GitHub Releases!"
+
+

@@ -110,10 +110,15 @@ jobs:
             fi
           fi
 
+          if [ -f "build/app/outputs/flutter-apk/app-release.apk" ]; then
+            cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/quickplate-release.apk
+          fi
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
         with:
           files: |
+            build/app/outputs/flutter-apk/quickplate-release.apk
             build/app/outputs/flutter-apk/app-release.apk
             build/app/outputs/bundle/release/app-release.aab
           draft: false
