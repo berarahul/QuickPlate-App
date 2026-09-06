@@ -113,6 +113,14 @@ class ProfileScreen extends StatelessWidget {
               Text('ACTIVITY', style: AppTextStyles.labelSmall),
               const SizedBox(height: 8),
               _buildProfileOption(
+                icon: Icons.table_restaurant_outlined,
+                title: 'Table & Seat Reservations',
+                subtitle: 'Reserve seats in advance & manage bookings',
+                onTap: () {
+                  Navigator.pushNamed(context, AppRoutes.tableReservationScreen);
+                },
+              ),
+              _buildProfileOption(
                 icon: Icons.receipt_long_outlined,
                 title: 'My Orders',
                 subtitle: 'View past orders & track active ones',

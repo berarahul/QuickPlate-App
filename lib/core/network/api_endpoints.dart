@@ -9,8 +9,13 @@ class ApiEndpoints {
   static const String forgotPassword = '/auth/forgot-password';
   static const String resetPassword = '/auth/reset-password';
 
-  // Session
+  // Table & Reservations
   static const String tableSession = '/tables/session';
+  static const String leaveTableSession = '/tables/leave-session';
+  static const String availableTables = '/tables/available';
+  static const String reserveTable = '/tables/reserve';
+  static const String qrCheckIn = '/tables/qr-checkin';
+  static const String myReservations = '/tables/my-reservations';
 
   // Menu
   static const String studentMenu = '/student/menu';

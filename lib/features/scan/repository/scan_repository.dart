@@ -27,4 +27,19 @@ class ScanRepository {
       );
     }
   }
+
+  Future<bool> leaveTableSession() async {
+    try {
+      final response = await _apiClient.post(
+        ApiEndpoints.leaveTableSession,
+      );
+      return response.data['success'] == true;
+    } on ApiException catch (_) {
+      rethrow;
+    } catch (e) {
+      throw DefaultException(
+        'An unexpected error occurred while ending table session',
+      );
+    }
+  }
 }

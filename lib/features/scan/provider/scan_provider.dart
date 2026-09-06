@@ -18,13 +18,13 @@ class ScanProvider extends ChangeNotifier {
   TableSessionResponse? _sessionResponse;
   TableSessionResponse? get sessionResponse => _sessionResponse;
 
-  Future<bool> startTableSession(String tableId) async {
+  Future<bool> startTableSession(String tableId, {List<String>? chairIds}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final request = TableSessionRequest(tableId: tableId);
+      final request = TableSessionRequest(tableId: tableId, chairIds: chairIds);
       _sessionResponse = await _scanRepository.createTableSession(request);
 
       if (_sessionResponse?.success == true) {
@@ -38,6 +38,29 @@ class ScanProvider extends ChangeNotifier {
       return false;
     } catch (e) {
       _errorMessage = 'An unexpected error occurred.';
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<bool> leaveTableSession() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final success = await _scanRepository.leaveTableSession();
+      if (success) {
+        _sessionResponse = null;
+      }
+      return success;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      return false;
+    } catch (e) {
+      _errorMessage = 'Failed to end table session.';
       return false;
     } finally {
       _isLoading = false;

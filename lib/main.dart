@@ -18,6 +18,9 @@ import 'features/notifications/provider/notification_provider.dart';
 import 'features/notifications/repository/notification_repository.dart';
 import 'core/services/notification_service.dart';
 
+import 'features/table_reservation/provider/table_reservation_provider.dart';
+import 'features/table_reservation/repository/table_reservation_repository.dart';
+
 // FIX #2: The background handler MUST be a top-level function registered here
 // in main.dart, BEFORE runApp() is called. This is required by firebase_messaging
 // so the native Android/iOS layer can spawn a headless Dart isolate to run it
@@ -42,6 +45,7 @@ void main() async {
   final orderRepository = OrderRepository(apiClient);
   final notificationRepository = NotificationRepository(apiClient);
   final cartRepository = CartRepository(apiClient);
+  final tableReservationRepository = TableReservationRepository(apiClient);
 
   // FIX #3: Added `await` here. Without await, runApp() fires immediately while
   // initNotifications is still running, causing a race condition where
@@ -60,6 +64,9 @@ void main() async {
         ChangeNotifierProvider(create: (_) => CartProvider(cartRepository)),
         ChangeNotifierProvider(
           create: (_) => NotificationProvider(notificationRepository),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => TableReservationProvider(tableReservationRepository),
         ),
       ],
       child: const MyApp(),

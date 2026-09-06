@@ -39,36 +39,136 @@ class _ScanScreenState extends State<ScanScreen> {
           }
         }
 
-        final scanProvider = context.read<ScanProvider>();
-        final success = await scanProvider.startTableSession(tableId);
-
+        // Show Chair Selection Popup Dialog
         if (mounted) {
-          if (success) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  scanProvider.sessionResponse?.message ??
-                      'Table session started!',
-                ),
-              ),
-            );
-            // Optionally navigate to cart or menu automatically
-          } else {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  scanProvider.errorMessage ?? 'Failed to start session.',
-                ),
-                backgroundColor: AppColors.error,
-              ),
-            );
+          final scanProvider = context.read<ScanProvider>();
+          final messenger = ScaffoldMessenger.of(context);
+
+          final selectedChairs = await _showChairSelectionDialog(tableId);
+          if (selectedChairs == null || selectedChairs.isEmpty) {
             setState(() {
-              _isProcessing = false; // Allow rescanning
+              _isProcessing = false;
             });
+            return;
+          }
+
+          final success = await scanProvider.startTableSession(
+            tableId,
+            chairIds: selectedChairs,
+          );
+
+          if (mounted) {
+            if (success) {
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(
+                    scanProvider.sessionResponse?.message ??
+                        'Table $tableId session started with ${selectedChairs.join(", ")}!',
+                  ),
+                ),
+              );
+            } else {
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(
+                    scanProvider.errorMessage ?? 'Failed to start session.',
+                  ),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+              setState(() {
+                _isProcessing = false; // Allow rescanning
+              });
+            }
           }
         }
       }
     }
+  }
+
+  Future<List<String>?> _showChairSelectionDialog(String tableId) async {
+    final availableChairs = ['Chair 1', 'Chair 2', 'Chair 3', 'Chair 4'];
+    final selected = <String>{'Chair 1'};
+
+    return showModalBottomSheet<List<String>>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.event_seat_rounded, color: AppColors.primary, size: 28),
+                      const SizedBox(width: 12),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Table $tableId Scanned', style: AppTextStyles.displayLarge),
+                          Text('Select your available chair(s)', style: AppTextStyles.bodySmall),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: availableChairs.map((chair) {
+                      final isSelected = selected.contains(chair);
+                      return FilterChip(
+                        label: Text(chair),
+                        selected: isSelected,
+                        selectedColor: AppColors.primary.withValues(alpha: 0.2),
+                        checkmarkColor: AppColors.primary,
+                        labelStyle: TextStyle(
+                          color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        ),
+                        onSelected: (val) {
+                          setModalState(() {
+                            if (val) {
+                              selected.add(chair);
+                            } else {
+                              if (selected.length > 1) selected.remove(chair);
+                            }
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () => Navigator.pop(context, selected.toList()),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      ),
+                      child: Text(
+                        'Start Session (${selected.length} Chair${selected.length > 1 ? "s" : ""})',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override

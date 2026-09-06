@@ -6,6 +6,7 @@ class OrderRequest {
   final String? paymentMethod;
   final double studentLatitude;
   final double studentLongitude;
+  final String? reservationId;
 
   OrderRequest({
     required this.tableId,
@@ -13,17 +14,21 @@ class OrderRequest {
     this.paymentMethod,
     required this.studentLatitude,
     required this.studentLongitude,
+    this.reservationId,
   });
 
   Map<String, dynamic> toJson() {
-    final data = {
+    final Map<String, dynamic> data = {
       'tableId': tableId,
       'items': items.map((i) => i.toJson()).toList(),
       'studentLatitude': studentLatitude,
       'studentLongitude': studentLongitude,
     };
     if (paymentMethod != null) {
-      data['paymentMethod'] = paymentMethod!;
+      data['paymentMethod'] = paymentMethod;
+    }
+    if (reservationId != null && reservationId!.isNotEmpty) {
+      data['reservationId'] = reservationId;
     }
     return data;
   }
@@ -34,6 +39,7 @@ class OrderResponse {
   final String tableId;
   final List<OrderItem> items;
   final String status;
+  final String paymentStatus;
   final double totalAmount;
   final List<StatusTimeline>? statusTimeline;
   final DateTime createdAt;
@@ -43,6 +49,7 @@ class OrderResponse {
     required this.tableId,
     required this.items,
     required this.status,
+    this.paymentStatus = 'PENDING',
     required this.totalAmount,
     this.statusTimeline,
     required this.createdAt,
@@ -65,6 +72,7 @@ class OrderResponse {
           ? (json['items'] as List).map((i) => OrderItem.fromJson(i)).toList()
           : [],
       status: json['status'] ?? 'UNKNOWN',
+      paymentStatus: json['paymentStatus'] ?? json['payment_status'] ?? 'PENDING',
       totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0.0,
       statusTimeline: json['statusTimeline'] != null
           ? (json['statusTimeline'] as List)

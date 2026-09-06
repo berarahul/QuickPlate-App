@@ -1,6 +1,7 @@
 import 'dart:async';
 import '../provider/order_provider.dart';
 import '../models/order_model.dart';
+import '../../scan/provider/scan_provider.dart';
 import '../../../core/app_exports.dart';
 
 class OrderTrackingScreen extends StatefulWidget {
@@ -191,6 +192,64 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               ),
             ],
           ),
+          if (order.status.toUpperCase() == 'DELIVERED' || order.paymentStatus.toUpperCase() == 'PAID') ...[
+            const SizedBox(height: 16),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppColors.primaryTint,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.primary),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.restaurant_rounded, color: AppColors.primary, size: 24),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Done eating? Tap below to release your table seat for others!',
+                          style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 46,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        final messenger = ScaffoldMessenger.of(context);
+                        final scanProvider = context.read<ScanProvider>();
+                        final success = await scanProvider.leaveTableSession();
+                        messenger.showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              success
+                                  ? 'Meal finished! Table session ended.'
+                                  : 'Session ended or already expired.',
+                            ),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.check_circle_outline_rounded, color: Colors.black),
+                      label: const Text(
+                        'Finish Meal & Leave Table',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Colors.black),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

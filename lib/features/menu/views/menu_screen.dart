@@ -59,6 +59,29 @@ class _MenuScreenState extends State<MenuScreen> {
                       ],
                     ),
                     const Spacer(),
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.pushNamed(context, AppRoutes.tableReservationScreen);
+                      },
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        margin: const EdgeInsets.only(right: 8),
+                        decoration: BoxDecoration(
+                          color: AppColors.primaryTint,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: AppColors.primary.withValues(alpha: 0.4),
+                            width: 1,
+                          ),
+                        ),
+                        child: Icon(
+                          Icons.table_restaurant_rounded,
+                          size: 22,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ),
                     Consumer<CartProvider>(
                       builder: (context, cart, child) {
                         return GestureDetector(

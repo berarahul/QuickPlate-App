@@ -104,7 +104,7 @@ class _OrderHistoryScreenState extends State<OrderHistoryScreen> {
                                     ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      '${order.createdAt.day}/${order.createdAt.month}/${order.createdAt.year}',
+                                      DateTimeFormatter.formatDateTime(order.createdAt),
                                       style: AppTextStyles.bodySmall,
                                     ),
                                   ],

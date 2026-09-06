@@ -101,6 +101,7 @@ class OrderProvider extends ChangeNotifier {
   Future<bool> placeCashOrder({
     required String tableId,
     required List<OrderItem> items,
+    String? reservationId,
   }) async {
     _setLoading(true);
     _errorMessage = null;
@@ -115,6 +116,7 @@ class OrderProvider extends ChangeNotifier {
         paymentMethod: 'offline',
         studentLatitude: position.latitude,
         studentLongitude: position.longitude,
+        reservationId: reservationId,
       );
 
       _currentOrder = await _orderRepository.placeCashOrder(request);
@@ -136,6 +138,7 @@ class OrderProvider extends ChangeNotifier {
   Future<void> initiateOnlineOrder({
     required String tableId,
     required List<OrderItem> items,
+    String? reservationId,
     required Function(bool success, String? message) onPaymentCompleted,
   }) async {
     _setLoading(true);
@@ -154,6 +157,7 @@ class OrderProvider extends ChangeNotifier {
         items: items,
         studentLatitude: position.latitude,
         studentLongitude: position.longitude,
+        reservationId: reservationId,
       );
 
       _checkoutData = await _orderRepository.initiateCheckout(request);
