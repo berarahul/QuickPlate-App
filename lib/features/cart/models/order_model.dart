@@ -4,16 +4,16 @@ class OrderRequest {
   final String tableId;
   final List<OrderItem> items;
   final String? paymentMethod;
-  final double studentLatitude;
-  final double studentLongitude;
+  final double? studentLatitude;
+  final double? studentLongitude;
   final String? reservationId;
 
   OrderRequest({
     required this.tableId,
     required this.items,
     this.paymentMethod,
-    required this.studentLatitude,
-    required this.studentLongitude,
+    this.studentLatitude,
+    this.studentLongitude,
     this.reservationId,
   });
 
@@ -21,9 +21,13 @@ class OrderRequest {
     final Map<String, dynamic> data = {
       'tableId': tableId,
       'items': items.map((i) => i.toJson()).toList(),
-      'studentLatitude': studentLatitude,
-      'studentLongitude': studentLongitude,
     };
+    if (studentLatitude != null) {
+      data['studentLatitude'] = studentLatitude;
+    }
+    if (studentLongitude != null) {
+      data['studentLongitude'] = studentLongitude;
+    }
     if (paymentMethod != null) {
       data['paymentMethod'] = paymentMethod;
     }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/order_model.dart';
@@ -45,59 +44,6 @@ class OrderProvider extends ChangeNotifier {
   // For Razorpay success handling
   Function(bool success, String? message)? _onPaymentCompleted;
 
-  Future<Position?> _getCurrentLocation() async {
-    bool serviceEnabled;
-    LocationPermission permission;
-
-    // Check if location services are enabled.
-    serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) {
-      // Location services are not enabled, ask user to enable it.
-      _errorMessage =
-          'Location services are disabled. Please enable GPS and try again.';
-      notifyListeners();
-      return null;
-    }
-
-    permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        _errorMessage =
-            'Location permissions are denied. Please allow location access to proceed.';
-        notifyListeners();
-        return null;
-      }
-    }
-
-    if (permission == LocationPermission.deniedForever) {
-      // Permissions are denied forever, handle appropriately.
-      _errorMessage =
-          'Location permissions are permanently denied. Please enable them in settings.';
-      notifyListeners();
-      return null;
-    }
-
-    // When we reach here, permissions are granted and we can
-    // continue accessing the position of the device.
-    try {
-      return await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
-          timeLimit: Duration(seconds: 10),
-        ),
-      );
-    } catch (e) {
-      // Fallback to last known position if current position fails (e.g. timeout)
-      final lastKnown = await Geolocator.getLastKnownPosition();
-      if (lastKnown != null) return lastKnown;
-
-      _errorMessage = 'Could not determine your location. Please try again.';
-      notifyListeners();
-      return null;
-    }
-  }
-
   Future<bool> placeCashOrder({
     required String tableId,
     required List<OrderItem> items,
@@ -107,15 +53,10 @@ class OrderProvider extends ChangeNotifier {
     _errorMessage = null;
 
     try {
-      final position = await _getCurrentLocation();
-      if (position == null) return false;
-
       final request = OrderRequest(
         tableId: tableId,
         items: items,
         paymentMethod: 'offline',
-        studentLatitude: position.latitude,
-        studentLongitude: position.longitude,
         reservationId: reservationId,
       );
 
@@ -146,17 +87,9 @@ class OrderProvider extends ChangeNotifier {
     _onPaymentCompleted = onPaymentCompleted;
 
     try {
-      final position = await _getCurrentLocation();
-      if (position == null) {
-        _onPaymentCompleted?.call(false, _errorMessage);
-        return;
-      }
-
       final request = OrderRequest(
         tableId: tableId,
         items: items,
-        studentLatitude: position.latitude,
-        studentLongitude: position.longitude,
         reservationId: reservationId,
       );
 
