@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../provider/scan_provider.dart';
 import '../../../core/app_exports.dart';
@@ -187,12 +188,19 @@ class _ScanScreenState extends State<ScanScreen> {
     );
   }
 
+  Timer? _countdownTimer;
+
   @override
   void initState() {
     super.initState();
     if (widget.isActive) {
       _startScanner();
     }
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (mounted) {
+        setState(() {});
+      }
+    });
   }
 
   @override
@@ -225,6 +233,7 @@ class _ScanScreenState extends State<ScanScreen> {
 
   @override
   void dispose() {
+    _countdownTimer?.cancel();
     _scannerController.dispose();
     super.dispose();
   }
@@ -459,6 +468,23 @@ class _ScanScreenState extends State<ScanScreen> {
     ];
   }
 
+  String _formatRemainingTime(String? expiresAtStr) {
+    if (expiresAtStr == null) return '00:00';
+    try {
+      final expiresAt = DateTime.parse(expiresAtStr).toLocal();
+      final now = DateTime.now();
+      final difference = expiresAt.difference(now);
+      if (difference.isNegative) {
+        return 'Expired';
+      }
+      final minutes = difference.inMinutes;
+      final seconds = difference.inSeconds % 60;
+      return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+    } catch (e) {
+      return '00:00';
+    }
+  }
+
   Widget _buildActiveSessionCard(BuildContext context, ScanProvider scanProvider) {
     final data = scanProvider.sessionResponse?.data;
     final session = data?.session;
@@ -469,33 +495,54 @@ class _ScanScreenState extends State<ScanScreen> {
         ? session.chairIds!.join(', ')
         : 'Chair 1';
 
+    final bool hasOrder = session.hasOrder ?? false;
+    final String remainingTimeStr = _formatRemainingTime(session.expiresAt);
+    final bool isExpired = remainingTimeStr == 'Expired';
+
+    final Color badgeColor = hasOrder
+        ? AppColors.primary
+        : (isExpired ? AppColors.error : Colors.orange.shade800);
+    final Color badgeBg = hasOrder
+        ? AppColors.primaryTint
+        : (isExpired ? Colors.red.shade50 : Colors.orange.shade50);
+    final Color borderColor = hasOrder ? AppColors.primary : Colors.orange.shade600;
+
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.primary),
+        border: Border.all(color: borderColor, width: 1.5),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(Icons.check_circle_rounded, color: AppColors.success, size: 20),
-              const SizedBox(width: 8),
-              Text(
-                'Active Session: Table ${session.tableId}',
-                style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold),
+              Icon(
+                hasOrder ? Icons.check_circle_rounded : Icons.timer_outlined,
+                color: hasOrder ? AppColors.success : Colors.orange.shade800,
+                size: 20,
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Table ${session.tableId}',
+                  style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: AppColors.primaryTint,
+                  color: badgeBg,
                   borderRadius: BorderRadius.circular(6),
                 ),
-                child: Text('SEATED', style: TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.bold)),
+                child: Text(
+                  hasOrder ? 'ACTIVE DINING' : '5-MIN GRACE',
+                  style: TextStyle(color: badgeColor, fontSize: 10, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
@@ -504,6 +551,30 @@ class _ScanScreenState extends State<ScanScreen> {
             'Your Chair(s): $myChairs',
             style: AppTextStyles.bodyMedium.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
           ),
+          const SizedBox(height: 4),
+          Row(
+            children: [
+              Icon(Icons.hourglass_bottom_rounded, size: 14, color: badgeColor),
+              const SizedBox(width: 4),
+              Text(
+                hasOrder
+                    ? 'Session expires in: $remainingTimeStr'
+                    : 'Order food within $remainingTimeStr to lock seat',
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: badgeColor,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          if (!hasOrder && !isExpired)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                '⚠️ Order required within 5 mins or your seat will be automatically released.',
+                style: TextStyle(fontSize: 11, color: Colors.orange.shade900, fontStyle: FontStyle.italic),
+              ),
+            ),
           if (occupied.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(top: 4),

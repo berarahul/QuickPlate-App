@@ -40,6 +40,7 @@ class TableSession {
   final String? createdAt;
   final String? expiresAt;
   final bool? isActive;
+  final bool? hasOrder;
   final String? tableId;
   final List<String>? chairIds;
   final String? updatedAt;
@@ -50,6 +51,7 @@ class TableSession {
     this.createdAt,
     this.expiresAt,
     this.isActive,
+    this.hasOrder,
     this.tableId,
     this.chairIds,
     this.updatedAt,
@@ -62,6 +64,7 @@ class TableSession {
       createdAt: json['createdAt'],
       expiresAt: json['expiresAt'],
       isActive: json['isActive'],
+      hasOrder: json['hasOrder'] ?? false,
       tableId: json['tableId'],
       chairIds: json['chairIds'] != null
           ? List<String>.from(json['chairIds'])
