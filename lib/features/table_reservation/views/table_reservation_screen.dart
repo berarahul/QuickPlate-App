@@ -3,6 +3,7 @@ import '../provider/table_reservation_provider.dart';
 import '../models/table_availability_model.dart';
 import '../models/table_reservation_model.dart';
 import 'my_reservations_screen.dart';
+import 'live_table_view_screen.dart';
 
 class TableReservationScreen extends StatefulWidget {
   const TableReservationScreen({super.key});
@@ -113,6 +114,16 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
         elevation: 0,
         title: Text('Reserve Table & Seats', style: AppTextStyles.titleLarge),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.grid_view_rounded),
+            tooltip: 'Live Table View',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const LiveTableViewScreen()),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.bookmark_outline_rounded),
             tooltip: 'My Reservations',
@@ -542,14 +553,21 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Select Seats', style: AppTextStyles.titleMedium),
-              Row(
-                children: [
-                  _buildLegend(AppColors.primary, 'Selected'),
-                  const SizedBox(width: 8),
-                  _buildLegend(AppColors.successTint, 'Available'),
-                  const SizedBox(width: 8),
-                  _buildLegend(Colors.grey.shade800, 'Reserved'),
-                ],
+              Flexible(
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      _buildLegend(AppColors.primary, 'Selected'),
+                      const SizedBox(width: 6),
+                      _buildLegend(AppColors.successTint, 'Available'),
+                      const SizedBox(width: 6),
+                      _buildLegend(Colors.grey.shade800, 'Reserved'),
+                      const SizedBox(width: 6),
+                      _buildLegend(Colors.blue.shade600, 'Session Running'),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -596,29 +614,61 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                     children: List.generate(selectedTable.maxCapacity, (idx) {
                       final seatNum = idx + 1;
                       final isReserved = selectedTable.reservedSeatNumbers.contains(seatNum);
+                      final isSessionRunning = selectedTable.sessionRunningSeatNumbers.contains(seatNum);
                       final isSelected = provider.selectedSeats.contains(seatNum);
+                      final isOccupied = isReserved || isSessionRunning;
 
                       const seatIcon = Icons.chair_rounded;
 
+                      final cardColor = isSelected
+                          ? AppColors.primary
+                          : isSessionRunning
+                              ? Colors.blue.shade900.withValues(alpha: 0.7)
+                              : isReserved
+                                  ? Colors.grey.shade900
+                                  : AppColors.surfaceAlt;
+
+                      final borderColor = isSelected
+                          ? AppColors.primary
+                          : isSessionRunning
+                              ? Colors.blueAccent.withValues(alpha: 0.8)
+                              : isReserved
+                                  ? Colors.grey.shade800
+                                  : AppColors.success.withValues(alpha: 0.5);
+
+                      final iconData = isSessionRunning
+                          ? Icons.play_circle_fill_rounded
+                          : isReserved
+                              ? Icons.lock_rounded
+                              : seatIcon;
+
+                      final iconColor = isSelected
+                          ? Colors.black
+                          : isSessionRunning
+                              ? Colors.blue.shade300
+                              : isReserved
+                                  ? Colors.grey.shade600
+                                  : AppColors.success;
+
+                      final textColor = isSelected
+                          ? Colors.black
+                          : isSessionRunning
+                              ? Colors.blue.shade200
+                              : isReserved
+                                  ? Colors.grey.shade600
+                                  : AppColors.textPrimary;
+
                       return GestureDetector(
-                        onTap: isReserved ? null : () => provider.toggleSeatSelection(seatNum),
+                        onTap: isOccupied ? null : () => provider.toggleSeatSelection(seatNum),
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           width: 56,
                           height: 56,
                           decoration: BoxDecoration(
-                            color: isSelected
-                                ? AppColors.primary
-                                : isReserved
-                                    ? Colors.grey.shade900
-                                    : AppColors.surfaceAlt,
+                            color: cardColor,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: isSelected
-                                  ? AppColors.primary
-                                  : isReserved
-                                      ? Colors.grey.shade800
-                                      : AppColors.success.withValues(alpha: 0.5),
+                              color: borderColor,
                               width: 2,
                             ),
                             boxShadow: isSelected
@@ -629,13 +679,9 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                isReserved ? Icons.lock_rounded : seatIcon,
+                                iconData,
                                 size: 20,
-                                color: isSelected
-                                    ? Colors.black
-                                    : isReserved
-                                        ? Colors.grey.shade600
-                                        : AppColors.success,
+                                color: iconColor,
                               ),
                               const SizedBox(height: 2),
                               Text(
@@ -643,11 +689,7 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,
-                                  color: isSelected
-                                      ? Colors.black
-                                      : isReserved
-                                          ? Colors.grey.shade600
-                                          : AppColors.textPrimary,
+                                  color: textColor,
                                 ),
                               ),
                             ],

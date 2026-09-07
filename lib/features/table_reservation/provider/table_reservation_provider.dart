@@ -3,6 +3,7 @@ import 'package:razorpay_flutter/razorpay_flutter.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/table_availability_model.dart';
 import '../models/table_reservation_model.dart';
+import '../models/live_table_overview_model.dart';
 import '../repository/table_reservation_repository.dart';
 import '../../../core/network/api_exceptions.dart';
 
@@ -28,20 +29,46 @@ class TableReservationProvider extends ChangeNotifier {
   void _initCurrentTime() {
     final now = DateTime.now();
     const closeMin = 17 * 60; // 5 PM
+    const openMin = 9 * 60;   // 9 AM
     final nowMin = now.hour * 60 + now.minute;
 
-    if (nowMin >= closeMin) {
+    if (nowMin >= closeMin || nowMin < openMin) {
       _selectedStartTime = '09:00';
       _selectedEndTime = '10:00';
     } else {
-      final startH = now.hour < 9 ? 9 : now.hour;
-      final startM = (now.minute ~/ 15) * 15;
+      // Round UP to next 15-minute slot so default start time is never in the past
+      int nextMin = ((now.minute / 15).ceil()) * 15;
+      int startTotalMin = now.hour * 60 + nextMin;
+
+      if (startTotalMin >= closeMin) {
+        _selectedStartTime = '09:00';
+        _selectedEndTime = '10:00';
+        return;
+      }
+
+      final startH = startTotalMin ~/ 60;
+      final startM = startTotalMin % 60;
       _selectedStartTime = '${startH.toString().padLeft(2, '0')}:${startM.toString().padLeft(2, '0')}';
-      
-      final endMin = (startH * 60 + startM + 60 > closeMin) ? closeMin : (startH * 60 + startM + 60);
+
+      final endMin = (startTotalMin + 60 > closeMin) ? closeMin : (startTotalMin + 60);
       final endH = (endMin ~/ 60).toString().padLeft(2, '0');
       final endM = (endMin % 60).toString().padLeft(2, '0');
       _selectedEndTime = '$endH:$endM';
+    }
+  }
+
+  void refreshTimeSlotIfPast() {
+    final todayStr = DateTime.now().toIso8601String().split('T')[0];
+    if (_selectedDate == todayStr) {
+      final now = DateTime.now();
+      final parts = _selectedStartTime.split(':').map(int.parse).toList();
+      final startMin = parts[0] * 60 + parts[1];
+      final nowMin = now.hour * 60 + now.minute;
+
+      if (startMin < nowMin) {
+        _initCurrentTime();
+        notifyListeners();
+      }
     }
   }
 
@@ -133,6 +160,7 @@ class TableReservationProvider extends ChangeNotifier {
   }
 
   Future<void> fetchAvailableTables() async {
+    refreshTimeSlotIfPast();
     _setLoading(true);
     _errorMessage = null;
     _selectedTableId = null;
@@ -308,6 +336,29 @@ class TableReservationProvider extends ChangeNotifier {
   void setActiveReservation(TableReservation? reservation) {
     _activeReservation = reservation;
     notifyListeners();
+  }
+
+  // --- Live Table View State ---
+  List<LiveTableOverviewModel> _liveTables = [];
+  List<LiveTableOverviewModel> get liveTables => _liveTables;
+
+  bool _isLiveTablesLoading = false;
+  bool get isLiveTablesLoading => _isLiveTablesLoading;
+
+  Future<void> fetchLiveTablesOverview() async {
+    _isLiveTablesLoading = true;
+    notifyListeners();
+
+    try {
+      _liveTables = await _repository.getLiveTablesOverview();
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+    } catch (e) {
+      _errorMessage = 'Failed to load live table overview';
+    } finally {
+      _isLiveTablesLoading = false;
+      notifyListeners();
+    }
   }
 
   void _setLoading(bool val) {

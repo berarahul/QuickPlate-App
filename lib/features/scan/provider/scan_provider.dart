@@ -45,26 +45,47 @@ class ScanProvider extends ChangeNotifier {
     }
   }
 
-  Future<bool> leaveTableSession() async {
+  Future<LeaveTableSessionResult> leaveTableSession() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final success = await _scanRepository.leaveTableSession();
-      if (success) {
+      final result = await _scanRepository.leaveTableSession();
+      if (result.success) {
         _sessionResponse = null;
+      } else {
+        _errorMessage = result.message;
       }
-      return success;
+      return result;
     } on ApiException catch (e) {
       _errorMessage = e.message;
-      return false;
+      return LeaveTableSessionResult(success: false, message: e.message);
     } catch (e) {
       _errorMessage = 'Failed to end table session.';
-      return false;
+      return LeaveTableSessionResult(
+        success: false,
+        message: 'Failed to end table session.',
+      );
     } finally {
       _isLoading = false;
       notifyListeners();
+    }
+  }
+
+  Future<TableOccupiedDetails> fetchOccupiedChairsDetails(String tableId) async {
+    try {
+      return await _scanRepository.getOccupiedChairsDetails(tableId);
+    } catch (_) {
+      return TableOccupiedDetails(maxCapacity: 4, occupiedChairs: []);
+    }
+  }
+
+  Future<List<String>> fetchOccupiedChairs(String tableId) async {
+    try {
+      return await _scanRepository.getOccupiedChairs(tableId);
+    } catch (_) {
+      return [];
     }
   }
 

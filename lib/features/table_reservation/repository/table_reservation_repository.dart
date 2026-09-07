@@ -4,6 +4,7 @@ import '../../../core/network/api_endpoints.dart';
 import '../../../core/network/api_exceptions.dart';
 import '../models/table_availability_model.dart';
 import '../models/table_reservation_model.dart';
+import '../models/live_table_overview_model.dart';
 
 class TableReservationRepository {
   final ApiClient _apiClient;
@@ -55,12 +56,13 @@ class TableReservationRepository {
         'tableId': tableId,
         'seatsBooked': seatNumbers.length,
         'seatNumbers': seatNumbers,
+        'chairIds': seatNumbers.map((n) => 'Chair $n').toList(),
         'reservationDate': reservationDate,
         'startTime': formattedStartTime,
         'durationHours': (durationMinutes / 60.0),
         'paymentMethod': paymentMethod,
-        if (razorpayOrderId != null) 'razorpayOrderId': razorpayOrderId,
-        if (razorpayPaymentId != null) 'razorpayPaymentId': razorpayPaymentId,
+        'razorpayOrderId':? razorpayOrderId,
+        'razorpayPaymentId':? razorpayPaymentId,
       },
     );
 
@@ -99,5 +101,14 @@ class TableReservationRepository {
     if (data == null) return [];
 
     return data.map((r) => TableReservation.fromJson(r)).toList();
+  }
+
+  Future<List<LiveTableOverviewModel>> getLiveTablesOverview() async {
+    final response = await _apiClient.get(ApiEndpoints.liveTablesOverview);
+
+    final List? data = response.data['data'];
+    if (data == null) return [];
+
+    return data.map((t) => LiveTableOverviewModel.fromJson(t)).toList();
   }
 }

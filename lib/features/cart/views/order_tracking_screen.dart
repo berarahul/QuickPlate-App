@@ -192,7 +192,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
               ),
             ],
           ),
-          if (order.status.toUpperCase() == 'DELIVERED' || order.paymentStatus.toUpperCase() == 'PAID') ...[
+          if ((order.status.toUpperCase() == 'DELIVERED' || order.status.toUpperCase() == 'COMPLETED') &&
+              (order.paymentStatus.toUpperCase() == 'PAID' || order.paymentStatus.toUpperCase() == 'COMPLETED')) ...[
             const SizedBox(height: 16),
             Container(
               width: double.infinity,
@@ -224,14 +225,11 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
                       onPressed: () async {
                         final messenger = ScaffoldMessenger.of(context);
                         final scanProvider = context.read<ScanProvider>();
-                        final success = await scanProvider.leaveTableSession();
+                        final res = await scanProvider.leaveTableSession();
                         messenger.showSnackBar(
                           SnackBar(
-                            content: Text(
-                              success
-                                  ? 'Meal finished! Table session ended.'
-                                  : 'Session ended or already expired.',
-                            ),
+                            content: Text(res.message),
+                            backgroundColor: res.success ? AppColors.success : AppColors.error,
                           ),
                         );
                       },

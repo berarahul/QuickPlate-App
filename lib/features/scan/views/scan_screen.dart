@@ -1,6 +1,8 @@
 import 'dart:async';
+import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../provider/scan_provider.dart';
+import '../../table_reservation/provider/table_reservation_provider.dart';
 import '../../../core/app_exports.dart';
 
 class ScanScreen extends StatefulWidget {
@@ -18,6 +20,59 @@ class _ScanScreenState extends State<ScanScreen> {
   );
   bool _isProcessing = false;
 
+  Future<void> _scanFromGallery() async {
+    if (_isProcessing) return;
+
+    setState(() {
+      _isProcessing = true;
+    });
+
+    try {
+      final ImagePicker picker = ImagePicker();
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+
+      if (image == null) {
+        if (mounted) {
+          setState(() {
+            _isProcessing = false;
+          });
+        }
+        return;
+      }
+
+      final BarcodeCapture? capture =
+          await _scannerController.analyzeImage(image.path);
+
+      if (capture != null && capture.barcodes.isNotEmpty) {
+        final barcode = capture.barcodes.first;
+        final rawValue = barcode.rawValue;
+        if (rawValue != null && rawValue.isNotEmpty) {
+          await _handleScannedRawValue(rawValue);
+        } else {
+          _showGalleryError('No valid QR code content found in selected image.');
+        }
+      } else {
+        _showGalleryError('No valid QR code found in selected image.');
+      }
+    } catch (e) {
+      _showGalleryError('Error reading image: $e');
+    }
+  }
+
+  void _showGalleryError(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      setState(() {
+        _isProcessing = false;
+      });
+    }
+  }
+
   void _onDetect(BarcodeCapture capture) async {
     if (_isProcessing) return;
 
@@ -26,74 +81,162 @@ class _ScanScreenState extends State<ScanScreen> {
       final barcode = barcodes.first;
       final rawValue = barcode.rawValue;
 
-      if (rawValue != null) {
+      if (rawValue != null && rawValue.isNotEmpty) {
         setState(() {
           _isProcessing = true;
         });
 
-        // Extract tableId if the QR code is a URL, else assume it's the tableId directly
-        String tableId = rawValue;
-        if (rawValue.contains('tableId=')) {
-          final uri = Uri.tryParse(rawValue);
-          if (uri != null && uri.queryParameters.containsKey('tableId')) {
-            tableId = uri.queryParameters['tableId']!;
-          }
-        }
+        await _handleScannedRawValue(rawValue);
+      }
+    }
+  }
 
-        // Show Chair Selection Popup Dialog
+  Future<void> _handleScannedRawValue(String rawValue) async {
+    // Extract tableId if the QR code is a URL, else assume it's the tableId directly
+    String tableId = rawValue;
+    if (rawValue.contains('tableId=')) {
+      final uri = Uri.tryParse(rawValue);
+      if (uri != null && uri.queryParameters.containsKey('tableId')) {
+        tableId = uri.queryParameters['tableId']!;
+      }
+    }
+
+    if (!mounted) return;
+
+    try {
+      final scanProvider = context.read<ScanProvider>();
+      final reservationProvider = context.read<TableReservationProvider>();
+      final messenger = ScaffoldMessenger.of(context);
+
+      // Check if user has an advance reservation for this table
+      await reservationProvider.fetchMyReservations();
+      final myReservations = reservationProvider.myReservations;
+      final now = DateTime.now();
+
+      final matchingReservation = myReservations.where((r) {
+        if (r.tableId != tableId || r.reservationStatus != 'booked') return false;
+        try {
+          final end = DateTime.parse(r.endTime);
+          return end.isAfter(now);
+        } catch (_) {
+          return true;
+        }
+      }).firstOrNull;
+
+      if (matchingReservation != null) {
+        // User booked this table outside the canteen -> execute Check-In directly!
+        final checkinRes = await reservationProvider.checkInWithQR(tableId);
         if (mounted) {
-          final scanProvider = context.read<ScanProvider>();
-          final messenger = ScaffoldMessenger.of(context);
-
-          final selectedChairs = await _showChairSelectionDialog(tableId);
-          if (selectedChairs == null || selectedChairs.isEmpty) {
-            setState(() {
-              _isProcessing = false;
-            });
-            return;
-          }
-
-          final success = await scanProvider.startTableSession(
-            tableId,
-            chairIds: selectedChairs,
-          );
-
-          if (mounted) {
-            if (success) {
-              messenger.showSnackBar(
-                SnackBar(
-                  content: Text(
-                    scanProvider.sessionResponse?.message ??
-                        'Table $tableId session started with ${selectedChairs.join(", ")}!',
-                  ),
+          if (checkinRes != null) {
+            messenger.showSnackBar(
+              SnackBar(
+                content: Text(
+                  'Checked in to your reserved Table $tableId (${matchingReservation.seatNumbers.length} Chair/s)!',
                 ),
-              );
-            } else {
-              messenger.showSnackBar(
-                SnackBar(
-                  content: Text(
-                    scanProvider.errorMessage ?? 'Failed to start session.',
-                  ),
-                  backgroundColor: AppColors.error,
+                backgroundColor: AppColors.success,
+              ),
+            );
+          } else {
+            messenger.showSnackBar(
+              SnackBar(
+                content: Text(
+                  reservationProvider.errorMessage ?? 'Check-in failed.',
                 ),
-              );
-              setState(() {
-                _isProcessing = false; // Allow rescanning
-              });
-            }
+                backgroundColor: AppColors.error,
+              ),
+            );
           }
         }
+        return;
+      }
+
+      // If user has a reservation for a DIFFERENT table, notify them
+      final otherTableReservation = myReservations.where((r) {
+        if (r.tableId == tableId || r.reservationStatus != 'booked') return false;
+        try {
+          final end = DateTime.parse(r.endTime);
+          return end.isAfter(now);
+        } catch (_) {
+          return true;
+        }
+      }).firstOrNull;
+
+      if (otherTableReservation != null) {
+        if (mounted) {
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(
+                'Note: You have an advance reservation for Table ${otherTableReservation.tableId}, not Table $tableId.',
+              ),
+              backgroundColor: Colors.orange.shade800,
+            ),
+          );
+        }
+      }
+
+      // Walk-in scan (no advance reservation for this table) -> open Chair Selection Dialog
+      final selectedChairs = await _showChairSelectionDialog(tableId);
+      if (selectedChairs == null || selectedChairs.isEmpty) {
+        return;
+      }
+
+      final success = await scanProvider.startTableSession(
+        tableId,
+        chairIds: selectedChairs,
+      );
+
+      if (mounted) {
+        if (success) {
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(
+                scanProvider.sessionResponse?.message ??
+                    'Table $tableId session started with ${selectedChairs.join(", ")}!',
+              ),
+            ),
+          );
+        } else {
+          messenger.showSnackBar(
+            SnackBar(
+              content: Text(
+                scanProvider.errorMessage ?? 'Failed to start session.',
+              ),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isProcessing = false;
+        });
       }
     }
   }
 
   Future<List<String>?> _showChairSelectionDialog(String tableId) async {
     final scanProvider = context.read<ScanProvider>();
-    final occupied = scanProvider.sessionResponse?.data?.occupiedChairs ?? [];
-    final allChairs = ['Chair 1', 'Chair 2', 'Chair 3', 'Chair 4'];
+    final details = await scanProvider.fetchOccupiedChairsDetails(tableId);
+    final occupied = details.occupiedChairs;
+
+    int totalSeats = details.maxCapacity > 0 ? details.maxCapacity : 4;
+    for (final chairStr in occupied) {
+      final match = RegExp(r'Chair\s*(\d+)').firstMatch(chairStr);
+      if (match != null) {
+        final num = int.tryParse(match.group(1) ?? '');
+        if (num != null && num > totalSeats) {
+          totalSeats = num;
+        }
+      }
+    }
+
+    final allChairs = List.generate(totalSeats, (i) => 'Chair ${i + 1}');
     final availableChairs = allChairs.where((c) => !occupied.contains(c)).toList();
     final initialSelection = availableChairs.isNotEmpty ? {availableChairs.first} : <String>{};
     final selected = Set<String>.from(initialSelection);
+
+    if (!mounted) return null;
 
     return showModalBottomSheet<List<String>>(
       context: context,
@@ -125,40 +268,49 @@ class _ScanScreenState extends State<ScanScreen> {
                     ],
                   ),
                   const SizedBox(height: 20),
-                  Wrap(
-                    spacing: 12,
-                    runSpacing: 12,
-                    children: allChairs.map((chair) {
-                      final isOccupied = occupied.contains(chair);
-                      final isSelected = selected.contains(chair);
-                      return FilterChip(
-                        label: Text(isOccupied ? '$chair (Occupied)' : chair),
-                        selected: isSelected,
-                        selectedColor: AppColors.primary.withValues(alpha: 0.2),
-                        checkmarkColor: AppColors.primary,
-                        disabledColor: Colors.grey.shade800,
-                        labelStyle: TextStyle(
-                          color: isOccupied
-                              ? Colors.grey
-                              : isSelected
-                                  ? AppColors.primary
-                                  : AppColors.textPrimary,
-                          fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-                        ),
-                        onSelected: isOccupied
-                            ? null
-                            : (val) {
-                                setModalState(() {
-                                  if (val) {
-                                    selected.add(chair);
-                                  } else {
-                                    if (selected.length > 1) selected.remove(chair);
-                                  }
-                                });
-                              },
-                      );
-                    }).toList(),
-                  ),
+                  if (availableChairs.isEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.red.shade900.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.red.shade700),
+                      ),
+                      child: Text(
+                        'All chairs on Table $tableId are currently booked or occupied.',
+                        style: TextStyle(color: Colors.red.shade200, fontWeight: FontWeight.w600),
+                      ),
+                    )
+                  else
+                    Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: availableChairs.map((chair) {
+                        final isSelected = selected.contains(chair);
+                        return FilterChip(
+                          label: Text(chair),
+                          selected: isSelected,
+                          selectedColor: AppColors.primary.withValues(alpha: 0.2),
+                          checkmarkColor: AppColors.primary,
+                          labelStyle: TextStyle(
+                            color: isSelected
+                                ? AppColors.primary
+                                : AppColors.textPrimary,
+                            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                          ),
+                          onSelected: (val) {
+                            setModalState(() {
+                              if (val) {
+                                selected.add(chair);
+                              } else {
+                                if (selected.length > 1) selected.remove(chair);
+                              }
+                            });
+                          },
+                        );
+                      }).toList(),
+                    ),
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
@@ -267,13 +419,9 @@ class _ScanScreenState extends State<ScanScreen> {
                         ],
                       ),
                       const Spacer(),
-                      ValueListenableBuilder<MobileScannerState>(
-                        valueListenable: _scannerController,
-                        builder: (context, state, child) {
-                          final on =
-                              state.torchState == TorchState.on ||
-                              state.torchState == TorchState.auto;
-                          return Container(
+                      Row(
+                        children: [
+                          Container(
                             width: 44,
                             height: 44,
                             decoration: BoxDecoration(
@@ -283,16 +431,44 @@ class _ScanScreenState extends State<ScanScreen> {
                             ),
                             child: IconButton(
                               padding: EdgeInsets.zero,
-                              icon: Icon(
-                                on
-                                    ? Icons.flash_on_rounded
-                                    : Icons.flash_off_rounded,
+                              tooltip: 'Scan QR from Gallery',
+                              icon: const Icon(
+                                Icons.photo_library_rounded,
                                 size: 20,
                               ),
-                              onPressed: () => _scannerController.toggleTorch(),
+                              onPressed: _scanFromGallery,
                             ),
-                          );
-                        },
+                          ),
+                          const SizedBox(width: 8),
+                          ValueListenableBuilder<MobileScannerState>(
+                            valueListenable: _scannerController,
+                            builder: (context, state, child) {
+                              final on =
+                                  state.torchState == TorchState.on ||
+                                  state.torchState == TorchState.auto;
+                              return Container(
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: AppColors.surface,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: AppColors.border),
+                                ),
+                                child: IconButton(
+                                  padding: EdgeInsets.zero,
+                                  tooltip: 'Toggle Flash',
+                                  icon: Icon(
+                                    on
+                                        ? Icons.flash_on_rounded
+                                        : Icons.flash_off_rounded,
+                                    size: 20,
+                                  ),
+                                  onPressed: () => _scannerController.toggleTorch(),
+                                ),
+                              );
+                            },
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -364,41 +540,84 @@ class _ScanScreenState extends State<ScanScreen> {
                               ),
                             ),
                             Positioned(
-                              bottom: 48,
+                              bottom: 24,
                               left: 24,
                               right: 24,
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
-                                  vertical: 12,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.black.withValues(alpha: 0.6),
-                                  borderRadius: BorderRadius.circular(14),
-                                ),
-                                child: const Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.qr_code_2_rounded,
-                                      color: Colors.white,
-                                      size: 18,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 10,
                                     ),
-                                    SizedBox(width: 8),
-                                    Flexible(
-                                      child: Text(
-                                        'Align the table QR code within the frame',
-                                        textAlign: TextAlign.center,
-                                        style: TextStyle(
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withValues(alpha: 0.6),
+                                      borderRadius: BorderRadius.circular(14),
+                                    ),
+                                    child: const Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.qr_code_2_rounded,
                                           color: Colors.white,
-                                          fontSize: 13,
-                                          fontWeight: FontWeight.w500,
+                                          size: 18,
+                                        ),
+                                        SizedBox(width: 8),
+                                        Flexible(
+                                          child: Text(
+                                            'Align the table QR code within the frame',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: _scanFromGallery,
+                                      borderRadius: BorderRadius.circular(14),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 10,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: AppColors.primary,
+                                          borderRadius: BorderRadius.circular(14),
+                                        ),
+                                        child: const Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.photo_library_rounded,
+                                              color: Colors.white,
+                                              size: 18,
+                                            ),
+                                            SizedBox(width: 8),
+                                            Text(
+                                              'Scan QR from Gallery',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 13,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
                               ),
                             ),
                           ],
@@ -597,10 +816,14 @@ class _ScanScreenState extends State<ScanScreen> {
               icon: const Icon(Icons.exit_to_app_rounded, size: 16),
               label: const Text('End Table Session', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
               onPressed: () async {
-                final success = await scanProvider.leaveTableSession();
-                if (context.mounted && success) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Table session ended.')),
+                final messenger = ScaffoldMessenger.of(context);
+                final res = await scanProvider.leaveTableSession();
+                if (context.mounted) {
+                  messenger.showSnackBar(
+                    SnackBar(
+                      content: Text(res.message),
+                      backgroundColor: res.success ? AppColors.success : AppColors.error,
+                    ),
                   );
                 }
               },

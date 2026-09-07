@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:quick_plate/features/dashboard/dashboard_tab_controller.dart';
+import '../../table_reservation/views/live_table_view_screen.dart';
 import '../../scan/views/scan_screen.dart';
 import '../../menu/views/menu_screen.dart';
 import '../../cart/views/cart_screen.dart';
@@ -16,15 +17,17 @@ class DashboardScreen extends StatefulWidget {
 class _DashboardScreenState extends State<DashboardScreen> {
   final DashboardTabController _tabController = DashboardTabController();
 
-  static const _labels = ['Menu', 'Scan', 'Cart', 'Profile'];
+  static const _labels = ['Menu', 'Live View', 'Scan', 'Cart', 'Profile'];
   static const _icons = [
     Icons.restaurant_menu_rounded,
+    Icons.table_restaurant_outlined,
     Icons.qr_code_scanner_rounded,
     Icons.shopping_bag_outlined,
     Icons.person_outline_rounded,
   ];
   static const _iconsActive = [
     Icons.restaurant_menu_rounded,
+    Icons.table_restaurant_rounded,
     Icons.qr_code_scanner_rounded,
     Icons.shopping_bag_rounded,
     Icons.person_rounded,
@@ -53,8 +56,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final selectedIndex = _tabController.index;
 
     final screens = [
-      MenuScreen(onCartTap: () => _tabController.switchTo(2)),
-      ScanScreen(isActive: selectedIndex == 1),
+      MenuScreen(onCartTap: () => _tabController.switchTo(3)),
+      const LiveTableViewScreen(),
+      ScanScreen(isActive: selectedIndex == 2),
       const CartScreen(),
       const ProfileScreen(),
     ];

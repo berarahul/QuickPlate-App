@@ -29,6 +29,7 @@ class AvailableTable {
   final String tableId;
   final int maxCapacity;
   final List<int> reservedSeatNumbers;
+  final List<int> sessionRunningSeatNumbers;
   final List<int> availableSeats;
   final CostBreakdown? costBreakdown;
 
@@ -37,6 +38,7 @@ class AvailableTable {
     required this.tableId,
     required this.maxCapacity,
     required this.reservedSeatNumbers,
+    required this.sessionRunningSeatNumbers,
     required this.availableSeats,
     this.costBreakdown,
   });
@@ -48,18 +50,29 @@ class AvailableTable {
     List<int> reservedSeats = [];
     if (json['reservedSeatNumbers'] != null) {
       reservedSeats = List<int>.from(json['reservedSeatNumbers']);
-    } else {
+    }
+
+    List<int> sessionRunningSeats = [];
+    if (json['sessionRunningSeatNumbers'] != null) {
+      sessionRunningSeats = List<int>.from(json['sessionRunningSeatNumbers']);
+    }
+
+    if (json['reservedSeatNumbers'] == null && json['sessionRunningSeatNumbers'] == null) {
       for (int i = 1; i <= occupiedCount; i++) {
         reservedSeats.add(i);
       }
     }
 
     List<int> availSeats = [];
-    if (json['availableSeats'] is List) {
+    if (json['availableSeatNumbers'] is List) {
+      availSeats = List<int>.from(json['availableSeatNumbers']);
+    } else if (json['availableSeats'] is List) {
       availSeats = List<int>.from(json['availableSeats']);
     } else {
       for (int i = 1; i <= capacity; i++) {
-        if (!reservedSeats.contains(i)) availSeats.add(i);
+        if (!reservedSeats.contains(i) && !sessionRunningSeats.contains(i)) {
+          availSeats.add(i);
+        }
       }
     }
 
@@ -81,6 +94,7 @@ class AvailableTable {
       tableId: json['tableId'] ?? '',
       maxCapacity: capacity,
       reservedSeatNumbers: reservedSeats,
+      sessionRunningSeatNumbers: sessionRunningSeats,
       availableSeats: availSeats,
       costBreakdown: breakdown,
     );
