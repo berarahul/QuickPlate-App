@@ -304,7 +304,7 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
             children: [
               Text('Select Custom Time Range', style: AppTextStyles.titleSmall),
               Text(
-                'Canteen Hours: 09:00 - 17:00',
+                'Canteen Hours: ${provider.availabilityResponse?.openingTime ?? "09:00"} - ${provider.availabilityResponse?.closingTime ?? "17:00"}',
                 style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, fontSize: 11),
               ),
             ],
