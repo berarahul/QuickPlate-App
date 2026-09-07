@@ -43,6 +43,8 @@ class TableReservationRepository {
     required String startTime,
     int durationMinutes = 60,
     String paymentMethod = 'offline',
+    String? razorpayOrderId,
+    String? razorpayPaymentId,
   }) async {
     final timeStr = startTime.length == 5 ? startTime : startTime.padLeft(5, '0');
     final formattedStartTime = '${reservationDate}T$timeStr:00';
@@ -57,6 +59,8 @@ class TableReservationRepository {
         'startTime': formattedStartTime,
         'durationHours': (durationMinutes / 60.0),
         'paymentMethod': paymentMethod,
+        if (razorpayOrderId != null) 'razorpayOrderId': razorpayOrderId,
+        if (razorpayPaymentId != null) 'razorpayPaymentId': razorpayPaymentId,
       },
     );
 

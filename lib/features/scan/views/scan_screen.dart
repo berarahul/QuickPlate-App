@@ -87,8 +87,12 @@ class _ScanScreenState extends State<ScanScreen> {
   }
 
   Future<List<String>?> _showChairSelectionDialog(String tableId) async {
-    final availableChairs = ['Chair 1', 'Chair 2', 'Chair 3', 'Chair 4'];
-    final selected = <String>{'Chair 1'};
+    final scanProvider = context.read<ScanProvider>();
+    final occupied = scanProvider.sessionResponse?.data?.occupiedChairs ?? [];
+    final allChairs = ['Chair 1', 'Chair 2', 'Chair 3', 'Chair 4'];
+    final availableChairs = allChairs.where((c) => !occupied.contains(c)).toList();
+    final initialSelection = availableChairs.isNotEmpty ? {availableChairs.first} : <String>{};
+    final selected = Set<String>.from(initialSelection);
 
     return showModalBottomSheet<List<String>>(
       context: context,
@@ -97,9 +101,9 @@ class _ScanScreenState extends State<ScanScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (context) {
+      builder: (modalCtx) {
         return StatefulBuilder(
-          builder: (context, setModalState) {
+          builder: (modalCtx, setModalState) {
             return Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
@@ -123,26 +127,34 @@ class _ScanScreenState extends State<ScanScreen> {
                   Wrap(
                     spacing: 12,
                     runSpacing: 12,
-                    children: availableChairs.map((chair) {
+                    children: allChairs.map((chair) {
+                      final isOccupied = occupied.contains(chair);
                       final isSelected = selected.contains(chair);
                       return FilterChip(
-                        label: Text(chair),
+                        label: Text(isOccupied ? '$chair (Occupied)' : chair),
                         selected: isSelected,
                         selectedColor: AppColors.primary.withValues(alpha: 0.2),
                         checkmarkColor: AppColors.primary,
+                        disabledColor: Colors.grey.shade800,
                         labelStyle: TextStyle(
-                          color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                          color: isOccupied
+                              ? Colors.grey
+                              : isSelected
+                                  ? AppColors.primary
+                                  : AppColors.textPrimary,
                           fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                         ),
-                        onSelected: (val) {
-                          setModalState(() {
-                            if (val) {
-                              selected.add(chair);
-                            } else {
-                              if (selected.length > 1) selected.remove(chair);
-                            }
-                          });
-                        },
+                        onSelected: isOccupied
+                            ? null
+                            : (val) {
+                                setModalState(() {
+                                  if (val) {
+                                    selected.add(chair);
+                                  } else {
+                                    if (selected.length > 1) selected.remove(chair);
+                                  }
+                                });
+                              },
                       );
                     }).toList(),
                   ),
@@ -151,13 +163,17 @@ class _ScanScreenState extends State<ScanScreen> {
                     width: double.infinity,
                     height: 50,
                     child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context, selected.toList()),
+                      onPressed: selected.isEmpty
+                          ? null
+                          : () => Navigator.pop(modalCtx, selected.toList()),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
                       child: Text(
-                        'Start Session (${selected.length} Chair${selected.length > 1 ? "s" : ""})',
+                        selected.isEmpty
+                            ? 'All Chairs Occupied'
+                            : 'Start Session (${selected.length} Chair${selected.length > 1 ? "s" : ""})',
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
                     ),
@@ -272,6 +288,8 @@ class _ScanScreenState extends State<ScanScreen> {
                     ],
                   ),
                 ),
+                if (scanProvider.sessionResponse?.data?.session != null)
+                  _buildActiveSessionCard(context, scanProvider),
                 Expanded(
                   child: scanProvider.isLoading
                       ? Column(
@@ -439,5 +457,86 @@ class _ScanScreenState extends State<ScanScreen> {
         child: Container(width: thick, height: size, color: color),
       ),
     ];
+  }
+
+  Widget _buildActiveSessionCard(BuildContext context, ScanProvider scanProvider) {
+    final data = scanProvider.sessionResponse?.data;
+    final session = data?.session;
+    final occupied = data?.occupiedChairs ?? [];
+    if (session == null) return const SizedBox.shrink();
+
+    final myChairs = (session.chairIds != null && session.chairIds!.isNotEmpty)
+        ? session.chairIds!.join(', ')
+        : 'Chair 1';
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.primary),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.check_circle_rounded, color: AppColors.success, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                'Active Session: Table ${session.tableId}',
+                style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryTint,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text('SEATED', style: TextStyle(color: AppColors.primary, fontSize: 10, fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'Your Chair(s): $myChairs',
+            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
+          ),
+          if (occupied.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                'All Active Chairs on Table: ${occupied.join(", ")}',
+                style: AppTextStyles.bodySmall,
+              ),
+            ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            height: 38,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.error,
+                side: BorderSide(color: AppColors.error),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                padding: EdgeInsets.zero,
+              ),
+              icon: const Icon(Icons.exit_to_app_rounded, size: 16),
+              label: const Text('End Table Session', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
+              onPressed: () async {
+                final success = await scanProvider.leaveTableSession();
+                if (context.mounted && success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Table session ended.')),
+                  );
+                }
+              },
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

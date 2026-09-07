@@ -499,24 +499,27 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.table_restaurant_rounded,
-                            size: 16,
-                            color: isSelected ? AppColors.primary : AppColors.textSecondary,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Table ${table.tableId}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                              color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.table_restaurant_rounded,
+                              size: 16,
+                              color: isSelected ? AppColors.primary : AppColors.textSecondary,
                             ),
-                          ),
-                        ],
+                            const SizedBox(width: 4),
+                            Text(
+                              'Table ${table.tableId}',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                                color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                       const SizedBox(height: 2),
                       Text(
@@ -771,7 +774,7 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
       ),
       builder: (ctx) {
         return StatefulBuilder(
-          builder: (context, setModalState) {
+          builder: (modalCtx, setModalState) {
             return Padding(
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
               child: Column(
@@ -1015,7 +1018,7 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                 text: 'Pay ₹${depositAmount.toStringAsFixed(0)} via Razorpay',
                 onPressed: () {
                   Navigator.pop(ctx);
-                  _executeReservation(context, provider, 'razorpay');
+                  _executeReservation(context, provider, depositAmount);
                 },
               ),
             ],
@@ -1025,17 +1028,20 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
     );
   }
 
-  Future<void> _executeReservation(BuildContext context, TableReservationProvider provider, String paymentMethod) async {
-    final messenger = ScaffoldMessenger.of(context);
-    final reservation = await provider.reserveSeats(paymentMethod: paymentMethod);
-    if (!context.mounted) return;
-    if (reservation != null) {
-      _showReservationSuccessModal(context, reservation);
-    } else if (provider.errorMessage != null) {
-      messenger.showSnackBar(
-        SnackBar(content: Text(provider.errorMessage!), backgroundColor: AppColors.error),
-      );
-    }
+  Future<void> _executeReservation(BuildContext context, TableReservationProvider provider, double depositAmount) async {
+    await provider.initiateRazorpayReservation(
+      depositAmount: depositAmount,
+      onCompleted: (reservation, errorMessage) {
+        if (!context.mounted) return;
+        if (reservation != null) {
+          _showReservationSuccessModal(context, reservation);
+        } else if (errorMessage != null) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(errorMessage), backgroundColor: AppColors.error),
+          );
+        }
+      },
+    );
   }
 
   Widget _buildBottomCheckoutBar(BuildContext context, TableReservationProvider provider) {

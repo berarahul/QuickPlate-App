@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/table_availability_model.dart';
 import '../models/table_reservation_model.dart';
 import '../repository/table_reservation_repository.dart';
@@ -6,9 +8,21 @@ import '../../../core/network/api_exceptions.dart';
 
 class TableReservationProvider extends ChangeNotifier {
   final TableReservationRepository _repository;
+  late Razorpay _razorpay;
+  Function(TableReservation? reservation, String? errorMessage)? _onPaymentCompleted;
 
   TableReservationProvider(this._repository) {
     _initCurrentTime();
+    _razorpay = Razorpay();
+    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+  }
+
+  @override
+  void dispose() {
+    _razorpay.clear();
+    super.dispose();
   }
 
   void _initCurrentTime() {
@@ -174,6 +188,79 @@ class TableReservationProvider extends ChangeNotifier {
     } finally {
       _setLoading(false);
     }
+  }
+
+  Future<void> initiateRazorpayReservation({
+    required double depositAmount,
+    required Function(TableReservation? reservation, String? errorMessage) onCompleted,
+  }) async {
+    if (_selectedTableId == null || _selectedSeats.isEmpty) {
+      onCompleted(null, 'Please select a table and at least one seat');
+      return;
+    }
+
+    _onPaymentCompleted = onCompleted;
+    _setLoading(true);
+
+    final key = dotenv.env['RAZORPAY_KEY_ID'] ?? '';
+    if (key.isEmpty || key == 'rzp_test_your_key_here') {
+      // Direct fallback if key is placeholder or unconfigured
+      final reservation = await reserveSeats(paymentMethod: 'RAZORPAY');
+      _setLoading(false);
+      onCompleted(reservation, reservation == null ? errorMessage : null);
+      return;
+    }
+
+    var options = {
+      'key': key,
+      'amount': (depositAmount * 100).toInt(),
+      'name': 'Quick Plate',
+      'description': 'Table Booking Deposit',
+      'timeout': 300,
+      'prefill': {'contact': '', 'email': ''},
+    };
+
+    try {
+      _setLoading(false);
+      _razorpay.open(options);
+    } catch (e) {
+      _setLoading(false);
+      onCompleted(null, 'Could not open Razorpay gateway: $e');
+    }
+  }
+
+  void _handlePaymentSuccess(PaymentSuccessResponse response) async {
+    _setLoading(true);
+    try {
+      final reservation = await _repository.reserveTable(
+        tableId: _selectedTableId!,
+        seatNumbers: _selectedSeats.toList()..sort(),
+        reservationDate: _selectedDate,
+        startTime: _selectedStartTime,
+        durationMinutes: selectedDuration,
+        paymentMethod: 'RAZORPAY',
+        razorpayOrderId: response.orderId,
+        razorpayPaymentId: response.paymentId,
+      );
+
+      _activeReservation = reservation;
+      await fetchMyReservations();
+      _onPaymentCompleted?.call(reservation, null);
+    } on ApiException catch (e) {
+      _onPaymentCompleted?.call(null, e.message);
+    } catch (e) {
+      _onPaymentCompleted?.call(null, 'Failed to confirm reservation: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  void _handlePaymentError(PaymentFailureResponse response) {
+    _onPaymentCompleted?.call(null, response.message ?? 'Payment Failed');
+  }
+
+  void _handleExternalWallet(ExternalWalletResponse response) {
+    _onPaymentCompleted?.call(null, 'External wallet not supported');
   }
 
   Future<TableReservation?> checkInWithQR(String qrData) async {

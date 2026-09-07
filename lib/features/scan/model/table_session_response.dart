@@ -17,8 +17,9 @@ class TableSessionResponse {
 class SessionData {
   final TableSession? session;
   final TableInfo? table;
+  final List<String>? occupiedChairs;
 
-  SessionData({this.session, this.table});
+  SessionData({this.session, this.table, this.occupiedChairs});
 
   factory SessionData.fromJson(Map<String, dynamic> json) {
     return SessionData(
@@ -26,6 +27,9 @@ class SessionData {
           ? TableSession.fromJson(json['session'])
           : null,
       table: json['table'] != null ? TableInfo.fromJson(json['table']) : null,
+      occupiedChairs: json['occupiedChairs'] != null
+          ? List<String>.from(json['occupiedChairs'])
+          : null,
     );
   }
 }
@@ -37,6 +41,7 @@ class TableSession {
   final String? expiresAt;
   final bool? isActive;
   final String? tableId;
+  final List<String>? chairIds;
   final String? updatedAt;
 
   TableSession({
@@ -46,6 +51,7 @@ class TableSession {
     this.expiresAt,
     this.isActive,
     this.tableId,
+    this.chairIds,
     this.updatedAt,
   });
 
@@ -57,6 +63,9 @@ class TableSession {
       expiresAt: json['expiresAt'],
       isActive: json['isActive'],
       tableId: json['tableId'],
+      chairIds: json['chairIds'] != null
+          ? List<String>.from(json['chairIds'])
+          : [],
       updatedAt: json['updatedAt'],
     );
   }
