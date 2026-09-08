@@ -71,10 +71,14 @@ class CustomElevatedButton extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               if (leading != null) ...[leading!, const SizedBox(width: 8)],
-              Text(
-                text,
-                style:
-                    textStyle ?? AppTextStyles.buttonText.copyWith(color: fg),
+              Flexible(
+                child: Text(
+                  text,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style:
+                      textStyle ?? AppTextStyles.buttonText.copyWith(color: fg),
+                ),
               ),
             ],
           );

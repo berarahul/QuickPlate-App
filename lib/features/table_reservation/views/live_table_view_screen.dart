@@ -21,7 +21,11 @@ class _LiveTableViewScreenState extends State<LiveTableViewScreen> {
   @override
   void initState() {
     super.initState();
-    _fetchLiveOverview();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _fetchLiveOverview();
+      }
+    });
     // Auto refresh every 10 seconds for real-time live view
     _pollingTimer = Timer.periodic(const Duration(seconds: 10), (_) {
       if (mounted) {
