@@ -206,6 +206,7 @@ class TableReservationProvider extends ChangeNotifier {
 
       _activeReservation = reservation;
       await fetchMyReservations();
+      await fetchLiveTablesOverview();
       return reservation;
     } on ApiException catch (e) {
       _errorMessage = e.message;

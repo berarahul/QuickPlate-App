@@ -108,13 +108,13 @@ class _ScanScreenState extends State<ScanScreen> {
       final reservationProvider = context.read<TableReservationProvider>();
       final messenger = ScaffoldMessenger.of(context);
 
-      // Check if user has an advance reservation for this table
+      // Strict Validation: disallow QR scan for users who booked a table in advance
       await reservationProvider.fetchMyReservations();
       final myReservations = reservationProvider.myReservations;
       final now = DateTime.now();
 
-      final matchingReservation = myReservations.where((r) {
-        if (r.tableId != tableId || r.reservationStatus != 'booked') return false;
+      final advanceReservation = myReservations.where((r) {
+        if (r.reservationStatus == 'cancelled') return false;
         try {
           final end = DateTime.parse(r.endTime);
           return end.isAfter(now);
@@ -123,55 +123,19 @@ class _ScanScreenState extends State<ScanScreen> {
         }
       }).firstOrNull;
 
-      if (matchingReservation != null) {
-        // User booked this table outside the canteen -> execute Check-In directly!
-        final checkinRes = await reservationProvider.checkInWithQR(tableId);
-        if (mounted) {
-          if (checkinRes != null) {
-            messenger.showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Checked in to your reserved Table $tableId (${matchingReservation.seatNumbers.length} Chair/s)!',
-                ),
-                backgroundColor: AppColors.success,
-              ),
-            );
-          } else {
-            messenger.showSnackBar(
-              SnackBar(
-                content: Text(
-                  reservationProvider.errorMessage ?? 'Check-in failed.',
-                ),
-                backgroundColor: AppColors.error,
-              ),
-            );
-          }
-        }
-        return;
-      }
-
-      // If user has a reservation for a DIFFERENT table, notify them
-      final otherTableReservation = myReservations.where((r) {
-        if (r.tableId == tableId || r.reservationStatus != 'booked') return false;
-        try {
-          final end = DateTime.parse(r.endTime);
-          return end.isAfter(now);
-        } catch (_) {
-          return true;
-        }
-      }).firstOrNull;
-
-      if (otherTableReservation != null) {
+      if (advanceReservation != null) {
         if (mounted) {
           messenger.showSnackBar(
             SnackBar(
-              content: Text(
-                'Note: You have an advance reservation for Table ${otherTableReservation.tableId}, not Table $tableId.',
+              content: const Text(
+                'You already have an advance table reservation. If you want to book another chair, please book by app only.',
               ),
-              backgroundColor: Colors.orange.shade800,
+              backgroundColor: AppColors.error,
+              duration: const Duration(seconds: 5),
             ),
           );
         }
+        return;
       }
 
       // Walk-in scan (no advance reservation for this table) -> open Chair Selection Dialog
