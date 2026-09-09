@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import 'app_animations.dart';
 
 /// Primary call-to-action button used across the app.
 ///
@@ -93,22 +94,25 @@ class CustomElevatedButton extends StatelessWidget {
 
     final elevation = variant == ButtonVariant.filled ? 0.0 : 0.0;
 
-    final inner = Material(
-      color: isDisabled ? AppColors.textTertiary.withValues(alpha: 0.5) : bg,
-      elevation: elevation,
-      shadowColor: AppColors.primary.withValues(alpha: 0.25),
-      shape: shape.copyWith(side: side),
-      child: InkWell(
-        onTap: isDisabled ? null : onPressed,
-        borderRadius: BorderRadius.circular(borderRadius),
-        child: Container(
-          width: expanded ? double.infinity : width,
-          height: height ?? 52,
-          padding:
-              padding ??
-              const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          alignment: Alignment.center,
-          child: child,
+    final inner = AppBounceable(
+      scaleFactor: 0.97,
+      child: Material(
+        color: isDisabled ? AppColors.textTertiary.withValues(alpha: 0.5) : bg,
+        elevation: elevation,
+        shadowColor: AppColors.primary.withValues(alpha: 0.25),
+        shape: shape.copyWith(side: side),
+        child: InkWell(
+          onTap: isDisabled ? null : onPressed,
+          borderRadius: BorderRadius.circular(borderRadius),
+          child: Container(
+            width: expanded ? double.infinity : width,
+            height: height ?? 52,
+            padding:
+                padding ??
+                const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+            alignment: Alignment.center,
+            child: child,
+          ),
         ),
       ),
     );

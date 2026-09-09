@@ -58,8 +58,16 @@ class ProfileScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+        child: RefreshIndicator(
+          onRefresh: () async {
+            if (!context.mounted) return;
+            await context.read<AuthProvider>().loadUserInfo();
+          },
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+
+
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -208,8 +216,11 @@ class ProfileScreen extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
+
 
   Widget _buildProfileOption({
     required IconData icon,

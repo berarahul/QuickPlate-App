@@ -2,6 +2,7 @@ import 'package:qr_flutter/qr_flutter.dart';
 import '../../../core/app_exports.dart';
 import '../provider/table_reservation_provider.dart';
 import '../models/table_reservation_model.dart';
+import 'live_reservation_countdown.dart';
 
 class MyReservationsScreen extends StatefulWidget {
   const MyReservationsScreen({super.key});
@@ -35,16 +36,18 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: QrImageView(
-                data: qrData,
-                version: QrVersions.auto,
-                size: 200.0,
+            AppPopScale(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: QrImageView(
+                  data: qrData,
+                  version: QrVersions.auto,
+                  size: 200.0,
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -95,122 +98,132 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                         final isBooked = res.reservationStatus == 'booked';
                         final isCheckedIn = res.reservationStatus == 'checked_in';
 
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: AppColors.surface,
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: isBooked
-                                  ? AppColors.primary
-                                  : isCheckedIn
-                                      ? AppColors.success
-                                      : AppColors.border,
+                        return AppFadeInSlide(
+                          delay: Duration(milliseconds: index * 50),
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 16),
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppColors.surface,
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isBooked
+                                    ? AppColors.primary
+                                    : isCheckedIn
+                                        ? AppColors.success
+                                        : AppColors.border,
+                              ),
                             ),
-                          ),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        padding: const EdgeInsets.all(8),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.primaryTint,
-                                          borderRadius: BorderRadius.circular(10),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.all(8),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.primaryTint,
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          child: Icon(Icons.table_restaurant_rounded, color: AppColors.primary, size: 20),
                                         ),
-                                        child: Icon(Icons.table_restaurant_rounded, color: AppColors.primary, size: 20),
-                                      ),
-                                      const SizedBox(width: 10),
-                                      Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            'Table ${res.tableId}',
-                                            style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold),
-                                          ),
-                                          Text(
-                                            'Seats: ${res.seatNumbers.join(", ")}',
-                                            style: AppTextStyles.bodySmall,
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                    decoration: BoxDecoration(
-                                      color: isCheckedIn
-                                          ? AppColors.successTint
-                                          : isBooked
-                                              ? AppColors.primaryTint
-                                              : Colors.grey.shade800,
-                                      borderRadius: BorderRadius.circular(20),
+                                        const SizedBox(width: 10),
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Table ${res.tableId}',
+                                              style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold),
+                                            ),
+                                            Text(
+                                              'Seats: ${res.seatNumbers.join(", ")}',
+                                              style: AppTextStyles.bodySmall,
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
-                                    child: Text(
-                                      res.reservationStatus.toUpperCase(),
-                                      style: TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.bold,
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                      decoration: BoxDecoration(
                                         color: isCheckedIn
-                                            ? AppColors.success
+                                            ? AppColors.successTint
                                             : isBooked
-                                                ? AppColors.primary
-                                                : Colors.grey.shade400,
+                                                ? AppColors.primaryTint
+                                                : Colors.grey.shade800,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        res.reservationStatus.toUpperCase(),
+                                        style: TextStyle(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: isCheckedIn
+                                              ? AppColors.success
+                                              : isBooked
+                                                  ? AppColors.primary
+                                                  : Colors.grey.shade400,
+                                        ),
                                       ),
                                     ),
+                                  ],
+                                ),
+                                const Divider(height: 24),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Icon(Icons.calendar_today_rounded, size: 14, color: AppColors.textSecondary),
+                                        const SizedBox(width: 6),
+                                        Text(DateTimeFormatter.formatDate(res.reservationDate), style: AppTextStyles.bodySmall),
+                                      ],
+                                    ),
+                                    Row(
+                                      children: [
+                                        Icon(Icons.access_time_rounded, size: 14, color: AppColors.textSecondary),
+                                        const SizedBox(width: 6),
+                                        Text(DateTimeFormatter.formatTimeRange(res.startTime, res.endTime), style: AppTextStyles.bodySmall),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                                if (isBooked || isCheckedIn) ...[
+                                  const SizedBox(height: 10),
+                                  LiveReservationCountdown(
+                                    startTime: res.startTime,
+                                    endTime: res.endTime,
                                   ),
                                 ],
-                              ),
-                              const Divider(height: 24),
-                               Row(
-                                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                 children: [
-                                   Row(
-                                     children: [
-                                       Icon(Icons.calendar_today_rounded, size: 14, color: AppColors.textSecondary),
-                                       const SizedBox(width: 6),
-                                       Text(DateTimeFormatter.formatDate(res.reservationDate), style: AppTextStyles.bodySmall),
-                                     ],
-                                   ),
-                                   Row(
-                                     children: [
-                                       Icon(Icons.access_time_rounded, size: 14, color: AppColors.textSecondary),
-                                       const SizedBox(width: 6),
-                                       Text(DateTimeFormatter.formatTimeRange(res.startTime, res.endTime), style: AppTextStyles.bodySmall),
-                                     ],
-                                   ),
-                                 ],
-                               ),
-                              const SizedBox(height: 12),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(
-                                    'Deposit Paid: ₹${res.depositPaidAmount.toStringAsFixed(0)}',
-                                    style: AppTextStyles.bodySmall.copyWith(
-                                      color: AppColors.primary,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  if (isBooked || isCheckedIn)
-                                    ElevatedButton.icon(
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: AppColors.primary,
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                const SizedBox(height: 12),
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      'Deposit Paid: ₹${res.depositPaidAmount.toStringAsFixed(0)}',
+                                      style: AppTextStyles.bodySmall.copyWith(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.bold,
                                       ),
-                                      icon: const Icon(Icons.qr_code_rounded, size: 16, color: Colors.black),
-                                      label: const Text('Show QR', style: TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.bold)),
-                                      onPressed: () => _showQrDialog(context, res),
                                     ),
-                                ],
-                              ),
-                            ],
+                                    if (isBooked || isCheckedIn)
+                                      ElevatedButton.icon(
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: AppColors.primary,
+                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                        ),
+                                        icon: const Icon(Icons.qr_code_rounded, size: 16, color: Colors.black),
+                                        label: const Text('Show QR', style: TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.bold)),
+                                        onPressed: () => _showQrDialog(context, res),
+                                      ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         );
                       },
@@ -220,3 +233,4 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
     );
   }
 }
+

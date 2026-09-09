@@ -1,11 +1,12 @@
-import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/live_table_overview_model.dart';
 import '../provider/table_reservation_provider.dart';
 import '../../table_reservation/views/table_reservation_screen.dart';
+import 'live_reservation_countdown.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
+import '../../../core/widgets/app_animations.dart';
 
 class LiveTableViewScreen extends StatefulWidget {
   const LiveTableViewScreen({super.key});
@@ -15,7 +16,6 @@ class LiveTableViewScreen extends StatefulWidget {
 }
 
 class _LiveTableViewScreenState extends State<LiveTableViewScreen> {
-  Timer? _pollingTimer;
   String _selectedFilter = 'ALL'; // ALL, AVAILABLE, PARTIAL, FULL, BLOCKED
 
   @override
@@ -26,23 +26,17 @@ class _LiveTableViewScreenState extends State<LiveTableViewScreen> {
         _fetchLiveOverview();
       }
     });
-    // Auto refresh every 10 seconds for real-time live view
-    _pollingTimer = Timer.periodic(const Duration(seconds: 10), (_) {
-      if (mounted) {
-        context.read<TableReservationProvider>().fetchLiveTablesOverview();
-      }
-    });
   }
 
-  @override
-  void dispose() {
-    _pollingTimer?.cancel();
-    super.dispose();
-  }
 
   Future<void> _fetchLiveOverview() async {
-    await context.read<TableReservationProvider>().fetchLiveTablesOverview();
+    if (!mounted) return;
+    final provider = context.read<TableReservationProvider>();
+    await provider.fetchLiveTablesOverview();
+    await provider.fetchMyReservations();
   }
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -51,12 +45,14 @@ class _LiveTableViewScreenState extends State<LiveTableViewScreen> {
       appBar: AppBar(
         title: Row(
           children: [
-            Container(
-              width: 10,
-              height: 10,
-              decoration: const BoxDecoration(
-                color: Colors.greenAccent,
-                shape: BoxShape.circle,
+            AppPulseAnimation(
+              child: Container(
+                width: 10,
+                height: 10,
+                decoration: const BoxDecoration(
+                  color: Colors.greenAccent,
+                  shape: BoxShape.circle,
+                ),
               ),
             ),
             const SizedBox(width: 8),
@@ -134,6 +130,56 @@ class _LiveTableViewScreenState extends State<LiveTableViewScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Active Reservation Banner with Live Countdown Timer
+                  if (provider.myReservations.any((r) => r.reservationStatus == 'booked' || r.reservationStatus == 'checked_in')) ...[
+                    Builder(
+                      builder: (context) {
+                        final activeRes = provider.myReservations.firstWhere(
+                          (r) => r.reservationStatus == 'booked' || r.reservationStatus == 'checked_in',
+                        );
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 16),
+                          padding: const EdgeInsets.all(14),
+                          decoration: BoxDecoration(
+                            color: AppColors.surface,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: AppColors.primary, width: 1.5),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: AppColors.primaryTint,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(Icons.bookmark_rounded, color: AppColors.primary, size: 20),
+
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      'My Active Booking: Table ${activeRes.tableId} (${activeRes.seatNumbers.join(", ")})',
+                                      style: AppTextStyles.titleSmall.copyWith(fontWeight: FontWeight.bold),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    LiveReservationCountdown(
+                                      startTime: activeRes.startTime,
+                                      endTime: activeRes.endTime,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+
                   // Real-time Overview Banner
                   _buildSummaryBanner(
                     total: liveTables.length,
@@ -143,6 +189,7 @@ class _LiveTableViewScreenState extends State<LiveTableViewScreen> {
                     blocked: blockedCount,
                   ),
                   const SizedBox(height: 16),
+
 
                   // Filter Chips
                   _buildFilterChips(),
@@ -167,7 +214,7 @@ class _LiveTableViewScreenState extends State<LiveTableViewScreen> {
                           ),
                           const SizedBox(width: 4),
                           Text(
-                            'Auto-updating',
+                            'Pull to refresh',
                             style: AppTextStyles.bodySmall.copyWith(
                               color: AppColors.textTertiary,
                               fontSize: 11,
@@ -188,7 +235,10 @@ class _LiveTableViewScreenState extends State<LiveTableViewScreen> {
                         const SizedBox(height: 16),
                     itemBuilder: (context, index) {
                       final table = filteredTables[index];
-                      return _TableLiveCard(table: table);
+                      return AppFadeInSlide(
+                        delay: Duration(milliseconds: index * 40),
+                        child: _TableLiveCard(table: table),
+                      );
                     },
                   ),
                 ],

@@ -1,4 +1,3 @@
-import 'dart:async';
 import '../provider/order_provider.dart';
 import '../models/order_model.dart';
 import '../../scan/provider/scan_provider.dart';
@@ -14,28 +13,21 @@ class OrderTrackingScreen extends StatefulWidget {
 }
 
 class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
-  Timer? _timer;
-
   @override
   void initState() {
     super.initState();
     _fetchDetails();
-    // Poll every 30 seconds for status updates
-    _timer = Timer.periodic(const Duration(seconds: 30), (timer) {
-      _fetchDetails();
-    });
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
     context.read<OrderProvider>().clearOrderDetails();
     super.dispose();
   }
 
-  void _fetchDetails() {
+  Future<void> _fetchDetails() async {
     if (!mounted) return;
-    context.read<OrderProvider>().fetchOrderDetails(widget.orderId);
+    await context.read<OrderProvider>().fetchOrderDetails(widget.orderId);
   }
 
   void _handleCancel() async {
@@ -109,38 +101,42 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
 
           final upperStatus = order.status.toUpperCase();
 
-          return SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                // Live status banner
-                _StatusBanner(status: order.status),
-                const SizedBox(height: 20),
-                _buildOrderInfo(order),
-                const SizedBox(height: 28),
-                Text('Order Status', style: AppTextStyles.titleMedium),
-                const SizedBox(height: 16),
-                _buildStatusTimeline(order),
-                const SizedBox(height: 28),
-                if (upperStatus == 'WAITING_FOR_CASH' ||
-                    upperStatus == 'PENDING')
-                  SizedBox(
-                    height: 48,
-                    child: OutlinedButton.icon(
-                      onPressed: _handleCancel,
-                      icon: const Icon(Icons.close_rounded, size: 18),
-                      label: const Text('Cancel Order'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.error,
-                        side: BorderSide(color: AppColors.error),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+          return RefreshIndicator(
+            onRefresh: _fetchDetails,
+            child: SingleChildScrollView(
+              physics: const AlwaysScrollableScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  // Live status banner
+                  _StatusBanner(status: order.status),
+                  const SizedBox(height: 20),
+                  _buildOrderInfo(order),
+                  const SizedBox(height: 28),
+                  Text('Order Status', style: AppTextStyles.titleMedium),
+                  const SizedBox(height: 16),
+                  _buildStatusTimeline(order),
+                  const SizedBox(height: 28),
+                  if (upperStatus == 'WAITING_FOR_CASH' ||
+                      upperStatus == 'PENDING')
+                    SizedBox(
+                      height: 48,
+                      child: OutlinedButton.icon(
+                        onPressed: _handleCancel,
+                        icon: const Icon(Icons.close_rounded, size: 18),
+                        label: const Text('Cancel Order'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.error,
+                          side: BorderSide(color: AppColors.error),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           );
         },

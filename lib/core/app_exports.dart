@@ -10,6 +10,7 @@ export 'routes/app_routes.dart';
 export 'widgets/custom_elevated_button.dart';
 export 'widgets/app_card.dart';
 export 'widgets/app_components.dart';
+export 'widgets/app_animations.dart';
 export 'network/api_client.dart';
 export 'network/api_exceptions.dart';
 export 'network/network_info.dart';

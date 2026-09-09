@@ -21,7 +21,10 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
     });
   }
 
-  void _showReservationSuccessModal(BuildContext context, TableReservation reservation) {
+  void _showReservationSuccessModal(
+    BuildContext context,
+    TableReservation reservation,
+  ) {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -30,18 +33,26 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Column(
           children: [
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: AppColors.successTint,
-                shape: BoxShape.circle,
+            AppPopScale(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.successTint,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.check_circle_rounded,
+                  color: AppColors.success,
+                  size: 48,
+                ),
               ),
-              child: Icon(Icons.check_circle_rounded, color: AppColors.success, size: 48),
             ),
             const SizedBox(height: 12),
             Text(
               'Table Reserved!',
-              style: AppTextStyles.titleLarge.copyWith(fontWeight: FontWeight.bold),
+              style: AppTextStyles.titleLarge.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ],
         ),
@@ -50,7 +61,9 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
           children: [
             Text(
               'Table ${reservation.tableId} • Seats ${reservation.seatNumbers.join(", ")}',
-              style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.w600),
+              style: AppTextStyles.bodyMedium.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 6),
             Text(
@@ -63,7 +76,9 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
               decoration: BoxDecoration(
                 color: AppColors.primaryTint,
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                border: Border.all(
+                  color: AppColors.primary.withValues(alpha: 0.3),
+                ),
               ),
               child: Row(
                 children: [
@@ -87,7 +102,9 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
             ),
             onPressed: () {
               Navigator.pop(ctx);
@@ -96,7 +113,13 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                 MaterialPageRoute(builder: (_) => const MyReservationsScreen()),
               );
             },
-            child: const Text('View My Reservations', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            child: const Text(
+              'View My Reservations',
+              style: TextStyle(
+                color: Colors.black,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -146,22 +169,29 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
               child: provider.isLoading
                   ? const Center(child: CircularProgressIndicator())
                   : provider.errorMessage != null
-                      ? Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(Icons.error_outline_rounded, size: 48, color: AppColors.error),
-                              const SizedBox(height: 12),
-                              Text(provider.errorMessage!, style: AppTextStyles.bodyMedium),
-                              const SizedBox(height: 12),
-                              ElevatedButton(
-                                onPressed: () => provider.fetchAvailableTables(),
-                                child: const Text('Retry'),
-                              ),
-                            ],
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline_rounded,
+                            size: 48,
+                            color: AppColors.error,
                           ),
-                        )
-                      : _buildTableSeatSelection(context, provider),
+                          const SizedBox(height: 12),
+                          Text(
+                            provider.errorMessage!,
+                            style: AppTextStyles.bodyMedium,
+                          ),
+                          const SizedBox(height: 12),
+                          ElevatedButton(
+                            onPressed: () => provider.fetchAvailableTables(),
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    )
+                  : _buildTableSeatSelection(context, provider),
             ),
 
             if (provider.selectedSeats.isNotEmpty)
@@ -186,7 +216,10 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
     }
   }
 
-  Future<void> _selectStartTime(BuildContext context, TableReservationProvider provider) async {
+  Future<void> _selectStartTime(
+    BuildContext context,
+    TableReservationProvider provider,
+  ) async {
     final now = DateTime.now();
     final todayStr = now.toIso8601String().split('T')[0];
     final isToday = provider.selectedDate == todayStr;
@@ -212,14 +245,17 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
 
     if (picked != null) {
       final startMin = picked.hour * 60 + picked.minute;
-      final newStartStr = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+      final newStartStr =
+          '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
 
       // 1. Block past times for today
       if (isToday && startMin < nowMin) {
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Cannot select past time (${_format12Hour(newStartStr)}). Current time is ${_format12Hour('${now.hour}:${now.minute}')}.'),
+            content: Text(
+              'Cannot select past time (${_format12Hour(newStartStr)}). Current time is ${_format12Hour('${now.hour}:${now.minute}')}.',
+            ),
             backgroundColor: Colors.red,
           ),
         );
@@ -231,14 +267,19 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Start time must be within canteen hours ($openStr - $closeStr).'),
+            content: Text(
+              'Start time must be within canteen hours ($openStr - $closeStr).',
+            ),
             backgroundColor: Colors.red,
           ),
         );
         return;
       }
 
-      final endParts = provider.selectedEndTime.split(':').map(int.parse).toList();
+      final endParts = provider.selectedEndTime
+          .split(':')
+          .map(int.parse)
+          .toList();
       var endMin = endParts[0] * 60 + endParts[1];
 
       if (endMin <= startMin) {
@@ -254,7 +295,10 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
     }
   }
 
-  Future<void> _selectEndTime(BuildContext context, TableReservationProvider provider) async {
+  Future<void> _selectEndTime(
+    BuildContext context,
+    TableReservationProvider provider,
+  ) async {
     final response = provider.availabilityResponse;
     final closeStr = response?.closingTime ?? '17:00';
     final closeParts = closeStr.split(':').map(int.parse).toList();
@@ -269,7 +313,10 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
     );
 
     if (picked != null) {
-      final startParts = provider.selectedStartTime.split(':').map(int.parse).toList();
+      final startParts = provider.selectedStartTime
+          .split(':')
+          .map(int.parse)
+          .toList();
       final startMin = startParts[0] * 60 + startParts[1];
       final endMin = picked.hour * 60 + picked.minute;
 
@@ -288,21 +335,29 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('End time cannot exceed canteen closing time ($closeStr).'),
+            content: Text(
+              'End time cannot exceed canteen closing time ($closeStr).',
+            ),
             backgroundColor: Colors.red,
           ),
         );
         return;
       }
 
-      final newEndStr = '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+      final newEndStr =
+          '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
       provider.setTimeRange(provider.selectedStartTime, newEndStr);
       provider.fetchAvailableTables();
     }
   }
 
-  Widget _buildFiltersBar(BuildContext context, TableReservationProvider provider) {
-    final durationHours = (provider.selectedDuration / 60.0).toStringAsFixed(1).replaceAll('.0', '');
+  Widget _buildFiltersBar(
+    BuildContext context,
+    TableReservationProvider provider,
+  ) {
+    final durationHours = (provider.selectedDuration / 60.0)
+        .toStringAsFixed(1)
+        .replaceAll('.0', '');
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -316,7 +371,10 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
               Text('Select Custom Time Range', style: AppTextStyles.titleSmall),
               Text(
                 'Canteen Hours: ${provider.availabilityResponse?.openingTime ?? "09:00"} - ${provider.availabilityResponse?.closingTime ?? "17:00"}',
-                style: AppTextStyles.bodySmall.copyWith(color: AppColors.textSecondary, fontSize: 11),
+                style: AppTextStyles.bodySmall.copyWith(
+                  color: AppColors.textSecondary,
+                  fontSize: 11,
+                ),
               ),
             ],
           ),
@@ -331,7 +389,10 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                   onTap: () => _selectStartTime(context, provider),
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primaryTint,
                       borderRadius: BorderRadius.circular(12),
@@ -339,16 +400,29 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.access_time_rounded, size: 18, color: AppColors.primary),
+                        Icon(
+                          Icons.access_time_rounded,
+                          size: 18,
+                          color: AppColors.primary,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('FROM', style: TextStyle(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.bold)),
+                              Text(
+                                'FROM',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               Text(
                                 _format12Hour(provider.selectedStartTime),
-                                style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.bold),
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ],
                           ),
@@ -359,7 +433,11 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              Icon(Icons.arrow_forward_rounded, size: 20, color: AppColors.textSecondary),
+              Icon(
+                Icons.arrow_forward_rounded,
+                size: 20,
+                color: AppColors.textSecondary,
+              ),
               const SizedBox(width: 8),
 
               // To End Time Button
@@ -368,7 +446,10 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                   onTap: () => _selectEndTime(context, provider),
                   borderRadius: BorderRadius.circular(12),
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 10,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.primaryTint,
                       borderRadius: BorderRadius.circular(12),
@@ -376,16 +457,29 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.access_time_filled_rounded, size: 18, color: AppColors.primary),
+                        Icon(
+                          Icons.access_time_filled_rounded,
+                          size: 18,
+                          color: AppColors.primary,
+                        ),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('TO', style: TextStyle(fontSize: 10, color: AppColors.primary, fontWeight: FontWeight.bold)),
+                              Text(
+                                'TO',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: AppColors.primary,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                               Text(
                                 _format12Hour(provider.selectedEndTime),
-                                style: AppTextStyles.bodySmall.copyWith(fontWeight: FontWeight.bold),
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ],
                           ),
@@ -410,11 +504,18 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.timelapse_rounded, size: 14, color: AppColors.primary),
+                Icon(
+                  Icons.timelapse_rounded,
+                  size: 14,
+                  color: AppColors.primary,
+                ),
                 const SizedBox(width: 6),
                 Text(
                   'Booked Duration: $durationHours Hour(s) (${provider.selectedStartTime} to ${provider.selectedEndTime})',
-                  style: AppTextStyles.bodySmall.copyWith(fontSize: 11, fontWeight: FontWeight.w600),
+                  style: AppTextStyles.bodySmall.copyWith(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ],
             ),
@@ -424,11 +525,17 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
     );
   }
 
-  Widget _buildTableSeatSelection(BuildContext context, TableReservationProvider provider) {
+  Widget _buildTableSeatSelection(
+    BuildContext context,
+    TableReservationProvider provider,
+  ) {
     final response = provider.availabilityResponse;
     if (response == null || response.tables.isEmpty) {
       return Center(
-        child: Text('No tables available for selected time.', style: AppTextStyles.bodyMedium),
+        child: Text(
+          'No tables available for selected time.',
+          style: AppTextStyles.bodyMedium,
+        ),
       );
     }
 
@@ -453,7 +560,11 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
               ),
               child: Row(
                 children: [
-                  Icon(Icons.storefront_rounded, color: Colors.amber.shade700, size: 22),
+                  Icon(
+                    Icons.storefront_rounded,
+                    color: Colors.amber.shade700,
+                    size: 22,
+                  ),
                   const SizedBox(width: 10),
                   Expanded(
                     child: Column(
@@ -461,7 +572,11 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                       children: [
                         Text(
                           'Canteen is Currently Closed',
-                          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.amber.shade700, fontSize: 13),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.amber.shade700,
+                            fontSize: 13,
+                          ),
                         ),
                         const SizedBox(height: 2),
                         Text(
@@ -491,20 +606,32 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
             itemBuilder: (context, index) {
               final table = response.tables[index];
               final isSelected = table.tableId == provider.selectedTableId;
-              return GestureDetector(
+              return AppBounceable(
                 onTap: () => provider.selectTable(table.tableId),
+                scaleFactor: 0.94,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 150),
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primaryTint : AppColors.surface,
+                    color: isSelected
+                        ? AppColors.primaryTint
+                        : AppColors.surface,
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: isSelected ? AppColors.primary : AppColors.border,
                       width: isSelected ? 2 : 1,
                     ),
                     boxShadow: isSelected
-                        ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.3), blurRadius: 6, spreadRadius: 1)]
+                        ? [
+                            BoxShadow(
+                              color: AppColors.primary.withValues(alpha: 0.3),
+                              blurRadius: 6,
+                              spreadRadius: 1,
+                            ),
+                          ]
                         : [],
                   ),
                   child: Column(
@@ -518,7 +645,9 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                             Icon(
                               Icons.table_restaurant_rounded,
                               size: 16,
-                              color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                              color: isSelected
+                                  ? AppColors.primary
+                                  : AppColors.textSecondary,
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -526,7 +655,9 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 12,
-                                color: isSelected ? AppColors.primary : AppColors.textPrimary,
+                                color: isSelected
+                                    ? AppColors.primary
+                                    : AppColors.textPrimary,
                               ),
                             ),
                           ],
@@ -537,7 +668,9 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                         '${table.availableSeats.length}/${table.maxCapacity} free',
                         style: AppTextStyles.bodySmall.copyWith(
                           fontSize: 10,
-                          color: isSelected ? AppColors.primary : AppColors.textSecondary,
+                          color: isSelected
+                              ? AppColors.primary
+                              : AppColors.textSecondary,
                         ),
                       ),
                     ],
@@ -591,7 +724,9 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                     decoration: BoxDecoration(
                       color: AppColors.background,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.4)),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.4),
+                      ),
                     ),
                     child: Center(
                       child: Text(
@@ -613,9 +748,14 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                     alignment: WrapAlignment.center,
                     children: List.generate(selectedTable.maxCapacity, (idx) {
                       final seatNum = idx + 1;
-                      final isReserved = selectedTable.reservedSeatNumbers.contains(seatNum);
-                      final isSessionRunning = selectedTable.sessionRunningSeatNumbers.contains(seatNum);
-                      final isSelected = provider.selectedSeats.contains(seatNum);
+                      final isReserved = selectedTable.reservedSeatNumbers
+                          .contains(seatNum);
+                      final isSessionRunning = selectedTable
+                          .sessionRunningSeatNumbers
+                          .contains(seatNum);
+                      final isSelected = provider.selectedSeats.contains(
+                        seatNum,
+                      );
                       final isOccupied = isReserved || isSessionRunning;
 
                       const seatIcon = Icons.chair_rounded;
@@ -623,43 +763,46 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                       final cardColor = isSelected
                           ? AppColors.primary
                           : isSessionRunning
-                              ? Colors.blue.shade900.withValues(alpha: 0.7)
-                              : isReserved
-                                  ? Colors.grey.shade900
-                                  : AppColors.surfaceAlt;
+                          ? Colors.blue.shade900.withValues(alpha: 0.7)
+                          : isReserved
+                          ? Colors.grey.shade900
+                          : AppColors.surfaceAlt;
 
                       final borderColor = isSelected
                           ? AppColors.primary
                           : isSessionRunning
-                              ? Colors.blueAccent.withValues(alpha: 0.8)
-                              : isReserved
-                                  ? Colors.grey.shade800
-                                  : AppColors.success.withValues(alpha: 0.5);
+                          ? Colors.blueAccent.withValues(alpha: 0.8)
+                          : isReserved
+                          ? Colors.grey.shade800
+                          : AppColors.success.withValues(alpha: 0.5);
 
                       final iconData = isSessionRunning
                           ? Icons.play_circle_fill_rounded
                           : isReserved
-                              ? Icons.lock_rounded
-                              : seatIcon;
+                          ? Icons.lock_rounded
+                          : seatIcon;
 
                       final iconColor = isSelected
                           ? Colors.black
                           : isSessionRunning
-                              ? Colors.blue.shade300
-                              : isReserved
-                                  ? Colors.grey.shade600
-                                  : AppColors.success;
+                          ? Colors.blue.shade300
+                          : isReserved
+                          ? Colors.grey.shade600
+                          : AppColors.success;
 
                       final textColor = isSelected
                           ? Colors.black
                           : isSessionRunning
-                              ? Colors.blue.shade200
-                              : isReserved
-                                  ? Colors.grey.shade600
-                                  : AppColors.textPrimary;
+                          ? Colors.blue.shade200
+                          : isReserved
+                          ? Colors.grey.shade600
+                          : AppColors.textPrimary;
 
-                      return GestureDetector(
-                        onTap: isOccupied ? null : () => provider.toggleSeatSelection(seatNum),
+                      return AppBounceable(
+                        onTap: isOccupied
+                            ? null
+                            : () => provider.toggleSeatSelection(seatNum),
+                        scaleFactor: 0.92,
                         child: AnimatedContainer(
                           duration: const Duration(milliseconds: 200),
                           width: 56,
@@ -667,22 +810,23 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                           decoration: BoxDecoration(
                             color: cardColor,
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: borderColor,
-                              width: 2,
-                            ),
+                            border: Border.all(color: borderColor, width: 2),
                             boxShadow: isSelected
-                                ? [BoxShadow(color: AppColors.primary.withValues(alpha: 0.4), blurRadius: 8, spreadRadius: 1)]
+                                ? [
+                                    BoxShadow(
+                                      color: AppColors.primary.withValues(
+                                        alpha: 0.4,
+                                      ),
+                                      blurRadius: 8,
+                                      spreadRadius: 1,
+                                    ),
+                                  ]
                                 : [],
                           ),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(
-                                iconData,
-                                size: 20,
-                                color: iconColor,
-                              ),
+                              Icon(iconData, size: 20, color: iconColor),
                               const SizedBox(height: 2),
                               Text(
                                 'S-$seatNum',
@@ -706,7 +850,10 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
 
           // Price & Deposit Breakdown Card
           if (selectedTable.costBreakdown != null)
-            _buildCostBreakdownCard(selectedTable.costBreakdown!, provider.selectedSeats.length),
+            _buildCostBreakdownCard(
+              selectedTable.costBreakdown!,
+              provider.selectedSeats.length,
+            ),
         ],
       ),
     );
@@ -728,7 +875,8 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
 
   Widget _buildCostBreakdownCard(CostBreakdown breakdown, int count) {
     final seatCount = count > 0 ? count : 1;
-    final totalDeposit = breakdown.ratePerChair * seatCount * breakdown.durationMultiplier;
+    final totalDeposit =
+        breakdown.ratePerChair * seatCount * breakdown.durationMultiplier;
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -742,7 +890,11 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.receipt_long_rounded, color: AppColors.primary, size: 20),
+              Icon(
+                Icons.receipt_long_rounded,
+                color: AppColors.primary,
+                size: 20,
+              ),
               const SizedBox(width: 8),
               Text('Deposit Breakdown', style: AppTextStyles.titleSmall),
             ],
@@ -752,7 +904,10 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Rate per Chair', style: AppTextStyles.bodySmall),
-              Text('₹${breakdown.ratePerChair.toStringAsFixed(0)}', style: AppTextStyles.bodySmall),
+              Text(
+                '₹${breakdown.ratePerChair.toStringAsFixed(0)}',
+                style: AppTextStyles.bodySmall,
+              ),
             ],
           ),
           const SizedBox(height: 6),
@@ -768,7 +923,10 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text('Duration Multiplier', style: AppTextStyles.bodySmall),
-              Text('${breakdown.durationMultiplier}x', style: AppTextStyles.bodySmall),
+              Text(
+                '${breakdown.durationMultiplier}x',
+                style: AppTextStyles.bodySmall,
+              ),
             ],
           ),
           const Divider(height: 20),
@@ -778,7 +936,10 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
               Text('Total Deposit Payable', style: AppTextStyles.titleSmall),
               Text(
                 '₹${totalDeposit.toStringAsFixed(0)}',
-                style: AppTextStyles.titleMedium.copyWith(color: AppColors.primary, fontWeight: FontWeight.bold),
+                style: AppTextStyles.titleMedium.copyWith(
+                  color: AppColors.primary,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -791,12 +952,19 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
             ),
             child: Row(
               children: [
-                Icon(Icons.info_outline_rounded, size: 16, color: AppColors.primary),
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 16,
+                  color: AppColors.primary,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Deposit is 100% credited to your cart order when you order food at your table!',
-                    style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
                   ),
                 ),
               ],
@@ -807,7 +975,11 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
     );
   }
 
-  void _showPaymentMethodModal(BuildContext context, TableReservationProvider provider, double depositAmount) {
+  void _showPaymentMethodModal(
+    BuildContext context,
+    TableReservationProvider provider,
+    double depositAmount,
+  ) {
     showModalBottomSheet(
       context: context,
       backgroundColor: AppColors.surface,
@@ -842,13 +1014,20 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                           color: AppColors.primaryTint,
                           shape: BoxShape.circle,
                         ),
-                        child: Icon(Icons.payment_rounded, color: AppColors.primary, size: 24),
+                        child: Icon(
+                          Icons.payment_rounded,
+                          color: AppColors.primary,
+                          size: 24,
+                        ),
                       ),
                       const SizedBox(width: 12),
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text('Select Payment Method', style: AppTextStyles.titleMedium),
+                          Text(
+                            'Select Payment Method',
+                            style: AppTextStyles.titleMedium,
+                          ),
                           Text(
                             'Deposit Payable: ₹${depositAmount.toStringAsFixed(0)}',
                             style: AppTextStyles.bodySmall.copyWith(
@@ -868,16 +1047,25 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                     decoration: BoxDecoration(
                       color: AppColors.primaryTint,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.primary.withValues(alpha: 0.3)),
+                      border: Border.all(
+                        color: AppColors.primary.withValues(alpha: 0.3),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        Icon(Icons.verified_user_rounded, color: AppColors.primary, size: 20),
+                        Icon(
+                          Icons.verified_user_rounded,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
                             'Advance table & seat booking requires Razorpay Online Payment to lock your slot.',
-                            style: AppTextStyles.bodySmall.copyWith(fontSize: 12, fontWeight: FontWeight.bold),
+                            style: AppTextStyles.bodySmall.copyWith(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
@@ -889,7 +1077,11 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                   InkWell(
                     onTap: () {
                       Navigator.pop(ctx);
-                      _showRazorpayCheckoutSheet(context, provider, depositAmount);
+                      _showRazorpayCheckoutSheet(
+                        context,
+                        provider,
+                        depositAmount,
+                      );
                     },
                     borderRadius: BorderRadius.circular(16),
                     child: Container(
@@ -901,7 +1093,11 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.payment_rounded, color: Colors.black, size: 24),
+                          const Icon(
+                            Icons.payment_rounded,
+                            color: Colors.black,
+                            size: 24,
+                          ),
                           const SizedBox(width: 12),
                           Text(
                             'Pay ₹${depositAmount.toStringAsFixed(0)} via Razorpay',
@@ -924,7 +1120,11 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
     );
   }
 
-  void _showRazorpayCheckoutSheet(BuildContext context, TableReservationProvider provider, double depositAmount) {
+  void _showRazorpayCheckoutSheet(
+    BuildContext context,
+    TableReservationProvider provider,
+    double depositAmount,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -943,7 +1143,10 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                 child: Container(
                   width: 40,
                   height: 4,
-                  decoration: BoxDecoration(color: Colors.grey.shade700, borderRadius: BorderRadius.circular(2)),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade700,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -951,8 +1154,15 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                 children: [
                   Container(
                     padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(color: Colors.blue.shade900, borderRadius: BorderRadius.circular(12)),
-                    child: const Icon(Icons.payment_rounded, color: Colors.white, size: 24),
+                    decoration: BoxDecoration(
+                      color: Colors.blue.shade900,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Icon(
+                      Icons.payment_rounded,
+                      color: Colors.white,
+                      size: 24,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -961,16 +1171,37 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                       children: [
                         Row(
                           children: [
-                            Text('Razorpay Secure Payment', style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold)),
+                            Text(
+                              'Razorpay Secure Payment',
+                              style: AppTextStyles.titleMedium.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             const SizedBox(width: 8),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                              decoration: BoxDecoration(color: Colors.blue.shade900, borderRadius: BorderRadius.circular(4)),
-                              child: const Text('GATEWAY', style: TextStyle(color: Colors.white, fontSize: 9, fontWeight: FontWeight.bold)),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.shade900,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: const Text(
+                                'GATEWAY',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                           ],
                         ),
-                        Text('100% Encrypted & Verified via Razorpay', style: AppTextStyles.bodySmall),
+                        Text(
+                          '100% Encrypted & Verified via Razorpay',
+                          style: AppTextStyles.bodySmall,
+                        ),
                       ],
                     ),
                   ),
@@ -989,10 +1220,16 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Deposit Payable Amount', style: AppTextStyles.bodyMedium),
+                    Text(
+                      'Deposit Payable Amount',
+                      style: AppTextStyles.bodyMedium,
+                    ),
                     Text(
                       '₹${depositAmount.toStringAsFixed(0)}',
-                      style: AppTextStyles.titleLarge.copyWith(color: AppColors.primary, fontWeight: FontWeight.bold),
+                      style: AppTextStyles.titleLarge.copyWith(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ],
                 ),
@@ -1012,18 +1249,37 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.qr_code_2_rounded, color: AppColors.primary, size: 26),
+                    Icon(
+                      Icons.qr_code_2_rounded,
+                      color: AppColors.primary,
+                      size: 26,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('UPI Apps (Google Pay / PhonePe / Paytm)', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                          Text('Instant 1-tap checkout via UPI', style: AppTextStyles.bodySmall.copyWith(fontSize: 10)),
+                          const Text(
+                            'UPI Apps (Google Pay / PhonePe / Paytm)',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            'Instant 1-tap checkout via UPI',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              fontSize: 10,
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                    const Icon(Icons.check_circle_rounded, color: Colors.green, size: 20),
+                    const Icon(
+                      Icons.check_circle_rounded,
+                      color: Colors.green,
+                      size: 20,
+                    ),
                   ],
                 ),
               ),
@@ -1039,14 +1295,29 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.credit_card_rounded, color: AppColors.textSecondary, size: 26),
+                    Icon(
+                      Icons.credit_card_rounded,
+                      color: AppColors.textSecondary,
+                      size: 26,
+                    ),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Credit / Debit Card / NetBanking', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
-                          Text('Visa, MasterCard, RuPay, SBI, HDFC', style: AppTextStyles.bodySmall.copyWith(fontSize: 10)),
+                          const Text(
+                            'Credit / Debit Card / NetBanking',
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                          Text(
+                            'Visa, MasterCard, RuPay, SBI, HDFC',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              fontSize: 10,
+                            ),
+                          ),
                         ],
                       ),
                     ),
@@ -1070,7 +1341,11 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
     );
   }
 
-  Future<void> _executeReservation(BuildContext context, TableReservationProvider provider, double depositAmount) async {
+  Future<void> _executeReservation(
+    BuildContext context,
+    TableReservationProvider provider,
+    double depositAmount,
+  ) async {
     await provider.initiateRazorpayReservation(
       depositAmount: depositAmount,
       onCompleted: (reservation, errorMessage) {
@@ -1079,16 +1354,24 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
           _showReservationSuccessModal(context, reservation);
         } else if (errorMessage != null) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errorMessage), backgroundColor: AppColors.error),
+            SnackBar(
+              content: Text(errorMessage),
+              backgroundColor: AppColors.error,
+            ),
           );
         }
       },
     );
   }
 
-  Widget _buildBottomCheckoutBar(BuildContext context, TableReservationProvider provider) {
+  Widget _buildBottomCheckoutBar(
+    BuildContext context,
+    TableReservationProvider provider,
+  ) {
     final response = provider.availabilityResponse;
-    final selectedTable = response?.tables.firstWhere((t) => t.tableId == provider.selectedTableId);
+    final selectedTable = response?.tables.firstWhere(
+      (t) => t.tableId == provider.selectedTableId,
+    );
     final rate = selectedTable?.costBreakdown?.ratePerChair ?? 50.0;
     final multiplier = selectedTable?.costBreakdown?.durationMultiplier ?? 1.0;
     final deposit = rate * provider.selectedSeats.length * multiplier;
@@ -1108,10 +1391,16 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text('${provider.selectedSeats.length} Seat(s) Selected', style: AppTextStyles.bodySmall),
+                Text(
+                  '${provider.selectedSeats.length} Seat(s) Selected',
+                  style: AppTextStyles.bodySmall,
+                ),
                 Text(
                   '₹${deposit.toStringAsFixed(0)} Deposit',
-                  style: AppTextStyles.titleLarge.copyWith(color: AppColors.primary, fontWeight: FontWeight.bold),
+                  style: AppTextStyles.titleLarge.copyWith(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ],
             ),
@@ -1119,10 +1408,10 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
           Expanded(
             child: CustomElevatedButton(
               text: !isOpen
-                  ? 'Not Available Right Now'
+                  ? 'Not Available'
                   : provider.isLoading
-                      ? 'Reserving...'
-                      : 'Confirm & Pay',
+                  ? 'Reserving...'
+                  : 'Confirm & Pay',
               loading: provider.isLoading,
               onPressed: !isOpen
                   ? null

@@ -40,7 +40,18 @@ class _MenuScreenState extends State<MenuScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       body: SafeArea(
-        child: CustomScrollView(
+        child: RefreshIndicator(
+          onRefresh: () async {
+            if (!mounted) return;
+            final menuProv = Provider.of<MenuProvider>(context, listen: false);
+            final cartProv = Provider.of<CartProvider>(context, listen: false);
+            await menuProv.fetchMenu();
+            await cartProv.fetchCart();
+          },
+          child: CustomScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+
+
           slivers: [
             SliverPadding(
               padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
@@ -59,7 +70,7 @@ class _MenuScreenState extends State<MenuScreen> {
                       ],
                     ),
                     const Spacer(),
-                    GestureDetector(
+                    AppBounceable(
                       onTap: () {
                         Navigator.pushNamed(context, AppRoutes.tableReservationScreen);
                       },
@@ -214,7 +225,10 @@ class _MenuScreenState extends State<MenuScreen> {
                     separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final MenuItem item = menuProvider.menuItems[index];
-                      return _MenuItemCard(item: item);
+                      return AppFadeInSlide(
+                        delay: Duration(milliseconds: index * 40),
+                        child: _MenuItemCard(item: item),
+                      );
                     },
                   ),
                 );
@@ -223,8 +237,10 @@ class _MenuScreenState extends State<MenuScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
+
 }
 
 class _MenuItemCard extends StatelessWidget {
@@ -408,3 +424,5 @@ class _MenuItemCard extends StatelessWidget {
     );
   }
 }
+
+

@@ -19,15 +19,16 @@ class AuthProvider extends ChangeNotifier {
   String? get userEmail => _userEmail ?? _loginResponse?.data?.user?.email;
 
   AuthProvider(this._authRepository) {
-    _loadUserInfo();
+    loadUserInfo();
   }
 
-  Future<void> _loadUserInfo() async {
+  Future<void> loadUserInfo() async {
     _userName = await SharedPrefsHelper.getUserName();
     _userEmail = await SharedPrefsHelper.getUserEmail();
     _authToken = await SharedPrefsHelper.getAuthToken();
     notifyListeners();
   }
+
 
   bool _isLoading = false;
   bool get isLoading => _isLoading;
