@@ -68,6 +68,51 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
     );
   }
 
+  void _handleCancelReservation(BuildContext context, TableReservation reservation) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Cancel Reservation?'),
+        content: Text('Are you sure you want to cancel your reservation for Table ${reservation.tableId}?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('No'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: AppColors.error),
+            child: const Text('Yes, Cancel'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true || !context.mounted) return;
+
+    final provider = context.read<TableReservationProvider>();
+    final messenger = ScaffoldMessenger.of(context);
+    final success = await provider.cancelReservation(reservation.id);
+
+    if (context.mounted) {
+      if (success) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('Reservation for Table ${reservation.tableId} cancelled successfully.'),
+            backgroundColor: AppColors.success,
+          ),
+        );
+      } else {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(provider.errorMessage ?? 'Failed to cancel reservation.'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final provider = context.watch<TableReservationProvider>();
@@ -210,15 +255,31 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
                                       ),
                                     ),
                                     if (isBooked || isCheckedIn)
-                                      ElevatedButton.icon(
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: AppColors.primary,
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                        ),
-                                        icon: const Icon(Icons.qr_code_rounded, size: 16, color: Colors.black),
-                                        label: const Text('Show QR', style: TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.bold)),
-                                        onPressed: () => _showQrDialog(context, res),
+                                      Row(
+                                        children: [
+                                          OutlinedButton.icon(
+                                            style: OutlinedButton.styleFrom(
+                                              foregroundColor: AppColors.error,
+                                              side: BorderSide(color: AppColors.error),
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                                            ),
+                                            icon: const Icon(Icons.cancel_outlined, size: 15),
+                                            label: const Text('Cancel', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                                            onPressed: () => _handleCancelReservation(context, res),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          ElevatedButton.icon(
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: AppColors.primary,
+                                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                            ),
+                                            icon: const Icon(Icons.qr_code_rounded, size: 16, color: Colors.black),
+                                            label: const Text('Show QR', style: TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.bold)),
+                                            onPressed: () => _showQrDialog(context, res),
+                                          ),
+                                        ],
                                       ),
                                   ],
                                 ),

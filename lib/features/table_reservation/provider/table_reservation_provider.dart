@@ -334,6 +334,32 @@ class TableReservationProvider extends ChangeNotifier {
     }
   }
 
+  Future<bool> cancelReservation(String reservationId) async {
+    _setLoading(true);
+    _errorMessage = null;
+
+    try {
+      final success = await _repository.cancelReservation(reservationId);
+      if (success) {
+        if (_activeReservation?.id == reservationId) {
+          _activeReservation = null;
+        }
+        await fetchMyReservations();
+        await fetchLiveTablesOverview();
+        return true;
+      }
+      return false;
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      return false;
+    } catch (e) {
+      _errorMessage = 'Failed to cancel reservation.';
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
   void setActiveReservation(TableReservation? reservation) {
     _activeReservation = reservation;
     notifyListeners();

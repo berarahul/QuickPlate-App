@@ -16,6 +16,7 @@ class ApiEndpoints {
   static const String reserveTable = '/tables/reserve';
   static const String qrCheckIn = '/tables/qr-checkin';
   static const String myReservations = '/tables/my-reservations';
+  static String cancelReservation(String reservationId) => '/tables/reservations/$reservationId/cancel';
   static const String liveTablesOverview = '/tables/live-overview';
   static String occupiedChairs(String tableId) => '/tables/$tableId/occupied-chairs';
 

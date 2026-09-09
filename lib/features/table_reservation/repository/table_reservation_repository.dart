@@ -103,6 +103,13 @@ class TableReservationRepository {
     return data.map((r) => TableReservation.fromJson(r)).toList();
   }
 
+  Future<bool> cancelReservation(String reservationId) async {
+    final response = await _apiClient.post(
+      ApiEndpoints.cancelReservation(reservationId),
+    );
+    return response.data['success'] == true;
+  }
+
   Future<List<LiveTableOverviewModel>> getLiveTablesOverview() async {
     final response = await _apiClient.get(ApiEndpoints.liveTablesOverview);
 
