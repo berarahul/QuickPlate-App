@@ -6,7 +6,8 @@ import 'my_reservations_screen.dart';
 import 'live_table_view_screen.dart';
 
 class TableReservationScreen extends StatefulWidget {
-  const TableReservationScreen({super.key});
+  final String? initialTableId;
+  const TableReservationScreen({super.key, this.initialTableId});
 
   @override
   State<TableReservationScreen> createState() => _TableReservationScreenState();
@@ -16,8 +17,15 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<TableReservationProvider>().fetchAvailableTables();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final provider = context.read<TableReservationProvider>();
+      await Future.wait([
+        provider.fetchAvailableTables(),
+        provider.fetchMyReservations(),
+      ]);
+      if (widget.initialTableId != null && mounted) {
+        provider.selectTable(widget.initialTableId!);
+      }
     });
   }
 
@@ -544,6 +552,16 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
       orElse: () => response.tables.first,
     );
 
+    final myActiveReservationsOnThisTable = provider.myReservations.where((r) {
+      return r.tableId == selectedTable.tableId && r.isActiveSlot;
+    }).toList();
+
+    final Set<int> mySeatNumbersOnThisTable = {};
+    for (var r in myActiveReservationsOnThisTable) {
+      mySeatNumbersOnThisTable.addAll(r.seatNumbers);
+    }
+    final bool isMyActiveTable = mySeatNumbersOnThisTable.isNotEmpty;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -589,6 +607,48 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                 ],
               ),
             ),
+
+          if (isMyActiveTable)
+            Container(
+              margin: const EdgeInsets.only(bottom: 16),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.indigo.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.indigo.shade400),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.bookmark_rounded,
+                    color: Colors.indigo.shade400,
+                    size: 22,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Your Active Session (Table ${selectedTable.tableId})',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.indigo.shade300,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          'Seats ${mySeatNumbersOnThisTable.join(", ")} are currently yours. Tap any available Green seat to add a guest seat!',
+                          style: AppTextStyles.bodySmall.copyWith(fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
           Text('Select Table', style: AppTextStyles.titleMedium),
           const SizedBox(height: 10),
 
@@ -692,12 +752,12 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                   child: Row(
                     children: [
                       _buildLegend(AppColors.primary, 'Selected'),
-                      const SizedBox(width: 6),
-                      _buildLegend(AppColors.successTint, 'Available'),
-                      const SizedBox(width: 6),
-                      _buildLegend(Colors.grey.shade800, 'Reserved'),
-                      const SizedBox(width: 6),
-                      _buildLegend(Colors.blue.shade600, 'Session Running'),
+                      const SizedBox(width: 8),
+                      _buildLegend(AppColors.success, 'Available'),
+                      const SizedBox(width: 8),
+                      _buildLegend(Colors.indigo.shade400, 'Your Seat'),
+                      const SizedBox(width: 8),
+                      _buildLegend(Colors.grey.shade600, 'Occupied'),
                     ],
                   ),
                 ),
@@ -748,6 +808,7 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                     alignment: WrapAlignment.center,
                     children: List.generate(selectedTable.maxCapacity, (idx) {
                       final seatNum = idx + 1;
+                      final isMySeat = mySeatNumbersOnThisTable.contains(seatNum);
                       final isReserved = selectedTable.reservedSeatNumbers
                           .contains(seatNum);
                       final isSessionRunning = selectedTable
@@ -756,50 +817,50 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                       final isSelected = provider.selectedSeats.contains(
                         seatNum,
                       );
-                      final isOccupied = isReserved || isSessionRunning;
-
-                      const seatIcon = Icons.chair_rounded;
+                      final isOccupiedByOther = (isReserved || isSessionRunning) && !isMySeat;
 
                       final cardColor = isSelected
                           ? AppColors.primary
-                          : isSessionRunning
-                          ? Colors.blue.shade900.withValues(alpha: 0.7)
-                          : isReserved
+                          : isMySeat
+                          ? Colors.indigo.shade900.withValues(alpha: 0.8)
+                          : isOccupiedByOther
                           ? Colors.grey.shade900
                           : AppColors.surfaceAlt;
 
                       final borderColor = isSelected
                           ? AppColors.primary
-                          : isSessionRunning
-                          ? Colors.blueAccent.withValues(alpha: 0.8)
-                          : isReserved
+                          : isMySeat
+                          ? Colors.indigo.shade400
+                          : isOccupiedByOther
                           ? Colors.grey.shade800
                           : AppColors.success.withValues(alpha: 0.5);
 
-                      final iconData = isSessionRunning
-                          ? Icons.play_circle_fill_rounded
-                          : isReserved
+                      final iconData = isSelected
+                          ? Icons.check_circle_rounded
+                          : isMySeat
+                          ? Icons.bookmark_rounded
+                          : isOccupiedByOther
                           ? Icons.lock_rounded
-                          : seatIcon;
+                          : Icons.chair_rounded;
 
                       final iconColor = isSelected
                           ? Colors.black
-                          : isSessionRunning
-                          ? Colors.blue.shade300
-                          : isReserved
+                          : isMySeat
+                          ? Colors.indigo.shade300
+                          : isOccupiedByOther
                           ? Colors.grey.shade600
                           : AppColors.success;
 
                       final textColor = isSelected
                           ? Colors.black
-                          : isSessionRunning
-                          ? Colors.blue.shade200
-                          : isReserved
+                          : isMySeat
+                          ? Colors.indigo.shade200
+                          : isOccupiedByOther
                           ? Colors.grey.shade600
                           : AppColors.textPrimary;
 
                       return AppBounceable(
-                        onTap: isOccupied
+                        onTap: (isOccupiedByOther || isMySeat)
                             ? null
                             : () => provider.toggleSeatSelection(seatNum),
                         scaleFactor: 0.92,
@@ -821,6 +882,14 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                                       spreadRadius: 1,
                                     ),
                                   ]
+                                : isMySeat
+                                ? [
+                                    BoxShadow(
+                                      color: Colors.indigo.withValues(alpha: 0.4),
+                                      blurRadius: 6,
+                                      spreadRadius: 1,
+                                    ),
+                                  ]
                                 : [],
                           ),
                           child: Column(
@@ -829,7 +898,7 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                               Icon(iconData, size: 20, color: iconColor),
                               const SizedBox(height: 2),
                               Text(
-                                'S-$seatNum',
+                                isMySeat ? 'Mine' : 'S-$seatNum',
                                 style: TextStyle(
                                   fontSize: 10,
                                   fontWeight: FontWeight.bold,

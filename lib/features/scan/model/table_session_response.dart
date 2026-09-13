@@ -41,6 +41,9 @@ class TableSession {
   final String? expiresAt;
   final bool? isActive;
   final bool? hasOrder;
+  final bool? isDelivered;
+  final int? extensionCount;
+  final num? totalExtensionFeePaid;
   final String? tableId;
   final List<String>? chairIds;
   final String? updatedAt;
@@ -52,6 +55,9 @@ class TableSession {
     this.expiresAt,
     this.isActive,
     this.hasOrder,
+    this.isDelivered,
+    this.extensionCount,
+    this.totalExtensionFeePaid,
     this.tableId,
     this.chairIds,
     this.updatedAt,
@@ -65,6 +71,9 @@ class TableSession {
       expiresAt: json['expiresAt'],
       isActive: json['isActive'],
       hasOrder: json['hasOrder'] ?? false,
+      isDelivered: json['isDelivered'] ?? false,
+      extensionCount: json['extensionCount'] ?? 0,
+      totalExtensionFeePaid: json['totalExtensionFeePaid'] ?? 0,
       tableId: json['tableId'],
       chairIds: json['chairIds'] != null
           ? List<String>.from(json['chairIds'])

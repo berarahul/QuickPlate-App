@@ -1,6 +1,7 @@
 import '../provider/order_provider.dart';
 import '../models/order_model.dart';
 import '../../scan/provider/scan_provider.dart';
+import '../../table_reservation/provider/table_reservation_provider.dart';
 import '../../../core/app_exports.dart';
 
 class OrderTrackingScreen extends StatefulWidget {
@@ -35,7 +36,9 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Cancel Order?'),
-        content: const Text('Are you sure you want to cancel this order?'),
+        content: const Text(
+          'Are you sure you want to cancel this order?\n(Orders can only be cancelled within 5 minutes of creation)',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
@@ -57,6 +60,8 @@ class _OrderTrackingScreenState extends State<OrderTrackingScreen> {
       );
       if (!mounted) return;
       if (success) {
+        context.read<ScanProvider>().clearSession();
+        context.read<TableReservationProvider>().fetchMyReservations();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Order cancelled successfully'),

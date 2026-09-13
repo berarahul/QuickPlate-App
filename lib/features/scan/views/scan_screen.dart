@@ -3,11 +3,18 @@ import 'package:image_picker/image_picker.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import '../provider/scan_provider.dart';
 import '../../table_reservation/provider/table_reservation_provider.dart';
+import '../../table_reservation/models/table_reservation_model.dart';
 import '../../../core/app_exports.dart';
 
 class ScanScreen extends StatefulWidget {
   final bool isActive;
-  const ScanScreen({super.key, this.isActive = true});
+  final VoidCallback? onSessionStarted;
+
+  const ScanScreen({
+    super.key,
+    this.isActive = true,
+    this.onSessionStarted,
+  });
 
   @override
   State<ScanScreen> createState() => _ScanScreenState();
@@ -113,6 +120,8 @@ class _ScanScreenState extends State<ScanScreen> {
       final myReservations = reservationProvider.myReservations;
       final now = DateTime.now();
 
+      final activeSession = scanProvider.sessionResponse?.data?.session;
+
       final advanceReservation = myReservations.where((r) {
         if (r.reservationStatus == 'cancelled') return false;
         try {
@@ -123,12 +132,12 @@ class _ScanScreenState extends State<ScanScreen> {
         }
       }).firstOrNull;
 
-      if (advanceReservation != null) {
+      if (activeSession != null && activeSession.isActive == true && activeSession.tableId != tableId) {
         if (mounted) {
           messenger.showSnackBar(
             SnackBar(
-              content: const Text(
-                'You already have an advance table reservation. If you want to book another chair, please book by app only.',
+              content: Text(
+                'You currently have an active session running at Table ${activeSession.tableId}. Please leave Table ${activeSession.tableId} before joining Table $tableId.',
               ),
               backgroundColor: AppColors.error,
               duration: const Duration(seconds: 5),
@@ -138,7 +147,158 @@ class _ScanScreenState extends State<ScanScreen> {
         return;
       }
 
-      // Walk-in scan (no advance reservation for this table) -> open Chair Selection Dialog
+      // Check if session has ALREADY been started / checked-in at this table
+      final isAlreadyCheckedIn = (activeSession != null && activeSession.isActive == true && activeSession.tableId == tableId) ||
+          (advanceReservation != null && advanceReservation.tableId == tableId && advanceReservation.reservationStatus.toLowerCase() == 'checked_in');
+
+      if (isAlreadyCheckedIn) {
+        // Session is already running! Show available chairs so user can add extra chairs to current running session.
+        final selectedChairs = await _showChairSelectionDialog(tableId);
+        if (selectedChairs == null || selectedChairs.isEmpty) {
+          return;
+        }
+
+        final success = await scanProvider.startTableSession(
+          tableId,
+          chairIds: selectedChairs,
+        );
+
+        if (mounted) {
+          if (success) {
+            messenger.showSnackBar(
+              SnackBar(
+                content: Text(
+                  scanProvider.sessionResponse?.message ??
+                      'Added ${selectedChairs.join(", ")} to Table $tableId session!',
+                ),
+                backgroundColor: AppColors.success,
+              ),
+            );
+
+            if (widget.onSessionStarted != null) {
+              widget.onSessionStarted!();
+            } else if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              Navigator.pushReplacementNamed(context, AppRoutes.dashboardScreen);
+            }
+          } else {
+            messenger.showSnackBar(
+              SnackBar(
+                content: Text(
+                  scanProvider.errorMessage ?? 'Failed to update session.',
+                ),
+                backgroundColor: AppColors.error,
+              ),
+            );
+          }
+        }
+        return;
+      }
+
+      if (advanceReservation != null && advanceReservation.reservationStatus.toLowerCase() != 'checked_in') {
+        if (advanceReservation.tableId != tableId) {
+          if (mounted) {
+            messenger.showSnackBar(
+              SnackBar(
+                content: Text(
+                  'You already have an advance table reservation for Table ${advanceReservation.tableId}. Please scan the QR code at Table ${advanceReservation.tableId}.',
+                ),
+                backgroundColor: AppColors.error,
+                duration: const Duration(seconds: 5),
+              ),
+            );
+          }
+          return;
+        } else {
+          // Advance reservation at this table
+          try {
+            final resStart = DateTimeFormatter.parseDateTime(advanceReservation.startTime) ?? DateTime.now();
+            final resEnd = DateTimeFormatter.parseDateTime(advanceReservation.endTime) ?? DateTime.now();
+
+            if (now.isBefore(resStart)) {
+              if (mounted) {
+                final startFormatted = DateTimeFormatter.formatTime(resStart);
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text(
+                      'Your reserved time slot for Table $tableId starts at $startFormatted. You can only start your session once your reserved time slot begins.',
+                    ),
+                    backgroundColor: AppColors.error,
+                    duration: const Duration(seconds: 5),
+                  ),
+                );
+              }
+              return;
+            }
+
+            if (now.isAfter(resEnd)) {
+              if (mounted) {
+                messenger.showSnackBar(
+                  SnackBar(
+                    content: Text('Your reservation for Table $tableId has expired.'),
+                    backgroundColor: AppColors.error,
+                    duration: const Duration(seconds: 5),
+                  ),
+                );
+              }
+              return;
+            }
+          } catch (_) {}
+
+          if (!mounted) return;
+          // Show Check-In confirmation modal displaying reserved chairs and slot
+          final confirmed = await _showAdvanceCheckInDialog(context, advanceReservation);
+          if (!confirmed) return;
+
+          // Inside slot check-in window -> check in using reserved chairs
+          final bookedChairs = advanceReservation.chairIds.isNotEmpty
+              ? advanceReservation.chairIds
+              : ['Chair 1'];
+
+          final success = await scanProvider.startTableSession(
+            tableId,
+            chairIds: bookedChairs,
+          );
+
+          if (mounted) {
+            if (success) {
+              await reservationProvider.fetchMyReservations();
+              if (!mounted) return;
+
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(
+                    scanProvider.sessionResponse?.message ??
+                        'Checked in to Table $tableId! Session started.',
+                  ),
+                  backgroundColor: AppColors.success,
+                ),
+              );
+
+              if (widget.onSessionStarted != null) {
+                widget.onSessionStarted!();
+              } else if (Navigator.canPop(context)) {
+                Navigator.pop(context);
+              } else {
+                Navigator.pushReplacementNamed(context, AppRoutes.dashboardScreen);
+              }
+            } else {
+              messenger.showSnackBar(
+                SnackBar(
+                  content: Text(
+                    scanProvider.errorMessage ?? 'Failed to start session.',
+                  ),
+                  backgroundColor: AppColors.error,
+                ),
+              );
+            }
+          }
+          return;
+        }
+      }
+
+      // Walk-in scan (or adding chairs to existing session at same table) -> open Chair Selection Dialog
       final selectedChairs = await _showChairSelectionDialog(tableId);
       if (selectedChairs == null || selectedChairs.isEmpty) {
         return;
@@ -155,15 +315,25 @@ class _ScanScreenState extends State<ScanScreen> {
             SnackBar(
               content: Text(
                 scanProvider.sessionResponse?.message ??
-                    'Table $tableId session started with ${selectedChairs.join(", ")}!',
+                    'Table $tableId session updated with ${selectedChairs.join(", ")}!',
               ),
+              backgroundColor: AppColors.success,
             ),
           );
+
+          // Automatically redirect to the Live Table View section (Tab Index 1)
+          if (widget.onSessionStarted != null) {
+            widget.onSessionStarted!();
+          } else if (Navigator.canPop(context)) {
+            Navigator.pop(context);
+          } else {
+            Navigator.pushReplacementNamed(context, AppRoutes.dashboardScreen);
+          }
         } else {
           messenger.showSnackBar(
             SnackBar(
               content: Text(
-                scanProvider.errorMessage ?? 'Failed to start session.',
+                scanProvider.errorMessage ?? 'Failed to update session.',
               ),
               backgroundColor: AppColors.error,
             ),
@@ -179,10 +349,138 @@ class _ScanScreenState extends State<ScanScreen> {
     }
   }
 
+  Future<bool> _showAdvanceCheckInDialog(
+    BuildContext context,
+    TableReservation reservation,
+  ) async {
+    final seatText = reservation.seatNumbers.isNotEmpty
+        ? reservation.seatNumbers.join(', ')
+        : (reservation.chairIds.isNotEmpty
+            ? reservation.chairIds.join(', ')
+            : '${reservation.seatsBooked} seat(s)');
+
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Column(
+          children: [
+            AppPopScale(
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppColors.primaryTint,
+                  shape: BoxShape.circle,
+                  boxShadow: AppColors.softShadow,
+                ),
+                child: Icon(
+                  Icons.table_restaurant_rounded,
+                  color: AppColors.primary,
+                  size: 40,
+                ),
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'Table ${reservation.tableId} Check-In',
+              style: AppTextStyles.titleLarge.copyWith(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Start table session for $seatText?',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 14),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: AppColors.background,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.border),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.event_seat_rounded, color: AppColors.primary, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Reserved Chairs: $seatText',
+                        style: AppTextStyles.bodyMedium.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.access_time_rounded, color: AppColors.textSecondary, size: 14),
+                      const SizedBox(width: 6),
+                      Text(
+                        DateTimeFormatter.formatTimeRange(reservation.startTime, reservation.endTime),
+                        style: AppTextStyles.bodySmall,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Tap "Start Session" to check in with your reserved chairs.',
+              textAlign: TextAlign.center,
+              style: AppTextStyles.bodySmall,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton.icon(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+              elevation: 4,
+              shadowColor: AppColors.primary.withValues(alpha: 0.4),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            ),
+            icon: const Icon(Icons.play_arrow_rounded, color: Colors.white),
+            label: const Text(
+              'Start Session',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            onPressed: () => Navigator.pop(ctx, true),
+          ),
+        ],
+      ),
+    );
+
+    return result ?? false;
+  }
+
   Future<List<String>?> _showChairSelectionDialog(String tableId) async {
     final scanProvider = context.read<ScanProvider>();
     final details = await scanProvider.fetchOccupiedChairsDetails(tableId);
     final occupied = details.occupiedChairs;
+
+    final myCurrentSession = scanProvider.sessionResponse?.data?.session;
+    final myExistingChairs = (myCurrentSession != null && myCurrentSession.tableId == tableId)
+        ? (myCurrentSession.chairIds ?? [])
+        : <String>[];
+
+    // Other users' occupied chairs (exclude my own currently held chairs so they are not treated as conflicts)
+    final occupiedByOthers = occupied.where((c) => !myExistingChairs.contains(c)).toList();
 
     int totalSeats = details.maxCapacity > 0 ? details.maxCapacity : 4;
     for (final chairStr in occupied) {
@@ -196,7 +494,7 @@ class _ScanScreenState extends State<ScanScreen> {
     }
 
     final allChairs = List.generate(totalSeats, (i) => 'Chair ${i + 1}');
-    final availableChairs = allChairs.where((c) => !occupied.contains(c)).toList();
+    final availableChairs = allChairs.where((c) => !occupiedByOthers.contains(c) && !myExistingChairs.contains(c)).toList();
     final initialSelection = availableChairs.isNotEmpty ? {availableChairs.first} : <String>{};
     final selected = Set<String>.from(initialSelection);
 
@@ -212,6 +510,14 @@ class _ScanScreenState extends State<ScanScreen> {
       builder: (modalCtx) {
         return StatefulBuilder(
           builder: (modalCtx, setModalState) {
+            final hasExistingChairs = myExistingChairs.isNotEmpty;
+            final titleText = hasExistingChairs
+                ? 'Add Chair to Table $tableId'
+                : 'Table $tableId Scanned';
+            final subtitleText = hasExistingChairs
+                ? 'Your active seats: ${myExistingChairs.join(", ")}. Select additional chair(s) to add:'
+                : 'Select your available chair(s)';
+
             return Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
@@ -222,12 +528,14 @@ class _ScanScreenState extends State<ScanScreen> {
                     children: [
                       Icon(Icons.event_seat_rounded, color: AppColors.primary, size: 28),
                       const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Table $tableId Scanned', style: AppTextStyles.displayLarge),
-                          Text('Select your available chair(s)', style: AppTextStyles.bodySmall),
-                        ],
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(titleText, style: AppTextStyles.displayLarge),
+                            Text(subtitleText, style: AppTextStyles.bodySmall),
+                          ],
+                        ),
                       ),
                     ],
                   ),
@@ -242,7 +550,9 @@ class _ScanScreenState extends State<ScanScreen> {
                         border: Border.all(color: Colors.red.shade700),
                       ),
                       child: Text(
-                        'All chairs on Table $tableId are currently booked or occupied.',
+                        hasExistingChairs
+                            ? 'All other chairs on Table $tableId are currently occupied by other users.'
+                            : 'All chairs on Table $tableId are currently booked or occupied.',
                         style: TextStyle(color: Colors.red.shade200, fontWeight: FontWeight.w600),
                       ),
                     )
@@ -289,8 +599,10 @@ class _ScanScreenState extends State<ScanScreen> {
                       ),
                       child: Text(
                         selected.isEmpty
-                            ? 'All Chairs Occupied'
-                            : 'Start Session (${selected.length} Chair${selected.length > 1 ? "s" : ""})',
+                            ? 'No Available Chairs'
+                            : (hasExistingChairs
+                                ? 'Add ${selected.length} Chair${selected.length > 1 ? "s" : ""} to Active Session'
+                                : 'Start Session (${selected.length} Chair${selected.length > 1 ? "s" : ""})'),
                         style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
                       ),
                     ),
@@ -437,8 +749,6 @@ class _ScanScreenState extends State<ScanScreen> {
                     ],
                   ),
                 ),
-                if (scanProvider.sessionResponse?.data?.session != null)
-                  _buildActiveSessionCard(context, scanProvider),
                 Expanded(
                   child: scanProvider.isLoading
                       ? Column(
@@ -649,152 +959,5 @@ class _ScanScreenState extends State<ScanScreen> {
         child: Container(width: thick, height: size, color: color),
       ),
     ];
-  }
-
-  String _formatRemainingTime(String? expiresAtStr) {
-    if (expiresAtStr == null) return '00:00';
-    try {
-      final expiresAt = DateTime.parse(expiresAtStr).toLocal();
-      final now = DateTime.now();
-      final difference = expiresAt.difference(now);
-      if (difference.isNegative) {
-        return 'Expired';
-      }
-      final minutes = difference.inMinutes;
-      final seconds = difference.inSeconds % 60;
-      return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
-    } catch (e) {
-      return '00:00';
-    }
-  }
-
-  Widget _buildActiveSessionCard(BuildContext context, ScanProvider scanProvider) {
-    final data = scanProvider.sessionResponse?.data;
-    final session = data?.session;
-    final occupied = data?.occupiedChairs ?? [];
-    if (session == null) return const SizedBox.shrink();
-
-    final myChairs = (session.chairIds != null && session.chairIds!.isNotEmpty)
-        ? session.chairIds!.join(', ')
-        : 'Chair 1';
-
-    final bool hasOrder = session.hasOrder ?? false;
-    final String remainingTimeStr = _formatRemainingTime(session.expiresAt);
-    final bool isExpired = remainingTimeStr == 'Expired';
-
-    final Color badgeColor = hasOrder
-        ? AppColors.primary
-        : (isExpired ? AppColors.error : Colors.orange.shade800);
-    final Color badgeBg = hasOrder
-        ? AppColors.primaryTint
-        : (isExpired ? Colors.red.shade50 : Colors.orange.shade50);
-    final Color borderColor = hasOrder ? AppColors.primary : Colors.orange.shade600;
-
-    return Container(
-      margin: const EdgeInsets.fromLTRB(20, 0, 20, 12),
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: borderColor, width: 1.5),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                hasOrder ? Icons.check_circle_rounded : Icons.timer_outlined,
-                color: hasOrder ? AppColors.success : Colors.orange.shade800,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Table ${session.tableId}',
-                  style: AppTextStyles.titleMedium.copyWith(fontWeight: FontWeight.bold),
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: badgeBg,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Text(
-                  hasOrder ? 'ACTIVE DINING' : '5-MIN GRACE',
-                  style: TextStyle(color: badgeColor, fontSize: 10, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Text(
-            'Your Chair(s): $myChairs',
-            style: AppTextStyles.bodyMedium.copyWith(color: AppColors.primary, fontWeight: FontWeight.w600),
-          ),
-          const SizedBox(height: 4),
-          Row(
-            children: [
-              Icon(Icons.hourglass_bottom_rounded, size: 14, color: badgeColor),
-              const SizedBox(width: 4),
-              Text(
-                hasOrder
-                    ? 'Session expires in: $remainingTimeStr'
-                    : 'Order food within $remainingTimeStr to lock seat',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: badgeColor,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          if (!hasOrder && !isExpired)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                '⚠️ Order required within 5 mins or your seat will be automatically released.',
-                style: TextStyle(fontSize: 11, color: Colors.orange.shade900, fontStyle: FontStyle.italic),
-              ),
-            ),
-          if (occupied.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: Text(
-                'All Active Chairs on Table: ${occupied.join(", ")}',
-                style: AppTextStyles.bodySmall,
-              ),
-            ),
-          const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            height: 38,
-            child: OutlinedButton.icon(
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.error,
-                side: BorderSide(color: AppColors.error),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                padding: EdgeInsets.zero,
-              ),
-              icon: const Icon(Icons.exit_to_app_rounded, size: 16),
-              label: const Text('End Table Session', style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold)),
-              onPressed: () async {
-                final messenger = ScaffoldMessenger.of(context);
-                final res = await scanProvider.leaveTableSession();
-                if (context.mounted) {
-                  messenger.showSnackBar(
-                    SnackBar(
-                      content: Text(res.message),
-                      backgroundColor: res.success ? AppColors.success : AppColors.error,
-                    ),
-                  );
-                }
-              },
-            ),
-          ),
-        ],
-      ),
-    );
   }
 }

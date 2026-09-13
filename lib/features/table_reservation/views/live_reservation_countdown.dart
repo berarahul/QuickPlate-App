@@ -6,6 +6,7 @@ class LiveReservationCountdown extends StatefulWidget {
   final dynamic endTime;
   final TextStyle? style;
   final bool compact;
+  final VoidCallback? onTimerTick;
 
   const LiveReservationCountdown({
     super.key,
@@ -13,6 +14,7 @@ class LiveReservationCountdown extends StatefulWidget {
     required this.endTime,
     this.style,
     this.compact = false,
+    this.onTimerTick,
   });
 
   @override
@@ -26,7 +28,10 @@ class _LiveReservationCountdownState extends State<LiveReservationCountdown> {
   void initState() {
     super.initState();
     _timer = Timer.periodic(const Duration(seconds: 1), (_) {
-      if (mounted) setState(() {});
+      if (mounted) {
+        setState(() {});
+        widget.onTimerTick?.call();
+      }
     });
   }
 

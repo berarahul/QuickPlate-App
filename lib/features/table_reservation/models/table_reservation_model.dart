@@ -29,6 +29,58 @@ class TableReservation {
     required this.createdAt,
   });
 
+  List<String> get chairIds => seatNumbers.map((n) => 'Chair $n').toList();
+  int get seatsBooked => seatNumbers.length;
+
+  bool get isSlotExpired {
+    try {
+      final now = DateTime.now();
+      if (endTime.isEmpty) return false;
+
+      final parsed = DateTime.tryParse(endTime);
+      if (parsed != null) {
+        return now.isAfter(parsed);
+      }
+
+      final parts = endTime.split(':');
+      if (parts.length >= 2) {
+        final hour = int.tryParse(parts[0]) ?? 0;
+        final minute = int.tryParse(parts[1]) ?? 0;
+        final endDt = DateTime(now.year, now.month, now.day, hour, minute);
+        return now.isAfter(endDt);
+      }
+    } catch (_) {}
+    return false;
+  }
+
+  bool get isActiveSlot {
+    final st = reservationStatus.toLowerCase();
+    final isValidStatus = (st == 'booked' || st == 'reserved' || st == 'checked_in');
+    return isValidStatus && !isSlotExpired;
+  }
+
+  bool get isSlotActiveNow {
+    if (reservationStatus.toLowerCase() == 'checked_in') return true;
+    try {
+      final now = DateTime.now();
+      final resStart = DateTime.parse(startTime);
+      final checkInAllowedFrom = resStart.subtract(const Duration(minutes: 10));
+      return now.isAfter(checkInAllowedFrom) && !isSlotExpired;
+    } catch (_) {}
+    return false;
+  }
+
+  bool get isUpcomingSlot {
+    if (reservationStatus.toLowerCase() == 'checked_in') return false;
+    try {
+      final now = DateTime.now();
+      final resStart = DateTime.parse(startTime);
+      final checkInAllowedFrom = resStart.subtract(const Duration(minutes: 10));
+      return now.isBefore(checkInAllowedFrom);
+    } catch (_) {}
+    return true;
+  }
+
   factory TableReservation.fromJson(Map<String, dynamic> json) {
     DateTime parseDate(dynamic date) {
       if (date == null) return DateTime.now();

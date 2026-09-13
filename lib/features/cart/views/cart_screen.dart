@@ -48,20 +48,75 @@ class CartScreen extends StatelessWidget {
     final orderProvider = context.read<OrderProvider>();
     final reservationProvider = context.read<TableReservationProvider>();
 
-    final tableId = scanProvider.sessionResponse?.data?.table?.tableId ?? reservationProvider.activeReservation?.tableId;
-    final reservationId = reservationProvider.activeReservation?.id;
+    final sessionData = scanProvider.sessionResponse?.data;
+    final liveSession = sessionData?.session;
+    final activeReservation = reservationProvider.activeReservation;
 
-    debugPrint('Placing order for tableId: $tableId, reservationId: $reservationId');
-    debugPrint('Cart items: ${cart.orderItems.length}');
+    final tableId = liveSession?.tableId ?? activeReservation?.tableId;
+    final reservationId = activeReservation?.id;
 
     if (tableId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text('Please scan a table QR code or reserve a seat first!'),
+          content: const Text(
+            'Please scan a table QR code or reserve a seat first!',
+          ),
           backgroundColor: AppColors.warning,
         ),
       );
       return;
+    }
+
+    // Requirement #1: Must be checked in via QR scan
+    final isCheckedIn = (liveSession != null && liveSession.isActive == true) ||
+        (activeReservation?.reservationStatus.toLowerCase() == 'checked_in');
+
+    if (!isCheckedIn) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Please scan the table QR code at Table $tableId to check in and start your session before placing an order.',
+          ),
+          backgroundColor: AppColors.error,
+        ),
+      );
+      return;
+    }
+
+    // Requirement #2: Must be within reserved time slot
+    if (activeReservation != null &&
+        activeReservation.reservationStatus.toLowerCase() != 'cancelled') {
+      try {
+        final now = DateTime.now();
+        final start = DateTimeFormatter.parseDateTime(activeReservation.startTime) ?? now;
+        final end = DateTimeFormatter.parseDateTime(activeReservation.endTime) ?? now;
+
+        if (now.isBefore(start)) {
+          final startFormatted = DateTimeFormatter.formatTime(start);
+          final endFormatted = DateTimeFormatter.formatTime(end);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Orders can only be placed during your reserved table slot ($startFormatted - $endFormatted). Your time slot has not started yet.',
+              ),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          return;
+        }
+
+        if (now.isAfter(end)) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Your reserved time slot for Table ${activeReservation.tableId} has expired.',
+              ),
+              backgroundColor: AppColors.error,
+            ),
+          );
+          return;
+        }
+      } catch (_) {}
     }
 
     if (cart.items.isEmpty) {
@@ -284,15 +339,22 @@ class CartScreen extends StatelessWidget {
   Widget _checkoutBar(CartProvider cart) {
     return Builder(
       builder: (context) {
-        final reservation = context.watch<TableReservationProvider>().activeReservation;
+        final reservation = context
+            .watch<TableReservationProvider>()
+            .activeReservation;
         final depositCredit = reservation?.depositPaidAmount ?? 0.0;
-        final depositDiscount = (depositCredit > 0 && cart.totalAmount > depositCredit) ? depositCredit : 0.0;
+        final depositDiscount =
+            (depositCredit > 0 && cart.totalAmount > depositCredit)
+            ? depositCredit
+            : 0.0;
         final netAmount = cart.totalAmount - depositDiscount;
 
         return Container(
-          padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 86),
           decoration: BoxDecoration(
             color: AppColors.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+            boxShadow: AppColors.cardShadow,
             border: Border(top: BorderSide(color: AppColors.border, width: 1)),
           ),
           child: SafeArea(
@@ -307,7 +369,10 @@ class CartScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text('Cart Total', style: AppTextStyles.bodySmall),
-                          Text('₹${cart.totalAmount}', style: AppTextStyles.bodySmall),
+                          Text(
+                            '₹${cart.totalAmount}',
+                            style: AppTextStyles.bodySmall,
+                          ),
                         ],
                       ),
                       const SizedBox(height: 4),
@@ -316,20 +381,30 @@ class CartScreen extends StatelessWidget {
                         children: [
                           Row(
                             children: [
-                              Icon(Icons.stars_rounded, size: 14, color: AppColors.primary),
+                              Icon(
+                                Icons.stars_rounded,
+                                size: 14,
+                                color: AppColors.primary,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 depositDiscount > 0
                                     ? 'Table Deposit Discount'
                                     : 'Table Deposit (Min Food Bill > ₹${depositCredit.toStringAsFixed(0)} to apply)',
-                                style: AppTextStyles.bodySmall.copyWith(color: AppColors.primary),
+                                style: AppTextStyles.bodySmall.copyWith(
+                                  color: AppColors.primary,
+                                ),
                               ),
                             ],
                           ),
                           Text(
-                            depositDiscount > 0 ? '-₹${depositDiscount.toStringAsFixed(0)}' : '₹0',
+                            depositDiscount > 0
+                                ? '-₹${depositDiscount.toStringAsFixed(0)}'
+                                : '₹0',
                             style: AppTextStyles.bodySmall.copyWith(
-                              color: depositDiscount > 0 ? AppColors.success : AppColors.textSecondary,
+                              color: depositDiscount > 0
+                                  ? AppColors.success
+                                  : AppColors.textSecondary,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -344,7 +419,10 @@ class CartScreen extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Text('Payable Total', style: AppTextStyles.bodySmall),
+                              Text(
+                                'Payable Total',
+                                style: AppTextStyles.bodySmall,
+                              ),
                               Text(
                                 '₹${netAmount.toStringAsFixed(0)}',
                                 style: AppTextStyles.titleLarge.copyWith(

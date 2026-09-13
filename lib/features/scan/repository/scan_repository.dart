@@ -18,9 +18,20 @@ class LeaveTableSessionResult {
   final bool success;
   final String message;
 
-  LeaveTableSessionResult({
+  LeaveTableSessionResult({required this.success, required this.message});
+}
+
+class ExtendSessionResult {
+  final bool success;
+  final String message;
+  final bool isFree;
+  final num feeCharged;
+
+  ExtendSessionResult({
     required this.success,
     required this.message,
+    this.isFree = true,
+    this.feeCharged = 0,
   });
 }
 
@@ -50,11 +61,10 @@ class ScanRepository {
 
   Future<LeaveTableSessionResult> leaveTableSession() async {
     try {
-      final response = await _apiClient.post(
-        ApiEndpoints.leaveTableSession,
-      );
+      final response = await _apiClient.post(ApiEndpoints.leaveTableSession);
       final success = response.data['success'] == true;
-      final message = response.data['message']?.toString() ??
+      final message =
+          response.data['message']?.toString() ??
           (success
               ? 'Table session ended successfully.'
               : 'Failed to end table session.');
@@ -74,10 +84,11 @@ class ScanRepository {
       final response = await _apiClient.get(
         ApiEndpoints.occupiedChairs(tableId),
       );
-      if (response.data['success'] == true &&
-          response.data['data'] != null) {
+      if (response.data['success'] == true && response.data['data'] != null) {
         final data = response.data['data'];
-        final maxCap = (data['maxCapacity'] is int) ? data['maxCapacity'] as int : 4;
+        final maxCap = (data['maxCapacity'] is int)
+            ? data['maxCapacity'] as int
+            : 4;
         final occupied = data['occupiedChairs'] != null
             ? List<String>.from(data['occupiedChairs'])
             : <String>[];
@@ -97,5 +108,45 @@ class ScanRepository {
   Future<List<String>> getOccupiedChairs(String tableId) async {
     final details = await getOccupiedChairsDetails(tableId);
     return details.occupiedChairs;
+  }
+
+  /// Fetches the user's current active session from GET /tables/session/active.
+  /// Returns null if no active session or on any error.
+  Future<TableSessionResponse?> fetchActiveSession() async {
+    try {
+      final response = await _apiClient.get(ApiEndpoints.activeSession);
+      if (response.data['success'] == true) {
+        return TableSessionResponse.fromJson(response.data);
+      }
+      return null;
+    } on ApiException catch (_) {
+      return null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<ExtendSessionResult> extendTableSession() async {
+    try {
+      final response = await _apiClient.post(ApiEndpoints.extendTableSession);
+      final success = response.data['success'] == true;
+      final message = response.data['message']?.toString() ?? 'Session extended.';
+      final data = response.data['data'];
+      final isFree = data != null ? data['isFree'] == true : true;
+      final feeCharged = data != null ? (data['feeCharged'] ?? 0) : 0;
+      return ExtendSessionResult(
+        success: success,
+        message: message,
+        isFree: isFree,
+        feeCharged: feeCharged,
+      );
+    } on ApiException catch (e) {
+      return ExtendSessionResult(success: false, message: e.message);
+    } catch (_) {
+      return ExtendSessionResult(
+        success: false,
+        message: 'Failed to extend table session.',
+      );
+    }
   }
 }

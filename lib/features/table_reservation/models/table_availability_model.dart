@@ -57,9 +57,9 @@ class AvailableTable {
       sessionRunningSeats = List<int>.from(json['sessionRunningSeatNumbers']);
     }
 
-    if (json['reservedSeatNumbers'] == null && json['sessionRunningSeatNumbers'] == null) {
+    if (reservedSeats.isEmpty && sessionRunningSeats.isEmpty && occupiedCount > 0) {
       for (int i = 1; i <= occupiedCount; i++) {
-        reservedSeats.add(i);
+        sessionRunningSeats.add(i);
       }
     }
 

@@ -1,7 +1,6 @@
 class ApiEndpoints {
   // Base URL
-  static const String baseUrl =
-      'https://quickplate-backend-z3j0.onrender.com/api/v1';
+  static const String baseUrl = 'http://10.0.2.2:5000/api/v1';
 
   // Auth
   static const String register = '/auth/register';
@@ -11,14 +10,18 @@ class ApiEndpoints {
 
   // Table & Reservations
   static const String tableSession = '/tables/session';
+  static const String activeSession = '/tables/session/active';
   static const String leaveTableSession = '/tables/leave-session';
+  static const String extendTableSession = '/tables/session/extend';
   static const String availableTables = '/tables/available';
   static const String reserveTable = '/tables/reserve';
   static const String qrCheckIn = '/tables/qr-checkin';
   static const String myReservations = '/tables/my-reservations';
-  static String cancelReservation(String reservationId) => '/tables/reservations/$reservationId/cancel';
+  static String cancelReservation(String reservationId) =>
+      '/tables/reservations/$reservationId/cancel';
   static const String liveTablesOverview = '/tables/live-overview';
-  static String occupiedChairs(String tableId) => '/tables/$tableId/occupied-chairs';
+  static String occupiedChairs(String tableId) =>
+      '/tables/$tableId/occupied-chairs';
 
   // Menu
   static const String studentMenu = '/student/menu';

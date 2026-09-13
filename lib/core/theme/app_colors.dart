@@ -54,4 +54,38 @@ class AppColors {
   static const Color white = Colors.white;
   static const Color black = Colors.black;
   static const Color overlay = Color(0x0D000000);
+
+  // ── Shadows & Gradients ───────────────────────────────────────────────
+  static List<BoxShadow> get softShadow => [
+        BoxShadow(
+          color: isDarkMode ? Colors.black.withValues(alpha: 0.4) : const Color(0x0C1F1B16),
+          blurRadius: 16,
+          offset: const Offset(0, 4),
+          spreadRadius: 0,
+        ),
+      ];
+
+  static List<BoxShadow> get cardShadow => [
+        BoxShadow(
+          color: isDarkMode ? Colors.black.withValues(alpha: 0.5) : const Color(0x0F000000),
+          blurRadius: 20,
+          offset: const Offset(0, 6),
+          spreadRadius: -2,
+        ),
+      ];
+
+  static List<BoxShadow> get primaryGlow => [
+        BoxShadow(
+          color: primary.withValues(alpha: 0.35),
+          blurRadius: 14,
+          offset: const Offset(0, 5),
+          spreadRadius: 0,
+        ),
+      ];
+
+  static LinearGradient get primaryGradient => LinearGradient(
+        colors: [primary, primaryDark],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+      );
 }

@@ -9,18 +9,23 @@ import '../../../core/network/api_exceptions.dart';
 
 class OrderProvider extends ChangeNotifier {
   final OrderRepository _orderRepository;
-  late Razorpay _razorpay;
+  Razorpay? _razorpay;
 
-  OrderProvider(this._orderRepository) {
-    _razorpay = Razorpay();
-    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
-    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
-    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+  OrderProvider(this._orderRepository);
+
+  Razorpay get razorpay {
+    if (_razorpay == null) {
+      _razorpay = Razorpay();
+      _razorpay!.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+      _razorpay!.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+      _razorpay!.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+    }
+    return _razorpay!;
   }
 
   @override
   void dispose() {
-    _razorpay.clear();
+    _razorpay?.clear();
     super.dispose();
   }
 
@@ -140,7 +145,7 @@ class OrderProvider extends ChangeNotifier {
     };
 
     try {
-      _razorpay.open(options);
+      razorpay.open(options);
     } catch (e) {
       debugPrint('Error opening Razorpay: $e');
       _onPaymentCompleted?.call(false, 'Could not open payment gateway');

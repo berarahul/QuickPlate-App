@@ -1,16 +1,19 @@
 class LiveChairDetail {
   final String chairId;
   final bool isOccupied;
+  final String? userName;
 
   LiveChairDetail({
     required this.chairId,
     required this.isOccupied,
+    this.userName,
   });
 
   factory LiveChairDetail.fromJson(Map<String, dynamic> json) {
     return LiveChairDetail(
       chairId: json['chairId'] ?? '',
       isOccupied: json['isOccupied'] == true,
+      userName: json['userName'],
     );
   }
 }

@@ -9,20 +9,26 @@ import '../../../core/network/api_exceptions.dart';
 
 class TableReservationProvider extends ChangeNotifier {
   final TableReservationRepository _repository;
-  late Razorpay _razorpay;
+  Razorpay? _razorpay;
   Function(TableReservation? reservation, String? errorMessage)? _onPaymentCompleted;
 
   TableReservationProvider(this._repository) {
     _initCurrentTime();
-    _razorpay = Razorpay();
-    _razorpay.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
-    _razorpay.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
-    _razorpay.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+  }
+
+  Razorpay get razorpay {
+    if (_razorpay == null) {
+      _razorpay = Razorpay();
+      _razorpay!.on(Razorpay.EVENT_PAYMENT_SUCCESS, _handlePaymentSuccess);
+      _razorpay!.on(Razorpay.EVENT_PAYMENT_ERROR, _handlePaymentError);
+      _razorpay!.on(Razorpay.EVENT_EXTERNAL_WALLET, _handleExternalWallet);
+    }
+    return _razorpay!;
   }
 
   @override
   void dispose() {
-    _razorpay.clear();
+    _razorpay?.clear();
     super.dispose();
   }
 
@@ -251,7 +257,7 @@ class TableReservationProvider extends ChangeNotifier {
 
     try {
       _setLoading(false);
-      _razorpay.open(options);
+      razorpay.open(options);
     } catch (e) {
       _setLoading(false);
       onCompleted(null, 'Could not open Razorpay gateway: $e');

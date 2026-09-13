@@ -11,6 +11,8 @@ import '../../features/notifications/views/notification_screen.dart';
 import '../../features/table_reservation/views/table_reservation_screen.dart';
 import '../../features/table_reservation/views/my_reservations_screen.dart';
 
+import '../../features/scan/views/scan_screen.dart';
+
 class AppRoutes {
   static final GlobalKey<NavigatorState> navigatorKey =
       GlobalKey<NavigatorState>();
@@ -24,6 +26,7 @@ class AppRoutes {
   static const String forgotPasswordScreen = '/forgot_password';
   static const String dashboardScreen = '/dashboard';
   static const String menuScreen = '/menu';
+  static const String scanScreen = '/scan';
   static const String orderHistoryScreen = '/order_history';
   static const String notificationScreen = '/notifications';
   static const String tableReservationScreen = '/table_reservation';
@@ -37,6 +40,7 @@ class AppRoutes {
     forgotPasswordScreen: (context) => const ForgotPasswordView(),
     dashboardScreen: (context) => const DashboardScreen(),
     menuScreen: (context) => const MenuScreen(),
+    scanScreen: (context) => const ScanScreen(isActive: true),
     orderHistoryScreen: (context) => const OrderHistoryScreen(),
     notificationScreen: (context) => const NotificationScreen(),
     tableReservationScreen: (context) => const TableReservationScreen(),

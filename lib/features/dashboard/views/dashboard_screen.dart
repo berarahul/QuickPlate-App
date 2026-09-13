@@ -1,5 +1,6 @@
 import 'package:flutter/services.dart';
 import 'package:quick_plate/features/dashboard/dashboard_tab_controller.dart';
+import '../../scan/provider/scan_provider.dart';
 import '../../table_reservation/views/live_table_view_screen.dart';
 import '../../scan/views/scan_screen.dart';
 import '../../menu/views/menu_screen.dart';
@@ -47,7 +48,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _onTabChanged() {
-    if (mounted) setState(() {});
+    if (!mounted) return;
+    setState(() {});
+    // Whenever the user switches to the Menu tab (0), refresh the active
+    // session so the 5-min timer card / green card renders correctly.
+    if (_tabController.index == 0) {
+      context.read<ScanProvider>().refreshSession();
+    }
   }
 
   @override
@@ -56,9 +63,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
     final selectedIndex = _tabController.index;
 
     final screens = [
-      MenuScreen(onCartTap: () => _tabController.switchTo(3)),
+      MenuScreen(
+        onCartTap: () => _tabController.switchTo(3),
+        onScanTap: () => _tabController.switchTo(2),
+      ),
       const LiveTableViewScreen(),
-      ScanScreen(isActive: selectedIndex == 2),
+      ScanScreen(
+        isActive: selectedIndex == 2,
+        onSessionStarted: () => _tabController.switchTo(1),
+      ),
       const CartScreen(),
       const ProfileScreen(),
     ];
@@ -75,16 +88,22 @@ class _DashboardScreenState extends State<DashboardScreen> {
       ),
       child: Scaffold(
         backgroundColor: AppColors.background,
+        extendBody: true,
         body: IndexedStack(index: selectedIndex, children: screens),
-        bottomNavigationBar: Container(
-          decoration: BoxDecoration(
-            color: AppColors.surface,
-            border: Border(top: BorderSide(color: AppColors.border, width: 1)),
-          ),
-          child: SafeArea(
-            top: false,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+        bottomNavigationBar: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+            child: Container(
+              height: 68,
+              decoration: BoxDecoration(
+                color: AppColors.surface.withValues(alpha: AppColors.isDarkMode ? 0.92 : 0.96),
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(
+                  color: AppColors.border.withValues(alpha: 0.6),
+                  width: 1,
+                ),
+                boxShadow: AppColors.cardShadow,
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: List.generate(_labels.length, (index) {
@@ -123,27 +142,36 @@ class _NavItem extends StatelessWidget {
     final color = selected ? AppColors.primary : AppColors.textTertiary;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(16),
+      splashColor: AppColors.primaryTint,
+      highlightColor: Colors.transparent,
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        duration: const Duration(milliseconds: 220),
+        curve: Curves.easeOutCubic,
+        padding: EdgeInsets.symmetric(
+          horizontal: selected ? 14 : 10,
+          vertical: 8,
+        ),
         decoration: BoxDecoration(
           color: selected ? AppColors.primaryTint : Colors.transparent,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
         ),
-        child: Column(
+        child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 22, color: color),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: color,
+            if (selected) ...[
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                  letterSpacing: -0.2,
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),

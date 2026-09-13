@@ -2,12 +2,15 @@ import 'dart:async';
 import '../provider/menu_provider.dart';
 import '../model/menu_response.dart';
 import '../../cart/provider/cart_provider.dart';
+import '../../scan/provider/scan_provider.dart';
 import '../../../core/app_exports.dart';
+import '../../../core/widgets/canteen_flow_guide_card.dart';
 
 class MenuScreen extends StatefulWidget {
   final VoidCallback? onCartTap;
+  final VoidCallback? onScanTap;
 
-  const MenuScreen({super.key, this.onCartTap});
+  const MenuScreen({super.key, this.onCartTap, this.onScanTap});
 
   @override
   State<MenuScreen> createState() => _MenuScreenState();
@@ -20,10 +23,12 @@ class _MenuScreenState extends State<MenuScreen> {
   @override
   void initState() {
     super.initState();
-    // Fetch menu data when screen is loaded
+    // Fetch menu data + refresh active session so the 5-min timer card shows
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<MenuProvider>(context, listen: false).fetchMenu();
       Provider.of<CartProvider>(context, listen: false).fetchCart();
+      // Refresh session state so CanteenFlowGuideCard shows the correct timer/status
+      Provider.of<ScanProvider>(context, listen: false).refreshSession();
     });
   }
 
@@ -45,8 +50,12 @@ class _MenuScreenState extends State<MenuScreen> {
             if (!mounted) return;
             final menuProv = Provider.of<MenuProvider>(context, listen: false);
             final cartProv = Provider.of<CartProvider>(context, listen: false);
-            await menuProv.fetchMenu();
-            await cartProv.fetchCart();
+            final scanProv = Provider.of<ScanProvider>(context, listen: false);
+            await Future.wait([
+              menuProv.fetchMenu(),
+              cartProv.fetchCart(),
+              scanProv.refreshSession(),
+            ]);
           },
           child: CustomScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
@@ -153,7 +162,13 @@ class _MenuScreenState extends State<MenuScreen> {
             ),
             SliverToBoxAdapter(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 12, 20, 8),
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: CanteenFlowGuideCard(onScanTap: widget.onScanTap),
+              ),
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 20, 8),
                 child: TextField(
                   controller: _searchController,
                   onChanged: (value) {
