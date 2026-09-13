@@ -126,13 +126,11 @@ class ScanProvider extends ChangeNotifier {
   Future<void> refreshSession() async {
     try {
       final response = await _scanRepository.fetchActiveSession();
-      if (response == null) {
-        return;
-      }
       _sessionResponse = response;
-      notifyListeners();
     } catch (_) {
-      // Silent — don't break the UI if the session fetch fails
+      _sessionResponse = null;
+    } finally {
+      notifyListeners();
     }
   }
 

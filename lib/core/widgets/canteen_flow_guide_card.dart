@@ -189,6 +189,10 @@ class CanteenFlowGuideCard extends StatelessWidget {
               onExpired: () async {
                 final res = await scanProvider.leaveTableSession();
                 if (context.mounted) {
+                  final reservationProvider = context.read<TableReservationProvider>();
+                  await reservationProvider.fetchMyReservations();
+                  await reservationProvider.fetchLiveTablesOverview();
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
@@ -258,6 +262,10 @@ class CanteenFlowGuideCard extends StatelessWidget {
                 onPressed: () async {
                   final res = await scanProvider.leaveTableSession();
                   if (context.mounted) {
+                    final reservationProvider = context.read<TableReservationProvider>();
+                    await reservationProvider.fetchMyReservations();
+                    await reservationProvider.fetchLiveTablesOverview();
+                    if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(res.message),
@@ -369,6 +377,10 @@ class CanteenFlowGuideCard extends StatelessWidget {
                   onPressed: () async {
                     final res = await scanProvider.leaveTableSession();
                     if (context.mounted) {
+                      final reservationProvider = context.read<TableReservationProvider>();
+                      await reservationProvider.fetchMyReservations();
+                      await reservationProvider.fetchLiveTablesOverview();
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(res.message),
@@ -632,6 +644,10 @@ class CanteenFlowGuideCard extends StatelessWidget {
               onExpired: () async {
                 final result = await scanProvider.leaveTableSession();
                 if (context.mounted) {
+                  final reservationProvider = context.read<TableReservationProvider>();
+                  await reservationProvider.fetchMyReservations();
+                  await reservationProvider.fetchLiveTablesOverview();
+                  if (!context.mounted) return;
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                       content: Text(
@@ -701,6 +717,10 @@ class CanteenFlowGuideCard extends StatelessWidget {
                 onPressed: () async {
                   final result = await scanProvider.leaveTableSession();
                   if (context.mounted) {
+                    final reservationProvider = context.read<TableReservationProvider>();
+                    await reservationProvider.fetchMyReservations();
+                    await reservationProvider.fetchLiveTablesOverview();
+                    if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text(result.message),
@@ -816,6 +836,10 @@ class CanteenFlowGuideCard extends StatelessWidget {
                   onPressed: () async {
                     final result = await scanProvider.leaveTableSession();
                     if (context.mounted) {
+                      final reservationProvider = context.read<TableReservationProvider>();
+                      await reservationProvider.fetchMyReservations();
+                      await reservationProvider.fetchLiveTablesOverview();
+                      if (!context.mounted) return;
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(result.message),

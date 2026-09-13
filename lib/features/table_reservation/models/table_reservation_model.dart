@@ -138,7 +138,11 @@ class TableReservation {
       depositPaidAmount: deposit,
       depositStatus: depStatusRaw,
       reservationStatus: statusRaw.toString().toLowerCase(),
-      qrCodeData: json['qrCodeData'] ?? json['qrCode'] ?? idVal,
+      qrCodeData: (json['qrCodeData'] != null && json['qrCodeData'].toString().isNotEmpty)
+          ? json['qrCodeData'].toString()
+          : (json['qrCode'] != null && json['qrCode'].toString().isNotEmpty)
+              ? json['qrCode'].toString()
+              : 'app://order?tableId=${json['tableId'] ?? ''}',
       createdAt: parseDate(json['createdAt']),
     );
   }

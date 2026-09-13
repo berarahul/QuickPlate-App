@@ -99,14 +99,21 @@ class _ScanScreenState extends State<ScanScreen> {
   }
 
   Future<void> _handleScannedRawValue(String rawValue) async {
-    // Extract tableId if the QR code is a URL, else assume it's the tableId directly
-    String tableId = rawValue;
-    if (rawValue.contains('tableId=')) {
-      final uri = Uri.tryParse(rawValue);
-      if (uri != null && uri.queryParameters.containsKey('tableId')) {
+    // Extract tableId if the QR code is a URL/URI, else assume it's the tableId directly
+    String tableId = rawValue.trim();
+    if (tableId.contains('tableId=')) {
+      final uri = Uri.tryParse(tableId);
+      if (uri != null && uri.queryParameters.containsKey('tableId') && uri.queryParameters['tableId']!.isNotEmpty) {
         tableId = uri.queryParameters['tableId']!;
+      } else {
+        // Fallback regex match if Uri parsing didn't extract query parameter (e.g. "tableId=T1" without scheme/query prefix)
+        final match = RegExp(r'tableId=([^&]+)', caseSensitive: false).firstMatch(tableId);
+        if (match != null && match.groupCount >= 1) {
+          tableId = match.group(1)!;
+        }
       }
     }
+    tableId = tableId.trim().toUpperCase();
 
     if (!mounted) return;
 

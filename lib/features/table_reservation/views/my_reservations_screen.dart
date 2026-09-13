@@ -39,7 +39,9 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
   }
 
   void _showQrDialog(BuildContext context, TableReservation reservation) {
-    final qrData = reservation.qrCodeData ?? reservation.id;
+    final qrData = (reservation.qrCodeData != null && reservation.qrCodeData!.isNotEmpty && reservation.qrCodeData != reservation.id)
+        ? reservation.qrCodeData!
+        : 'app://order?tableId=${reservation.tableId}';
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -54,7 +56,9 @@ class _MyReservationsScreenState extends State<MyReservationsScreen> {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AppPopScale(
+            SizedBox(
+              width: 232,
+              height: 232,
               child: Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
