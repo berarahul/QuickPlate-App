@@ -54,6 +54,7 @@ class CartProvider extends ChangeNotifier {
           price: existingCartItem.price,
           quantity: existingCartItem.quantity + 1,
           foodId: existingCartItem.foodId,
+          imageUrl: existingCartItem.imageUrl ?? menuItem.imageUrl,
         ),
       );
     } else {
@@ -65,6 +66,7 @@ class CartProvider extends ChangeNotifier {
           price: (menuItem.price ?? 0).toDouble(),
           quantity: 1,
           foodId: menuItem.id!,
+          imageUrl: menuItem.imageUrl,
         ),
       );
     }
@@ -99,6 +101,7 @@ class CartProvider extends ChangeNotifier {
           price: existingCartItem.price,
           quantity: existingCartItem.quantity - 1,
           foodId: existingCartItem.foodId,
+          imageUrl: existingCartItem.imageUrl,
         ),
       );
     } else {
@@ -127,6 +130,7 @@ class CartProvider extends ChangeNotifier {
           price: existingCartItem.price,
           quantity: existingCartItem.quantity + 1,
           foodId: existingCartItem.foodId,
+          imageUrl: existingCartItem.imageUrl,
         ),
       );
       notifyListeners();
@@ -171,6 +175,7 @@ class CartItem {
   final double price;
   final int quantity;
   final String foodId;
+  final String? imageUrl;
 
   CartItem({
     required this.id,
@@ -178,5 +183,6 @@ class CartItem {
     required this.price,
     required this.quantity,
     required this.foodId,
+    this.imageUrl,
   });
 }

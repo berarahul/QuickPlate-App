@@ -49,4 +49,26 @@ class AuthRepository {
     );
     return response.data;
   }
+
+  Future<Map<String, dynamic>> getProfile() async {
+    final response = await _apiClient.get(ApiEndpoints.profile);
+    return response.data;
+  }
+
+  Future<Map<String, dynamic>> updateProfile({
+    String? name,
+    String? phoneNumber,
+    String? idCardImage,
+  }) async {
+    final Map<String, dynamic> data = {};
+    if (name != null) data['name'] = name;
+    if (phoneNumber != null) data['phoneNumber'] = phoneNumber;
+    if (idCardImage != null) data['idCardImage'] = idCardImage;
+
+    final response = await _apiClient.patch(
+      ApiEndpoints.profile,
+      data: data,
+    );
+    return response.data;
+  }
 }

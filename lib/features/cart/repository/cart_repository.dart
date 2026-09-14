@@ -59,6 +59,7 @@ class CartRepository {
         price: (food['price'] ?? 0).toDouble(),
         quantity: quantity,
         foodId: foodId,
+        imageUrl: food['imageUrl'] ?? food['image'],
       );
     }
     return parsedItems;

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_text_styles.dart';
+import '../theme/theme_provider.dart';
 
 /// Small all-caps label used to introduce sections consistently.
 class SectionHeader extends StatelessWidget {
@@ -45,6 +47,13 @@ class StateView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    context.watch<ThemeProvider>();
+
+    final effectiveIconBg = iconBg ?? AppColors.primaryTint;
+    final effectiveIconColor = iconColor ?? AppColors.primary;
+    final effectiveTitleColor = AppColors.textPrimary;
+    final effectiveMessageColor = AppColors.textSecondary;
+
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
@@ -55,28 +64,33 @@ class StateView extends StatelessWidget {
               width: 88,
               height: 88,
               decoration: BoxDecoration(
-                color: iconBg ?? AppColors.primaryTint,
+                color: effectiveIconBg,
                 shape: BoxShape.circle,
               ),
               alignment: Alignment.center,
               child: Icon(
                 icon,
                 size: 40,
-                color: iconColor ?? AppColors.primary,
+                color: effectiveIconColor,
               ),
             ),
             const SizedBox(height: 20),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: AppTextStyles.titleMedium,
+              style: AppTextStyles.titleMedium.copyWith(
+                color: effectiveTitleColor,
+                fontWeight: FontWeight.w700,
+              ),
             ),
             if (message != null) ...[
               const SizedBox(height: 8),
               Text(
                 message!,
                 textAlign: TextAlign.center,
-                style: AppTextStyles.bodyMedium,
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: effectiveMessageColor,
+                ),
               ),
             ],
             if (actionLabel != null && onAction != null) ...[
@@ -93,7 +107,13 @@ class StateView extends StatelessWidget {
                     borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-                child: Text(actionLabel!),
+                child: Text(
+                  actionLabel!,
+                  style: TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
               ),
             ],
           ],

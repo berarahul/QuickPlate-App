@@ -1,56 +1,12 @@
 import '../../../core/app_exports.dart';
 import '../../notifications/provider/notification_provider.dart';
 import '../../auth/provider/auth_provider.dart';
+import 'widgets/edit_profile_sheet.dart';
+import 'widgets/logout_dialog.dart';
+import 'widgets/profile_option_tile.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
-
-  void _showLogoutDialog(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: const Text('Confirm Logout'),
-        content: const Text(
-          'Are you sure you want to log out from QuickPlate?',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
-              foregroundColor: Colors.white,
-            ),
-            onPressed: () async {
-              Navigator.pop(dialogContext); // close dialog
-
-              // Show loading overlay
-              showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (overlayContext) =>
-                    const Center(child: CircularProgressIndicator()),
-              );
-
-              await context.read<AuthProvider>().logout();
-
-              if (context.mounted) {
-                Navigator.pop(context); // Close loading overlay
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  AppRoutes.loginScreen,
-                  (route) => false,
-                );
-              }
-            },
-            child: const Text('Logout'),
-          ),
-        ],
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -61,205 +17,205 @@ class ProfileScreen extends StatelessWidget {
         child: RefreshIndicator(
           onRefresh: () async {
             if (!context.mounted) return;
-            await context.read<AuthProvider>().loadUserInfo();
+            await context.read<AuthProvider>().fetchProfile();
           },
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 32),
-
-
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Account', style: AppTextStyles.labelSmall),
-              const SizedBox(height: 4),
-              Text('Profile', style: AppTextStyles.displayLarge),
-              const SizedBox(height: 24),
-              // Profile header card
-              Consumer<AuthProvider>(
-                builder: (context, authProvider, child) {
-                  return AppCard(
-                    padding: const EdgeInsets.all(20),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Icon(
-                            Icons.person_rounded,
-                            size: 34,
-                            color: AppColors.white,
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                authProvider.userName ?? 'Student Name',
-                                style: AppTextStyles.titleMedium,
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                authProvider.userEmail ?? 'student@email.com',
-                                style: AppTextStyles.bodySmall,
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
-              Text('ACTIVITY', style: AppTextStyles.labelSmall),
-              const SizedBox(height: 8),
-              _buildProfileOption(
-                icon: Icons.table_restaurant_outlined,
-                title: 'Table & Seat Reservations',
-                subtitle: 'Reserve seats in advance & manage bookings',
-                onTap: () {
-                  Navigator.pushNamed(context, AppRoutes.tableReservationScreen);
-                },
-              ),
-              _buildProfileOption(
-                icon: Icons.receipt_long_outlined,
-                title: 'My Orders',
-                subtitle: 'View past orders & track active ones',
-                onTap: () {
-                  Navigator.pushNamed(context, AppRoutes.orderHistoryScreen);
-                },
-              ),
-              Consumer<NotificationProvider>(
-                builder: (context, notificationProvider, child) {
-                  final unreadCount = notificationProvider.unreadCount;
-                  return _buildProfileOption(
-                    icon: Icons.notifications_none_rounded,
-                    title: 'Notifications',
-                    subtitle: 'Order updates and announcements',
-                    trailing: unreadCount > 0
-                        ? Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Account', style: AppTextStyles.labelSmall),
+                const SizedBox(height: 4),
+                Text('Profile', style: AppTextStyles.displayLarge),
+                const SizedBox(height: 24),
+                // Profile header card
+                Consumer<AuthProvider>(
+                  builder: (context, authProvider, child) {
+                    final avatarUrl = authProvider.userIdCardImage;
+                    return AppCard(
+                      padding: const EdgeInsets.all(20),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 64,
+                            height: 64,
                             decoration: BoxDecoration(
-                              color: AppColors.primary,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              '$unreadCount',
-                              style: const TextStyle(
-                                color: AppColors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w700,
+                              color: AppColors.primaryTint,
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: AppColors.primary,
+                                width: 1.5,
                               ),
                             ),
-                          )
-                        : null,
-                    onTap: () {
-                      Navigator.pushNamed(
-                        context,
-                        AppRoutes.notificationScreen,
-                      );
-                    },
-                  );
-                },
-              ),
-              Consumer<ThemeProvider>(
-                builder: (context, themeProvider, child) {
-                  return _buildProfileOption(
-                    icon: themeProvider.isDarkMode
-                        ? Icons.dark_mode_outlined
-                        : Icons.light_mode_outlined,
-                    title: 'Dark Theme',
-                    subtitle: themeProvider.isDarkMode
-                        ? 'Dark mode enabled'
-                        : 'Dark mode disabled',
-                    iconColor: themeProvider.isDarkMode
-                        ? Colors.purpleAccent
-                        : AppColors.primary,
-                    iconBg: themeProvider.isDarkMode
-                        ? Colors.purpleAccent.withValues(alpha: 0.15)
-                        : AppColors.primaryTint,
-                    onTap: () {
-                      themeProvider.toggleTheme(!themeProvider.isDarkMode);
-                    },
-                    trailing: Switch.adaptive(
-                      value: themeProvider.isDarkMode,
-                      activeTrackColor: AppColors.primary,
-                      onChanged: (value) {
-                        themeProvider.toggleTheme(value);
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(18),
+                              child: (avatarUrl != null && avatarUrl.isNotEmpty)
+                                  ? Image.network(
+                                      avatarUrl,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, _, _) => Icon(
+                                        Icons.person_rounded,
+                                        size: 34,
+                                        color: AppColors.primary,
+                                      ),
+                                    )
+                                  : Icon(
+                                      Icons.person_rounded,
+                                      size: 34,
+                                      color: AppColors.primary,
+                                    ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  authProvider.userName ?? 'Student Name',
+                                  style: AppTextStyles.titleMedium,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  authProvider.userEmail ?? 'student@email.com',
+                                  style: AppTextStyles.bodySmall,
+                                ),
+                                if (authProvider.userPhone != null &&
+                                    authProvider.userPhone!.isNotEmpty) ...[
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    authProvider.userPhone!,
+                                    style: AppTextStyles.bodySmall.copyWith(
+                                      color: AppColors.textSecondary,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              Icons.edit_outlined,
+                              color: AppColors.primary,
+                            ),
+                            tooltip: 'Edit Profile',
+                            onPressed: () => EditProfileSheet.show(context),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+                Text('ACTIVITY', style: AppTextStyles.labelSmall),
+                const SizedBox(height: 8),
+                ProfileOptionTile(
+                  icon: Icons.table_restaurant_outlined,
+                  title: 'Table & Seat Reservations',
+                  subtitle: 'Reserve seats in advance & manage bookings',
+                  onTap: () {
+                    Navigator.pushNamed(
+                      context,
+                      AppRoutes.tableReservationScreen,
+                    );
+                  },
+                ),
+                ProfileOptionTile(
+                  icon: Icons.receipt_long_outlined,
+                  title: 'My Orders',
+                  subtitle: 'View past orders & track active ones',
+                  onTap: () {
+                    Navigator.pushNamed(context, AppRoutes.orderHistoryScreen);
+                  },
+                ),
+                Consumer<NotificationProvider>(
+                  builder: (context, notificationProvider, child) {
+                    final unreadCount = notificationProvider.unreadCount;
+                    return ProfileOptionTile(
+                      icon: Icons.notifications_none_rounded,
+                      title: 'Notifications',
+                      subtitle: 'Order updates and announcements',
+                      trailing: unreadCount > 0
+                          ? Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primary,
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                '$unreadCount',
+                                style: const TextStyle(
+                                  color: AppColors.white,
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            )
+                          : null,
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          AppRoutes.notificationScreen,
+                        );
                       },
-                    ),
-                  );
-                },
-              ),
-              const SizedBox(height: 24),
-              Text('ACCOUNT', style: AppTextStyles.labelSmall),
-              const SizedBox(height: 8),
-              _buildProfileOption(
-                icon: Icons.logout_rounded,
-                title: 'Logout',
-                subtitle: 'Sign out of this device',
-                iconColor: AppColors.error,
-                iconBg: AppColors.errorTint,
-                onTap: () => _showLogoutDialog(context),
-              ),
-            ],
-          ),
-        ),
-      ),
-    ),
-  );
-}
-
-
-
-  Widget _buildProfileOption({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-    Color? iconColor,
-    Color? iconBg,
-    Widget? trailing,
-  }) {
-    final effectiveIconColor = iconColor ?? AppColors.primary;
-    final effectiveIconBg = iconBg ?? AppColors.primaryTint;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
-      child: AppCard(
-        padding: EdgeInsets.zero,
-        onTap: onTap,
-        child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 6,
-          ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          leading: Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: effectiveIconBg,
-              borderRadius: BorderRadius.circular(12),
+                    );
+                  },
+                ),
+                Consumer<ThemeProvider>(
+                  builder: (context, themeProvider, child) {
+                    return ProfileOptionTile(
+                      icon: themeProvider.isDarkMode
+                          ? Icons.dark_mode_outlined
+                          : Icons.light_mode_outlined,
+                      title: 'Dark Theme',
+                      subtitle: themeProvider.isDarkMode
+                          ? 'Dark mode enabled'
+                          : 'Dark mode disabled',
+                      iconColor: AppColors.primary,
+                      iconBg: AppColors.primaryTint,
+                      onTap: () {
+                        themeProvider.toggleTheme(!themeProvider.isDarkMode);
+                      },
+                      trailing: Switch.adaptive(
+                        value: themeProvider.isDarkMode,
+                        activeTrackColor: AppColors.primary,
+                        onChanged: (value) {
+                          themeProvider.toggleTheme(value);
+                        },
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  'ACCOUNT',
+                  style: AppTextStyles.labelSmall.copyWith(
+                    letterSpacing: 0.8,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ProfileOptionTile(
+                  icon: Icons.person_outline_rounded,
+                  title: 'Edit Profile',
+                  subtitle: 'Update your name, phone & photo',
+                  onTap: () => EditProfileSheet.show(context),
+                ),
+                ProfileOptionTile(
+                  icon: Icons.logout_rounded,
+                  title: 'Logout',
+                  subtitle: 'Sign out of this device',
+                  iconColor: AppColors.error,
+                  iconBg: AppColors.error.withValues(alpha: 0.1),
+                  onTap: () => LogoutDialog.show(context),
+                ),
+              ],
             ),
-            child: Icon(icon, color: effectiveIconColor, size: 20),
           ),
-          title: Text(title, style: AppTextStyles.titleSmall),
-          subtitle: Text(subtitle, style: AppTextStyles.bodySmall),
-          trailing:
-              trailing ??
-              Icon(Icons.chevron_right_rounded, color: AppColors.textTertiary),
         ),
       ),
     );

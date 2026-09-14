@@ -2,12 +2,14 @@ class ApiEndpoints {
   // Base URL
   static const String baseUrl =
       'https://quickplate-backend-z3j0.onrender.com/api/v1';
+  // static const String baseUrl = 'http://10.0.2.2:5000/api/v1';
 
   // Auth
   static const String register = '/auth/register';
   static const String login = '/auth/login';
   static const String forgotPassword = '/auth/forgot-password';
   static const String resetPassword = '/auth/reset-password';
+  static const String profile = '/auth/profile';
 
   // Table & Reservations
   static const String tableSession = '/tables/session';

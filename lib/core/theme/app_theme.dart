@@ -11,7 +11,8 @@ class AppTheme {
     final base = ThemeData.light(useMaterial3: true);
 
     return base.copyWith(
-      colorScheme: ColorScheme.light(
+      colorScheme: ColorScheme(
+        brightness: AppColors.isDarkMode ? Brightness.dark : Brightness.light,
         primary: AppColors.primary,
         onPrimary: AppColors.white,
         secondary: AppColors.primary,
@@ -19,11 +20,25 @@ class AppTheme {
         surface: AppColors.surface,
         onSurface: AppColors.textPrimary,
         error: AppColors.error,
+        onError: AppColors.white,
         outline: AppColors.border,
       ),
       scaffoldBackgroundColor: AppColors.background,
       splashFactory: InkSparkle.splashFactory,
       visualDensity: VisualDensity.standard,
+
+      // ── Text Theme ───────────────────────────────────────────────────
+      textTheme: TextTheme(
+        bodyLarge: TextStyle(color: AppColors.textPrimary),
+        bodyMedium: TextStyle(color: AppColors.textPrimary),
+        bodySmall: TextStyle(color: AppColors.textSecondary),
+        titleLarge: TextStyle(color: AppColors.textPrimary),
+        titleMedium: TextStyle(color: AppColors.textPrimary),
+        titleSmall: TextStyle(color: AppColors.textPrimary),
+        labelLarge: TextStyle(color: AppColors.textPrimary),
+        labelMedium: TextStyle(color: AppColors.textSecondary),
+        labelSmall: TextStyle(color: AppColors.textTertiary),
+      ),
 
       // ── App bar ────────────────────────────────────────────────────────
       appBarTheme: AppBarTheme(
@@ -147,9 +162,20 @@ class AppTheme {
       iconTheme: IconThemeData(color: AppColors.textPrimary),
       snackBarTheme: SnackBarThemeData(
         behavior: SnackBarBehavior.floating,
-        backgroundColor: AppColors.textPrimary,
-        contentTextStyle: const TextStyle(color: AppColors.white),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        backgroundColor:
+            AppColors.isDarkMode ? const Color(0xFF292524) : const Color(0xFF1F1B16),
+        contentTextStyle: TextStyle(
+          color: AppColors.isDarkMode ? const Color(0xFFF5F5F4) : Colors.white,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(
+            color: AppColors.isDarkMode ? const Color(0xFF3F3A36) : Colors.transparent,
+            width: 1,
+          ),
+        ),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: AppColors.surface,

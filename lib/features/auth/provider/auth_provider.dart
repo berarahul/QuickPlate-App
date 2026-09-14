@@ -18,6 +18,12 @@ class AuthProvider extends ChangeNotifier {
   String? _userEmail;
   String? get userEmail => _userEmail ?? _loginResponse?.data?.user?.email;
 
+  String? _userPhone;
+  String? get userPhone => _userPhone;
+
+  String? _userIdCardImage;
+  String? get userIdCardImage => _userIdCardImage;
+
   AuthProvider(this._authRepository) {
     loadUserInfo();
   }
@@ -27,6 +33,27 @@ class AuthProvider extends ChangeNotifier {
     _userEmail = await SharedPrefsHelper.getUserEmail();
     _authToken = await SharedPrefsHelper.getAuthToken();
     notifyListeners();
+    if (_authToken != null) {
+      await fetchProfile();
+    }
+  }
+
+  Future<void> fetchProfile() async {
+    try {
+      final res = await _authRepository.getProfile();
+      if (res['success'] == true && res['data'] != null) {
+        final userData = res['data'];
+        _userName = userData['name'];
+        _userEmail = userData['email'];
+        _userPhone = userData['phoneNumber'];
+        _userIdCardImage = userData['idCardImage'];
+        if (_userName != null) await SharedPrefsHelper.setUserName(_userName!);
+        if (_userEmail != null) await SharedPrefsHelper.setUserEmail(_userEmail!);
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint("Error fetching profile: $e");
+    }
   }
 
 
@@ -180,6 +207,46 @@ class AuthProvider extends ChangeNotifier {
         return true;
       } else {
         _errorMessage = res['message'] ?? 'Failed to reset password';
+        return false;
+      }
+    } on ApiException catch (e) {
+      _errorMessage = e.message;
+      return false;
+    } catch (e) {
+      _errorMessage = 'An unexpected error occurred';
+      return false;
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  Future<bool> updateProfile({
+    required String name,
+    required String phoneNumber,
+    String? idCardImage,
+  }) async {
+    _setLoading(true);
+    _errorMessage = null;
+
+    try {
+      final res = await _authRepository.updateProfile(
+        name: name,
+        phoneNumber: phoneNumber,
+        idCardImage: idCardImage,
+      );
+
+      if (res['success'] == true && res['data'] != null) {
+        final userData = res['data'];
+        _userName = userData['name'];
+        _userEmail = userData['email'];
+        _userPhone = userData['phoneNumber'];
+        _userIdCardImage = userData['idCardImage'];
+        if (_userName != null) await SharedPrefsHelper.setUserName(_userName!);
+        if (_userEmail != null) await SharedPrefsHelper.setUserEmail(_userEmail!);
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = res['message'] ?? 'Failed to update profile';
         return false;
       }
     } on ApiException catch (e) {

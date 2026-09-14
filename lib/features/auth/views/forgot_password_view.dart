@@ -149,6 +149,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
           const SizedBox(height: 32),
           TextFormField(
             controller: _emailController,
+            style: TextStyle(color: AppColors.textPrimary),
             decoration: const InputDecoration(
               labelText: 'Email Address',
               hintText: 'you@college.edu',
@@ -213,6 +214,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
           const SizedBox(height: 32),
           TextFormField(
             controller: _otpController,
+            style: TextStyle(color: AppColors.textPrimary),
             decoration: const InputDecoration(
               labelText: '6-Digit OTP',
               hintText: '123456',
@@ -230,6 +232,7 @@ class _ForgotPasswordViewState extends State<ForgotPasswordView> {
           const SizedBox(height: 16),
           TextFormField(
             controller: _newPasswordController,
+            style: TextStyle(color: AppColors.textPrimary),
             decoration: InputDecoration(
               labelText: 'New Password',
               hintText: '••••••••',

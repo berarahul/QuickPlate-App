@@ -103,6 +103,7 @@ class _StudentLoginState extends State<StudentLogin> {
                 const SizedBox(height: 32),
                 TextFormField(
                   controller: _emailController,
+                  style: TextStyle(color: AppColors.textPrimary),
                   decoration: const InputDecoration(
                     labelText: 'Email Address',
                     hintText: 'you@college.edu',
@@ -115,6 +116,7 @@ class _StudentLoginState extends State<StudentLogin> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _passwordController,
+                  style: TextStyle(color: AppColors.textPrimary),
                   decoration: InputDecoration(
                     labelText: 'Password',
                     hintText: '••••••••',

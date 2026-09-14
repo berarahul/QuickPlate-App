@@ -1,9 +1,14 @@
 import '../../../core/app_exports.dart';
 import '../provider/table_reservation_provider.dart';
-import '../models/table_availability_model.dart';
-import '../models/table_reservation_model.dart';
 import 'my_reservations_screen.dart';
 import 'live_table_view_screen.dart';
+
+// Extracted Sub-widgets
+import 'widgets/reservation_time_filter_bar.dart';
+import 'widgets/table_selector_grid.dart';
+import 'widgets/seat_map_view.dart';
+import 'widgets/reservation_cost_breakdown_card.dart';
+import 'widgets/reservation_checkout_sheet.dart';
 
 class TableReservationScreen extends StatefulWidget {
   final String? initialTableId;
@@ -27,187 +32,6 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
         provider.selectTable(widget.initialTableId!);
       }
     });
-  }
-
-  void _showReservationSuccessModal(
-    BuildContext context,
-    TableReservation reservation,
-  ) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        title: Column(
-          children: [
-            AppPopScale(
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.successTint,
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.check_circle_rounded,
-                  color: AppColors.success,
-                  size: 48,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              'Table Reserved!',
-              style: AppTextStyles.titleLarge.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              'Table ${reservation.tableId} • Seats ${reservation.seatNumbers.join(", ")}',
-              style: AppTextStyles.bodyMedium.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              'Date: ${DateTimeFormatter.formatDate(reservation.reservationDate)} (${DateTimeFormatter.formatTimeRange(reservation.startTime, reservation.endTime)})',
-              style: AppTextStyles.bodySmall,
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppColors.primaryTint,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppColors.primary.withValues(alpha: 0.3),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.stars_rounded, color: AppColors.primary),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      '₹${reservation.depositPaidAmount.toStringAsFixed(0)} deposit paid! This will automatically discount your food order.',
-                      style: AppTextStyles.bodySmall.copyWith(
-                        color: AppColors.textPrimary,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const MyReservationsScreen()),
-              );
-            },
-            child: const Text(
-              'View My Reservations',
-              style: TextStyle(
-                color: Colors.black,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final provider = context.watch<TableReservationProvider>();
-
-    return Scaffold(
-      backgroundColor: AppColors.background,
-      appBar: AppBar(
-        backgroundColor: AppColors.surface,
-        elevation: 0,
-        title: Text('Reserve Table & Seats', style: AppTextStyles.titleLarge),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.grid_view_rounded),
-            tooltip: 'Live Table View',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const LiveTableViewScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.bookmark_outline_rounded),
-            tooltip: 'My Reservations',
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const MyReservationsScreen()),
-              );
-            },
-          ),
-        ],
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Search Filters Bar
-            _buildFiltersBar(context, provider),
-
-            Expanded(
-              child: provider.isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : provider.errorMessage != null
-                  ? Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.error_outline_rounded,
-                            size: 48,
-                            color: AppColors.error,
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            provider.errorMessage!,
-                            style: AppTextStyles.bodyMedium,
-                          ),
-                          const SizedBox(height: 12),
-                          ElevatedButton(
-                            onPressed: () => provider.fetchAvailableTables(),
-                            child: const Text('Retry'),
-                          ),
-                        ],
-                      ),
-                    )
-                  : _buildTableSeatSelection(context, provider),
-            ),
-
-            if (provider.selectedSeats.isNotEmpty)
-              _buildBottomCheckoutBar(context, provider),
-          ],
-        ),
-      ),
-    );
   }
 
   String _format12Hour(String time24) {
@@ -256,7 +80,6 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
       final newStartStr =
           '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
 
-      // 1. Block past times for today
       if (isToday && startMin < nowMin) {
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -270,7 +93,6 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
         return;
       }
 
-      // 2. Validate operating hours boundary
       if (startMin < openMin || startMin >= closeMin) {
         if (!context.mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
@@ -359,181 +181,87 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
     }
   }
 
-  Widget _buildFiltersBar(
-    BuildContext context,
-    TableReservationProvider provider,
-  ) {
-    final durationHours = (provider.selectedDuration / 60.0)
-        .toStringAsFixed(1)
-        .replaceAll('.0', '');
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.watch<TableReservationProvider>();
 
-    return Container(
-      padding: const EdgeInsets.all(16),
-      color: AppColors.surface,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Select Custom Time Range', style: AppTextStyles.titleSmall),
-              Text(
-                'Canteen Hours: ${provider.availabilityResponse?.openingTime ?? "09:00"} - ${provider.availabilityResponse?.closingTime ?? "17:00"}',
-                style: AppTextStyles.bodySmall.copyWith(
-                  color: AppColors.textSecondary,
-                  fontSize: 11,
-                ),
-              ),
-            ],
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        backgroundColor: AppColors.surface,
+        elevation: 0,
+        title: Text('Reserve Table & Seats', style: AppTextStyles.titleLarge),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.grid_view_rounded),
+            tooltip: 'Live Table View',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const LiveTableViewScreen()),
+              );
+            },
           ),
-          const SizedBox(height: 12),
-
-          // Custom Range Selector Row (From -> To)
-          Row(
-            children: [
-              // From Start Time Button
-              Expanded(
-                child: InkWell(
-                  onTap: () => _selectStartTime(context, provider),
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryTint,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.primary, width: 1.5),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.access_time_rounded,
-                          size: 18,
-                          color: AppColors.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'FROM',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                _format12Hour(provider.selectedStartTime),
-                                style: AppTextStyles.bodySmall.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Icon(
-                Icons.arrow_forward_rounded,
-                size: 20,
-                color: AppColors.textSecondary,
-              ),
-              const SizedBox(width: 8),
-
-              // To End Time Button
-              Expanded(
-                child: InkWell(
-                  onTap: () => _selectEndTime(context, provider),
-                  borderRadius: BorderRadius.circular(12),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryTint,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppColors.primary, width: 1.5),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.access_time_filled_rounded,
-                          size: 18,
-                          color: AppColors.primary,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'TO',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              Text(
-                                _format12Hour(provider.selectedEndTime),
-                                style: AppTextStyles.bodySmall.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-
-          // Duration Badge Banner
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-            decoration: BoxDecoration(
-              color: AppColors.background,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: AppColors.border),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.timelapse_rounded,
-                  size: 14,
-                  color: AppColors.primary,
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  'Booked Duration: $durationHours Hour(s) (${provider.selectedStartTime} to ${provider.selectedEndTime})',
-                  style: AppTextStyles.bodySmall.copyWith(
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ],
-            ),
+          IconButton(
+            icon: const Icon(Icons.bookmark_outline_rounded),
+            tooltip: 'My Reservations',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const MyReservationsScreen()),
+              );
+            },
           ),
         ],
+      ),
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Modular Time Filter Bar
+            ReservationTimeFilterBar(
+              provider: provider,
+              onSelectStartTime: () => _selectStartTime(context, provider),
+              onSelectEndTime: () => _selectEndTime(context, provider),
+            ),
+
+            Expanded(
+              child: provider.isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : provider.errorMessage != null
+                  ? Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.error_outline_rounded,
+                            size: 48,
+                            color: AppColors.error,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            provider.errorMessage!,
+                            style: AppTextStyles.bodyMedium,
+                          ),
+                          const SizedBox(height: 12),
+                          ElevatedButton(
+                            onPressed: () => provider.fetchAvailableTables(),
+                            child: const Text('Retry'),
+                          ),
+                        ],
+                      ),
+                    )
+                  : _buildMainContent(context, provider),
+            ),
+
+            if (provider.selectedSeats.isNotEmpty)
+              _buildBottomCheckoutBar(context, provider),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildTableSeatSelection(
+  Widget _buildMainContent(
     BuildContext context,
     TableReservationProvider provider,
   ) {
@@ -563,7 +291,7 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
     final bool isMyActiveTable = mySeatNumbersOnThisTable.isNotEmpty;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -639,7 +367,7 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Seats ${mySeatNumbersOnThisTable.join(", ")} are currently yours. Tap any available Green seat to add a guest seat!',
+                          'Seats ${mySeatNumbersOnThisTable.join(", ")} are currently yours. Tap any available seat to add a guest seat!',
                           style: AppTextStyles.bodySmall.copyWith(fontSize: 11),
                         ),
                       ],
@@ -649,787 +377,29 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
               ),
             ),
 
-          Text('Select Table', style: AppTextStyles.titleMedium),
-          const SizedBox(height: 10),
-
-          // Table Selector GridView (Non-horizontally scrolling)
-          GridView.builder(
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 3,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              childAspectRatio: 1.8,
-            ),
-            itemCount: response.tables.length,
-            itemBuilder: (context, index) {
-              final table = response.tables[index];
-              final isSelected = table.tableId == provider.selectedTableId;
-              return AppBounceable(
-                onTap: () => provider.selectTable(table.tableId),
-                scaleFactor: 0.94,
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 150),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? AppColors.primaryTint
-                        : AppColors.surface,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: isSelected ? AppColors.primary : AppColors.border,
-                      width: isSelected ? 2 : 1,
-                    ),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: AppColors.primary.withValues(alpha: 0.3),
-                              blurRadius: 6,
-                              spreadRadius: 1,
-                            ),
-                          ]
-                        : [],
-                  ),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.table_restaurant_rounded,
-                              size: 16,
-                              color: isSelected
-                                  ? AppColors.primary
-                                  : AppColors.textSecondary,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              'Table ${table.tableId}',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                                color: isSelected
-                                    ? AppColors.primary
-                                    : AppColors.textPrimary,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${table.availableSeats.length}/${table.maxCapacity} free',
-                        style: AppTextStyles.bodySmall.copyWith(
-                          fontSize: 10,
-                          color: isSelected
-                              ? AppColors.primary
-                              : AppColors.textSecondary,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            },
+          // Table Selector Grid Widget
+          TableSelectorGrid(
+            availabilityResponse: response,
+            provider: provider,
           ),
           const SizedBox(height: 24),
 
-          // Seat Map Header & Legend
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Select Seats', style: AppTextStyles.titleMedium),
-              Flexible(
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildLegend(AppColors.primary, 'Selected'),
-                      const SizedBox(width: 8),
-                      _buildLegend(AppColors.success, 'Available'),
-                      const SizedBox(width: 8),
-                      _buildLegend(Colors.indigo.shade400, 'Your Seat'),
-                      const SizedBox(width: 8),
-                      _buildLegend(Colors.grey.shade600, 'Occupied'),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-
-          // Interactive Seat Grid Layout
-          Center(
-            child: Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppColors.surface,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                children: [
-                  // Center Table Graphic
-                  Container(
-                    width: 140,
-                    height: 60,
-                    decoration: BoxDecoration(
-                      color: AppColors.background,
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.4),
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(
-                        'TABLE ${selectedTable.tableId}',
-                        style: TextStyle(
-                          color: AppColors.primary,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: 1.2,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-
-                  // Seats Grid
-                  Wrap(
-                    spacing: 16,
-                    runSpacing: 16,
-                    alignment: WrapAlignment.center,
-                    children: List.generate(selectedTable.maxCapacity, (idx) {
-                      final seatNum = idx + 1;
-                      final isMySeat = mySeatNumbersOnThisTable.contains(seatNum);
-                      final isReserved = selectedTable.reservedSeatNumbers
-                          .contains(seatNum);
-                      final isSessionRunning = selectedTable
-                          .sessionRunningSeatNumbers
-                          .contains(seatNum);
-                      final isSelected = provider.selectedSeats.contains(
-                        seatNum,
-                      );
-                      final isOccupiedByOther = (isReserved || isSessionRunning) && !isMySeat;
-
-                      final cardColor = isSelected
-                          ? AppColors.primary
-                          : isMySeat
-                          ? Colors.indigo.shade900.withValues(alpha: 0.8)
-                          : isOccupiedByOther
-                          ? Colors.grey.shade900
-                          : AppColors.surfaceAlt;
-
-                      final borderColor = isSelected
-                          ? AppColors.primary
-                          : isMySeat
-                          ? Colors.indigo.shade400
-                          : isOccupiedByOther
-                          ? Colors.grey.shade800
-                          : AppColors.success.withValues(alpha: 0.5);
-
-                      final iconData = isSelected
-                          ? Icons.check_circle_rounded
-                          : isMySeat
-                          ? Icons.bookmark_rounded
-                          : isOccupiedByOther
-                          ? Icons.lock_rounded
-                          : Icons.chair_rounded;
-
-                      final iconColor = isSelected
-                          ? Colors.black
-                          : isMySeat
-                          ? Colors.indigo.shade300
-                          : isOccupiedByOther
-                          ? Colors.grey.shade600
-                          : AppColors.success;
-
-                      final textColor = isSelected
-                          ? Colors.black
-                          : isMySeat
-                          ? Colors.indigo.shade200
-                          : isOccupiedByOther
-                          ? Colors.grey.shade600
-                          : AppColors.textPrimary;
-
-                      return AppBounceable(
-                        onTap: (isOccupiedByOther || isMySeat)
-                            ? null
-                            : () => provider.toggleSeatSelection(seatNum),
-                        scaleFactor: 0.92,
-                        child: AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          width: 56,
-                          height: 56,
-                          decoration: BoxDecoration(
-                            color: cardColor,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: borderColor, width: 2),
-                            boxShadow: isSelected
-                                ? [
-                                    BoxShadow(
-                                      color: AppColors.primary.withValues(
-                                        alpha: 0.4,
-                                      ),
-                                      blurRadius: 8,
-                                      spreadRadius: 1,
-                                    ),
-                                  ]
-                                : isMySeat
-                                ? [
-                                    BoxShadow(
-                                      color: Colors.indigo.withValues(alpha: 0.4),
-                                      blurRadius: 6,
-                                      spreadRadius: 1,
-                                    ),
-                                  ]
-                                : [],
-                          ),
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(iconData, size: 20, color: iconColor),
-                              const SizedBox(height: 2),
-                              Text(
-                                isMySeat ? 'Mine' : 'S-$seatNum',
-                                style: TextStyle(
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                  color: textColor,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                ],
-              ),
-            ),
+          // Seat Map View Widget
+          SeatMapView(
+            selectedTable: selectedTable,
+            provider: provider,
+            mySeatNumbersOnThisTable: mySeatNumbersOnThisTable,
           ),
           const SizedBox(height: 24),
 
-          // Price & Deposit Breakdown Card
+          // Cost Breakdown Card Widget
           if (selectedTable.costBreakdown != null)
-            _buildCostBreakdownCard(
-              selectedTable.costBreakdown!,
-              provider.selectedSeats.length,
+            ReservationCostBreakdownCard(
+              breakdown: selectedTable.costBreakdown!,
+              count: provider.selectedSeats.length,
             ),
         ],
       ),
-    );
-  }
-
-  Widget _buildLegend(Color color, String label) {
-    return Row(
-      children: [
-        Container(
-          width: 10,
-          height: 10,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 4),
-        Text(label, style: const TextStyle(fontSize: 10, color: Colors.grey)),
-      ],
-    );
-  }
-
-  Widget _buildCostBreakdownCard(CostBreakdown breakdown, int count) {
-    final seatCount = count > 0 ? count : 1;
-    final totalDeposit =
-        breakdown.ratePerChair * seatCount * breakdown.durationMultiplier;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.surface,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.receipt_long_rounded,
-                color: AppColors.primary,
-                size: 20,
-              ),
-              const SizedBox(width: 8),
-              Text('Deposit Breakdown', style: AppTextStyles.titleSmall),
-            ],
-          ),
-          const Divider(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Rate per Chair', style: AppTextStyles.bodySmall),
-              Text(
-                '₹${breakdown.ratePerChair.toStringAsFixed(0)}',
-                style: AppTextStyles.bodySmall,
-              ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Selected Chairs', style: AppTextStyles.bodySmall),
-              Text('$count seats', style: AppTextStyles.bodySmall),
-            ],
-          ),
-          const SizedBox(height: 6),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Duration Multiplier', style: AppTextStyles.bodySmall),
-              Text(
-                '${breakdown.durationMultiplier}x',
-                style: AppTextStyles.bodySmall,
-              ),
-            ],
-          ),
-          const Divider(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text('Total Deposit Payable', style: AppTextStyles.titleSmall),
-              Text(
-                '₹${totalDeposit.toStringAsFixed(0)}',
-                style: AppTextStyles.titleMedium.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: AppColors.primaryTint.withValues(alpha: 0.5),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(
-              children: [
-                Icon(
-                  Icons.info_outline_rounded,
-                  size: 16,
-                  color: AppColors.primary,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Deposit is 100% credited to your cart order when you order food at your table!',
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showPaymentMethodModal(
-    BuildContext context,
-    TableReservationProvider provider,
-    double depositAmount,
-  ) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return StatefulBuilder(
-          builder: (modalCtx, setModalState) {
-            return Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: Container(
-                      width: 40,
-                      height: 4,
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade700,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(10),
-                        decoration: BoxDecoration(
-                          color: AppColors.primaryTint,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(
-                          Icons.payment_rounded,
-                          color: AppColors.primary,
-                          size: 24,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Select Payment Method',
-                            style: AppTextStyles.titleMedium,
-                          ),
-                          Text(
-                            'Deposit Payable: ₹${depositAmount.toStringAsFixed(0)}',
-                            style: AppTextStyles.bodySmall.copyWith(
-                              color: AppColors.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  const Divider(height: 28),
-
-                  // Info Banner for Online Only Payment
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.primaryTint,
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: AppColors.primary.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.verified_user_rounded,
-                          color: AppColors.primary,
-                          size: 20,
-                        ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            'Advance table & seat booking requires Razorpay Online Payment to lock your slot.',
-                            style: AppTextStyles.bodySmall.copyWith(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Option: Razorpay Online Payment
-                  InkWell(
-                    onTap: () {
-                      Navigator.pop(ctx);
-                      _showRazorpayCheckoutSheet(
-                        context,
-                        provider,
-                        depositAmount,
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(16),
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(
-                            Icons.payment_rounded,
-                            color: Colors.black,
-                            size: 24,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Pay ₹${depositAmount.toStringAsFixed(0)} via Razorpay',
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
-
-  void _showRazorpayCheckoutSheet(
-    BuildContext context,
-    TableReservationProvider provider,
-    double depositAmount,
-  ) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppColors.surface,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.fromLTRB(20, 20, 20, 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade700,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.blue.shade900,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: const Icon(
-                      Icons.payment_rounded,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Text(
-                              'Razorpay Secure Payment',
-                              style: AppTextStyles.titleMedium.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.blue.shade900,
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                              child: const Text(
-                                'GATEWAY',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        Text(
-                          '100% Encrypted & Verified via Razorpay',
-                          style: AppTextStyles.bodySmall,
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              const Divider(height: 24),
-
-              // Deposit Amount Summary Card
-              Container(
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Deposit Payable Amount',
-                      style: AppTextStyles.bodyMedium,
-                    ),
-                    Text(
-                      '₹${depositAmount.toStringAsFixed(0)}',
-                      style: AppTextStyles.titleLarge.copyWith(
-                        color: AppColors.primary,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              Text('Selected Payment Mode', style: AppTextStyles.titleSmall),
-              const SizedBox(height: 10),
-
-              // UPI Option
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceAlt,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.qr_code_2_rounded,
-                      color: AppColors.primary,
-                      size: 26,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'UPI Apps (Google Pay / PhonePe / Paytm)',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
-                          Text(
-                            'Instant 1-tap checkout via UPI',
-                            style: AppTextStyles.bodySmall.copyWith(
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Icon(
-                      Icons.check_circle_rounded,
-                      color: Colors.green,
-                      size: 20,
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-
-              // Card Option
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceAlt,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.credit_card_rounded,
-                      color: AppColors.textSecondary,
-                      size: 26,
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            'Credit / Debit Card / NetBanking',
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
-                          Text(
-                            'Visa, MasterCard, RuPay, SBI, HDFC',
-                            style: AppTextStyles.bodySmall.copyWith(
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 20),
-
-              // Pay via Razorpay Button
-              CustomElevatedButton(
-                text: 'Pay ₹${depositAmount.toStringAsFixed(0)} via Razorpay',
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  _executeReservation(context, provider, depositAmount);
-                },
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Future<void> _executeReservation(
-    BuildContext context,
-    TableReservationProvider provider,
-    double depositAmount,
-  ) async {
-    await provider.initiateRazorpayReservation(
-      depositAmount: depositAmount,
-      onCompleted: (reservation, errorMessage) {
-        if (!context.mounted) return;
-        if (reservation != null) {
-          _showReservationSuccessModal(context, reservation);
-        } else if (errorMessage != null) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(errorMessage),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-      },
     );
   }
 
@@ -1484,7 +454,11 @@ class _TableReservationScreenState extends State<TableReservationScreen> {
               loading: provider.isLoading,
               onPressed: !isOpen
                   ? null
-                  : () => _showPaymentMethodModal(context, provider, deposit),
+                  : () => ReservationCheckoutSheet.showPaymentMethodModal(
+                        context,
+                        provider,
+                        deposit,
+                      ),
             ),
           ),
         ],

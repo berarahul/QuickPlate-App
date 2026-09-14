@@ -22,6 +22,7 @@ class LiveTableOverviewModel {
   final String id;
   final String tableId;
   final int maxCapacity;
+  final int floorNumber;
   final String status; // 'AVAILABLE', 'PARTIALLY_OCCUPIED', 'FULL', 'BLOCKED'
   final List<String> occupiedChairs;
   final int occupiedCount;
@@ -33,6 +34,7 @@ class LiveTableOverviewModel {
     required this.id,
     required this.tableId,
     required this.maxCapacity,
+    required this.floorNumber,
     required this.status,
     required this.occupiedChairs,
     required this.occupiedCount,
@@ -43,6 +45,7 @@ class LiveTableOverviewModel {
 
   factory LiveTableOverviewModel.fromJson(Map<String, dynamic> json) {
     final maxCap = json['maxCapacity'] is int ? json['maxCapacity'] as int : 4;
+    final floorNum = json['floorNumber'] is int ? json['floorNumber'] as int : 1;
     final occupied = json['occupiedChairs'] != null
         ? List<String>.from(json['occupiedChairs'])
         : <String>[];
@@ -56,6 +59,7 @@ class LiveTableOverviewModel {
       id: json['id'] ?? json['_id'] ?? '',
       tableId: json['tableId'] ?? '',
       maxCapacity: maxCap,
+      floorNumber: floorNum,
       status: json['status'] ?? 'AVAILABLE',
       occupiedChairs: occupied,
       occupiedCount: json['occupiedCount'] ?? occupied.length,

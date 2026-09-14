@@ -158,6 +158,7 @@ class _StudentRegistrationState extends State<StudentRegistration> {
                 const SizedBox(height: 28),
                 TextFormField(
                   controller: _nameController,
+                  style: TextStyle(color: AppColors.textPrimary),
                   decoration: const InputDecoration(
                     labelText: 'Full Name',
                     hintText: 'Alex Student',
@@ -169,6 +170,7 @@ class _StudentRegistrationState extends State<StudentRegistration> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _emailController,
+                  style: TextStyle(color: AppColors.textPrimary),
                   decoration: const InputDecoration(
                     labelText: 'Email Address',
                     hintText: 'you@college.edu',
@@ -181,6 +183,7 @@ class _StudentRegistrationState extends State<StudentRegistration> {
                 const SizedBox(height: 16),
                 TextFormField(
                   controller: _passwordController,
+                  style: TextStyle(color: AppColors.textPrimary),
                   decoration: InputDecoration(
                     labelText: 'Password',
                     hintText: '••••••••',
